@@ -75,6 +75,14 @@ export interface SessionRecord {
   expires_at: string;
 }
 
+export interface CatalogueStats {
+  whale_shark_individuals: number;
+  whale_shark_encounters: number;
+  whale_shark_encounters_ytd: number;
+  all_individuals: number;
+  fetched_at: string;
+}
+
 export interface DataStore {
   listScarRecords(filter?: { encounterId?: string; individualId?: string }): Promise<ScarRecord[]>;
   createScarRecord(record: ScarRecord): Promise<ScarRecord>;
@@ -94,6 +102,8 @@ export interface DataStore {
   updateBatchItem(id: string, patch: Partial<BatchItem>): Promise<BatchItem>;
   createSession(session: SessionRecord): Promise<SessionRecord>;
   getSession(id: string): Promise<SessionRecord | null>;
+  saveCatalogueStats(stats: CatalogueStats): Promise<CatalogueStats>;
+  getCatalogueStats(): Promise<CatalogueStats | null>;
 }
 
 class MemoryStore implements DataStore {
@@ -103,6 +113,7 @@ class MemoryStore implements DataStore {
   private batches: Batch[] = [];
   private batchItems: BatchItem[] = [];
   private sessions: SessionRecord[] = [];
+  private catalogueStats: CatalogueStats | null = null;
 
   constructor() {
     this.reset();
@@ -115,6 +126,7 @@ class MemoryStore implements DataStore {
     this.batches = structuredClone(mockBatches);
     this.batchItems = structuredClone(mockBatchItems);
     this.sessions = [];
+    this.catalogueStats = null;
     return this;
   }
 
@@ -216,6 +228,15 @@ class MemoryStore implements DataStore {
   async getSession(id: string) {
     const session = this.sessions.find((candidate) => candidate.id === id);
     return session && new Date(session.expires_at) > new Date() ? session : null;
+  }
+
+  async saveCatalogueStats(stats: CatalogueStats) {
+    this.catalogueStats = structuredClone(stats);
+    return stats;
+  }
+
+  async getCatalogueStats() {
+    return this.catalogueStats ? structuredClone(this.catalogueStats) : null;
   }
 }
 
@@ -338,10 +359,24 @@ class D1Store implements DataStore {
   getSession(id: string) {
     return this.db.prepare('SELECT * FROM sessions WHERE id = ? AND expires_at > ?').bind(id, new Date().toISOString()).first<SessionRecord>();
   }
+
+  async saveCatalogueStats(stats: CatalogueStats) {
+    await this.db.prepare(`INSERT INTO catalogue_stats (id, whale_shark_individuals, whale_shark_encounters, whale_shark_encounters_ytd, all_individuals, fetched_at) VALUES (1, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET whale_shark_individuals=excluded.whale_shark_individuals, whale_shark_encounters=excluded.whale_shark_encounters, whale_shark_encounters_ytd=excluded.whale_shark_encounters_ytd, all_individuals=excluded.all_individuals, fetched_at=excluded.fetched_at`)
+      .bind(stats.whale_shark_individuals, stats.whale_shark_encounters, stats.whale_shark_encounters_ytd, stats.all_individuals, stats.fetched_at).run();
+    return stats;
+  }
+
+  getCatalogueStats() {
+    return this.db.prepare('SELECT whale_shark_individuals, whale_shark_encounters, whale_shark_encounters_ytd, all_individuals, fetched_at FROM catalogue_stats WHERE id = 1').first<CatalogueStats>();
+  }
 }
 
 export function createDataStore(db?: D1Database, mock = false): DataStore {
   if (mock) return memoryStore;
   if (!db) throw new Error('DB D1 binding is required outside mock mode');
   return new D1Store(db);
+}
+
+export function createCatalogueDataStore(db?: D1Database): DataStore {
+  return db ? new D1Store(db) : memoryStore;
 }

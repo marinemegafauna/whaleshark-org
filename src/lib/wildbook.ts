@@ -29,8 +29,20 @@ export interface BulkImportPayload {
   photographerEmail: string;
 }
 
-function endpoint(path: string): string {
-  return new URL(path, `${siteConfig.wildbookBaseUrl.replace(/\/$/, '')}/`).toString();
+export interface CatalogueCounts {
+  whale_shark_individuals: number;
+  whale_shark_encounters: number;
+  whale_shark_encounters_ytd: number;
+  all_individuals: number;
+}
+
+interface RequestOptions {
+  baseUrl?: string;
+  signal?: AbortSignal;
+}
+
+function endpoint(path: string, baseUrl = siteConfig.wildbookBaseUrl): string {
+  return new URL(path, `${baseUrl.replace(/\/$/, '')}/`).toString();
 }
 
 async function checked(response: Response): Promise<Response> {
@@ -45,17 +57,52 @@ function sessionHeaders(cookie: string): HeadersInit {
   return { Accept: 'application/json', 'Content-Type': 'application/json', Cookie: cookie };
 }
 
-export async function login(username: string, password: string, fetcher: Fetcher = fetch) {
+export async function login(username: string, password: string, fetcher: Fetcher = fetch, options: RequestOptions = {}) {
   const response = await checked(
-    await fetcher(endpoint('/api/v3/login'), {
+    await fetcher(endpoint('/api/v3/login', options.baseUrl), {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
+      signal: options.signal,
     }),
   );
   const match = response.headers.get('set-cookie')?.match(/(?:^|;\s*)(JSESSIONID=[^;]+)/i);
   if (!match?.[1]) throw new Error('Wildbook login did not return a JSESSIONID cookie');
   return { cookie: match[1], user: (await response.json()) as WildbookUser };
+}
+
+async function searchTotal(cookie: string, index: 'encounter' | 'individual', query: unknown, fetcher: Fetcher, options: RequestOptions): Promise<number> {
+  const url = new URL(endpoint(`/api/v3/search/${index}`, options.baseUrl));
+  url.searchParams.set('size', '0');
+  const response = await checked(await fetcher(url, {
+    method: 'POST',
+    headers: sessionHeaders(cookie),
+    body: JSON.stringify({ query }),
+    signal: options.signal,
+  }));
+  const raw = response.headers.get('X-Wildbook-Total-Hits');
+  const total = raw === null ? Number.NaN : Number(raw);
+  if (!Number.isSafeInteger(total) || total < 0) {
+    throw new Error(`Wildbook response requires a valid X-Wildbook-Total-Hits header; received ${raw ?? 'nothing'}`);
+  }
+  return total;
+}
+
+export async function getCatalogueStats(cookie: string, year: number, fetcher: Fetcher = fetch, options: RequestOptions = {}): Promise<CatalogueCounts> {
+  const taxonomy = { term: { taxonomy: 'Rhincodon typus' } };
+  const yearStart = Date.UTC(year, 0, 1);
+  const [whaleSharkIndividuals, whaleSharkEncounters, whaleSharkEncountersYtd, allIndividuals] = await Promise.all([
+    searchTotal(cookie, 'individual', taxonomy, fetcher, options),
+    searchTotal(cookie, 'encounter', taxonomy, fetcher, options),
+    searchTotal(cookie, 'encounter', { bool: { filter: [taxonomy, { range: { dateMillis: { gte: yearStart } } }] } }, fetcher, options),
+    searchTotal(cookie, 'individual', { match_all: {} }, fetcher, options),
+  ]);
+  return {
+    whale_shark_individuals: whaleSharkIndividuals,
+    whale_shark_encounters: whaleSharkEncounters,
+    whale_shark_encounters_ytd: whaleSharkEncountersYtd,
+    all_individuals: allIndividuals,
+  };
 }
 
 export async function searchEncounters(cookie: string, search: EncounterSearch, fetcher: Fetcher = fetch) {

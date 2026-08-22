@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test } from 'vitest';
-import { createDataStore, createMemoryStore } from './db';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { createCatalogueDataStore, createDataStore, createMemoryStore } from './db';
 
 describe('mock data store', () => {
   beforeEach(() => createMemoryStore().reset());
@@ -40,6 +40,35 @@ describe('mock data store', () => {
 
   test('does not silently replace a missing production D1 binding with memory', () => {
     expect(() => createDataStore(undefined, false)).toThrow(/DB D1 binding/i);
+  });
+
+  test('prefers persistent D1 storage for catalogue stats even when other features are mocked', async () => {
+    const snapshot = {
+      whale_shark_individuals: 17_532,
+      whale_shark_encounters: 110_256,
+      whale_shark_encounters_ytd: 851,
+      all_individuals: 25_975,
+      fetched_at: '2026-08-22T00:00:00.000Z',
+    };
+    const prepare = vi.fn().mockReturnValue({ first: vi.fn().mockResolvedValue(snapshot) });
+    const store = createCatalogueDataStore({ prepare } as unknown as D1Database);
+
+    await expect(store.getCatalogueStats()).resolves.toEqual(snapshot);
+  });
+
+  test('persists and reloads the latest catalogue statistics snapshot', async () => {
+    const store = createMemoryStore();
+    const snapshot = {
+      whale_shark_individuals: 17_532,
+      whale_shark_encounters: 110_256,
+      whale_shark_encounters_ytd: 851,
+      all_individuals: 25_975,
+      fetched_at: '2026-08-22T00:00:00.000Z',
+    };
+
+    await store.saveCatalogueStats(snapshot);
+
+    await expect(store.getCatalogueStats()).resolves.toEqual(snapshot);
   });
 
   test('creates, lists, updates, and reloads a batch with its items', async () => {

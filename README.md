@@ -22,7 +22,7 @@ If installation reports `ENOTFOUND registry.npmjs.org`, the machine cannot curre
 
 `MOCK=1` is the development default. It makes every screen browsable without network access or credentials:
 
-- `/` — public photo drop and matching explanation
+- `/` — full public landing page with photo drop, live Sharkbook catalogue counts, and matching explanation
 - `/bulk` — whole-dive photo upload with per-photo matching progress
 - `/bulk/batch-demo/review` — grouped known/new-animal review before submission
 - `/match/submission-demo` — ranked example match

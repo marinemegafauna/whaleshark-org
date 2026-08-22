@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { getBulkImportStatus, login, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
+import { getBulkImportStatus, getCatalogueStats, login, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
 
 describe('Wildbook client', () => {
   test('parses flat encounter hits and total from the response header', async () => {
@@ -51,6 +51,41 @@ describe('Wildbook client', () => {
       cookie: 'JSESSIONID=abc123',
       user: { username: 'clare', displayName: 'Clare Prebble' },
     });
+  });
+
+  test('reads catalogue totals from Wildbook response headers', async () => {
+    const totals = ['17532', '110256', '851', '25975'];
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () =>
+      new Response(JSON.stringify({ hits: [] }), {
+        headers: { 'Content-Type': 'application/json', 'X-Wildbook-Total-Hits': totals.shift()! },
+      }),
+    );
+
+    await expect(getCatalogueStats('JSESSIONID=session', 2026, fetcher)).resolves.toEqual({
+      whale_shark_individuals: 17_532,
+      whale_shark_encounters: 110_256,
+      whale_shark_encounters_ytd: 851,
+      all_individuals: 25_975,
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    const calls = fetcher.mock.calls.map(([url, init]) => ({
+      path: new URL(String(url)).pathname,
+      size: new URL(String(url)).searchParams.get('size'),
+      body: JSON.parse(String(init?.body)),
+    }));
+    expect(calls).toEqual([
+      { path: '/api/v3/search/individual', size: '0', body: { query: { term: { taxonomy: 'Rhincodon typus' } } } },
+      { path: '/api/v3/search/encounter', size: '0', body: { query: { term: { taxonomy: 'Rhincodon typus' } } } },
+      { path: '/api/v3/search/encounter', size: '0', body: { query: { bool: { filter: [{ term: { taxonomy: 'Rhincodon typus' } }, { range: { dateMillis: { gte: 1_767_225_600_000 } } }] } } } },
+      { path: '/api/v3/search/individual', size: '0', body: { query: { match_all: {} } } },
+    ]);
+  });
+
+  test('rejects a missing or malformed catalogue total header', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ hits: [] }));
+
+    await expect(getCatalogueStats('JSESSIONID=session', 2026, fetcher)).rejects.toThrow(/X-Wildbook-Total-Hits/i);
   });
 
   test('uploads a complete file through the ResumableUpload multipart contract', async () => {

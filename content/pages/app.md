@@ -43,6 +43,13 @@ workbench:
     help: Match groupings need a final check before publication.
     counts: "{photos} photos · {animals} animals"
     review: Review →
+  publicQueue:
+    eyebrow: Public sighting reports
+    heading: Reports awaiting a Sharkbook link
+    help: Dry-run reports remain visible here until reviewed publication is enabled.
+    singleLabel: Single photo
+    batchLabel: Whole dive
+    open: Open report →
   tableHeaders: [Encounter, Individual, Date · photographer, Sex · size, Photos, Scar record, " "]
   sightings: "· {count} sightings"
   newLabel: · new
@@ -61,6 +68,7 @@ workbench:
     sexSize: Sex · size
     photos: Photos
   viewRecord: View scar record →
+  publicNotesLabel: Public notes
 scar:
   breadcrumb: "{site} · Encounters · {encounter}"
   heading: Scar record · {individual} · {date}

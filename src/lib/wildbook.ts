@@ -1,4 +1,6 @@
 import siteConfig from '../../site.config';
+import type { Species } from './species';
+import { metresFromObservation, publicOptionLabel, type PublicObservations } from './public-observations';
 
 export type Fetcher = typeof fetch;
 export type WildbookUser = { username: string; displayName?: string; [key: string]: unknown };
@@ -27,6 +29,7 @@ export interface BulkImportPayload {
   encounterDate: string;
   photographerName: string;
   photographerEmail: string;
+  rows?: Record<string, string>[];
 }
 
 export interface CatalogueCounts {
@@ -34,6 +37,78 @@ export interface CatalogueCounts {
   whale_shark_encounters: number;
   whale_shark_encounters_ytd: number;
   all_individuals: number;
+}
+
+export interface WildbookRowInput {
+  species: Species;
+  observations: PublicObservations;
+  locationId: string;
+  sightingId: string;
+  mediaFilenames: string[];
+}
+
+function compactNumber(value: number, decimals = 6): string {
+  return value.toFixed(decimals).replace(/\.?0+$/, '');
+}
+
+export function buildWildbookRow(input: WildbookRowInput): Record<string, string> {
+  const { species, observations } = input;
+  const [genus = '', specificEpithet = ''] = species.wildbook_taxonomy.trim().split(/\s+/, 2);
+  const [year = '', month = '', day = ''] = (observations.observed_date ?? '').split('-');
+  const [hour = '', minutes = ''] = (observations.observed_time ?? '').split(':');
+  const row: Record<string, string> = {
+    // Source: species.wildbook_taxonomy.
+    'Encounter.genus': genus,
+    'Encounter.specificEpithet': specificEpithet,
+    // Source: public report encounter date.
+    'Encounter.year': year,
+    'Encounter.month': month ? String(Number(month)) : '',
+    'Encounter.day': day ? String(Number(day)) : '',
+    // Source: one shared id per uploaded dive/batch.
+    'Encounter.sightingID': input.sightingId,
+    // Source: filenames returned by the upload session.
+    'Encounter.mediaAsset': input.mediaFilenames.join(','),
+  };
+  if (input.locationId) row['Encounter.locationID'] = input.locationId; // Source: selected listed site resolved to its first literal Wildbook locationId; omitted for Other.
+  if (hour) row['Encounter.hour'] = String(Number(hour)); // Source: optional public report time.
+  if (minutes) row['Encounter.minutes'] = String(Number(minutes)); // Source: optional public report time.
+  if (observations.verbatim_locality) row['Encounter.verbatimLocality'] = observations.verbatim_locality; // Source: unlisted/free-text place.
+  if (observations.decimal_latitude !== undefined) row['Encounter.decimalLatitude'] = compactNumber(observations.decimal_latitude); // Source: optional GPS.
+  if (observations.decimal_longitude !== undefined) row['Encounter.decimalLongitude'] = compactNumber(observations.decimal_longitude); // Source: optional GPS.
+  if (observations.depth !== undefined) row['Encounter.depth'] = compactNumber(observations.depth); // Source: public sea-floor depth in metres.
+  if (observations.sex) row['Encounter.sex'] = observations.sex.toLowerCase(); // Source: public sex choice.
+  if (observations.life_stage && observations.life_stage !== 'unknown') row['Encounter.lifeStage'] = observations.life_stage; // Source: public life-stage choice.
+  if (observations.living_status) row['Encounter.livingStatus'] = observations.living_status; // Source: public alive/dead choice.
+  if (observations.behavior.length) {
+    row['Encounter.behavior'] = observations.behavior.map((value) => publicOptionLabel(species, 'behavior', value)).join('; '); // Source: public behaviour chips.
+  }
+  if (observations.injuries.severity && observations.injuries.severity !== 'none') {
+    const severity = `${observations.injuries.severity[0]!.toUpperCase()}${observations.injuries.severity.slice(1)}`;
+    const types = observations.injuries.types.map((value) => publicOptionLabel(species, 'injury_types', value)).join('; ');
+    const regions = observations.injuries.regions.map((value) => publicOptionLabel(species, 'injury_regions', value)).join('; ');
+    const summary = `${severity}: ${types || 'Injury or scar'}${regions ? ` on ${regions}` : ''}`;
+    row['Encounter.distinguishingScar'] = observations.injuries.description
+      ? `${summary} — reporter: ${observations.injuries.description}`
+      : summary; // Source: generated injury summary plus reporter free text.
+  }
+  const lengthM = metresFromObservation(observations);
+  if (lengthM !== undefined) {
+    row['Encounter.measurement.length'] = compactNumber(lengthM, 2); // Source: public length, normalized to metres.
+    row['Encounter.measurement.length.samplingProtocol'] = observations.length?.estimated ? 'samplingProtocol0' : 'samplingProtocol1'; // Source: estimated toggle.
+  }
+  if (observations.temperature) {
+    const celsius = observations.temperature.unit === 'f' ? (observations.temperature.value - 32) * 5 / 9 : observations.temperature.value;
+    row['Encounter.measurement.temperature'] = compactNumber(celsius, 1); // Source: public water temperature, normalized to Celsius.
+    row['Encounter.measurement.temperature.samplingProtocol'] = 'samplingProtocol1'; // Source: direct reported measurement.
+  }
+  const comments = [observations.comments, observations.photographer_name ? `Photographer: ${observations.photographer_name}.` : undefined].filter(Boolean);
+  if (comments.length) row['Encounter.researcherComments'] = comments.join('\n'); // Source: public comments plus photographer-name fallback.
+  if (observations.individual_count !== undefined) row['Sighting.individualCount'] = String(observations.individual_count); // Source: sharks seen on the dive.
+  if (observations.submitter_name) row['Encounter.submitterName'] = observations.submitter_name; // Source: public submitter name.
+  if (observations.submitter_email) row['Encounter.submitter.emailAddress'] = observations.submitter_email; // Source: public submitter email.
+  if (observations.photographer_email) row['Encounter.photographer.emailAddress'] = observations.photographer_email; // Source: public photographer email.
+  if (observations.inform_other.length) row['Encounter.informOther.emailAddress'] = observations.inform_other.join(','); // Source: public re-sight notification list.
+  return row;
 }
 
 interface RequestOptions {

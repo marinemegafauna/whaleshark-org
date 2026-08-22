@@ -48,6 +48,7 @@ const landingSchema = z.object({
   how: z.object({
     eyebrow: text,
     heading: text,
+    moreLink: linkSchema,
     steps: z.array(z.object({
       number: text,
       heading: text,
@@ -74,10 +75,19 @@ const landingSchema = z.object({
   footerLinks: z.array(linkSchema),
 }).strict();
 
+const howItWorksSchema = z.object({
+  page: z.literal('how-it-works').default('how-it-works'),
+  title: text,
+  eyebrow: text,
+  lede: text,
+  sections: z.array(z.object({ id: text, heading: text, body: text }).strict()).min(1),
+  credits: z.array(z.object({ label: text, value: text }).strict()).min(1),
+}).strict();
+
 const bulkSchema = z.object({
   page: z.literal('bulk'),
   seo: seoSchema,
-  intro: z.object({ eyebrow: text, heading: text, body: text }).strict(),
+  intro: z.object({ eyebrow: text, heading: text, body: text, diagnosticNotice: text }).strict(),
   upload: z.object({ dropHeading: text, help: text, choosePhotos: text, chooseFolder: text, uploadedImageAlt: text }).strict(),
   summary: z.object({
     photoCount: template,
@@ -105,6 +115,8 @@ const bulkSchema = z.object({
     publishNote: text,
     reviewButton: text,
     confirmationHelp: text,
+    sightingHeading: text,
+    sightingHelp: text,
   }).strict(),
   statuses: z.object({
     matchedFallback: text,
@@ -116,7 +128,7 @@ const bulkSchema = z.object({
     uploading: text,
     queued: text,
   }).strict(),
-  errors: z.object({ refresh: text, upload: text }).strict(),
+  errors: z.object({ refresh: text, upload: text, sharedDetails: text }).strict(),
   review: z.object({
     seoTitle: template,
     eyebrow: text,
@@ -145,6 +157,9 @@ const bulkSchema = z.object({
     submitButton: text,
     backToPhotos: text,
     submitHelp: text,
+    perAnimalHeading: text,
+    perAnimalHelp: text,
+    missingAnimalFields: text,
   }).strict(),
 }).strict();
 
@@ -159,11 +174,19 @@ const matchSchema = z.object({
     editDetails: text,
     explanation: text,
   }).strict(),
-  heading: z.object({ eyebrow: text, title: template, fallbackAnimal: text, body: text }).strict(),
+  heading: z.object({ eyebrow: text, title: template, fallbackAnimal: text, body: text, pendingEyebrow: text, pendingTitle: text, pendingBody: text }).strict(),
   decisions: z.object({ confirm: text, none: text, uncertain: text }).strict(),
-  candidates: z.object({ imageAlt: text, gapLabel: text, showMore: text }).strict(),
+  candidates: z.object({ imageAlt: text, gapLabel: text, showMore: text, pending: text }).strict(),
   actions: z.object({ confirm: template, notSure: text, none: text }).strict(),
   researcherNote: template,
+  report: z.object({
+    heading: text,
+    help: text,
+    saved: text,
+    missing: template,
+    emailPreviewHeading: text,
+    emailPreviewLabel: template,
+  }).strict(),
 }).strict();
 
 const signinSchema = z.object({
@@ -211,6 +234,7 @@ const appSchema = z.object({
     exportButton: text,
     stats: z.object({ needsRecord: text, recordedWeek: text, freshMajor: text, matchesAwaiting: text, batchesAwaiting: text }).strict(),
     queue: z.object({ eyebrow: text, heading: text, help: text, counts: template, review: text }).strict(),
+    publicQueue: z.object({ eyebrow: text, heading: text, help: text, singleLabel: text, batchLabel: text, open: text }).strict(),
     tableHeaders: z.array(text).length(7),
     sightings: template,
     newLabel: text,
@@ -226,6 +250,7 @@ const appSchema = z.object({
     unassigned: text,
     cardLabels: z.object({ datePhotographer: text, sexSize: text, photos: text }).strict(),
     viewRecord: text,
+    publicNotesLabel: text,
   }).strict(),
   scar: z.object({
     breadcrumb: template,
@@ -257,9 +282,10 @@ const appSchema = z.object({
   }).strict(),
 }).strict();
 
-export const pageCollectionSchema = z.discriminatedUnion('page', [
+export const pageCollectionSchema = z.union([
   landingSchema,
   bulkSchema,
+  howItWorksSchema,
   matchSchema,
   signinSchema,
   appSchema,
@@ -274,8 +300,11 @@ export const siteContentSchema = z.object({
   menuLabel: text,
   signInLabel: text,
   publicNavAriaLabel: text,
-  publicNav: z.array(z.object({ key: z.enum(['catalogue', 'match', 'sites', 'photographers', 'about']), label: text, href: text }).strict()),
+  partnerAriaLabel: text,
+  howItWorksUi: z.object({ contentsLabel: text, creditsHeading: text, build: linkSchema, currentStageNotice: text }).strict(),
+  publicNav: z.array(z.object({ key: z.enum(['catalogue', 'match', 'how', 'sites', 'photographers', 'about']), label: text, href: text }).strict()),
   researchSites: z.array(z.object({ id: text, label: text }).strict()),
+  partners: z.array(z.object({ name: text, logo: text, url: text, alt: text }).strict()).min(1),
   footerText: text,
   footerNavAriaLabel: text,
   photoCredits: z.array(z.object({ image: text, credit: text }).strict()),
@@ -320,6 +349,57 @@ const speciesFieldSchema = z.object({
   }
 });
 
+const publicReportOptionSchema = z.object({
+  id: text,
+  label: text,
+}).strict();
+
+const publicReportFieldSchema = z.object({
+  id: text,
+  label: text,
+  type: z.enum(['select', 'chips', 'text', 'number', 'textarea', 'date', 'email']),
+  required: z.boolean(),
+  help: text.optional(),
+  placeholder: text.optional(),
+  autocomplete: text.optional(),
+  multiple: z.boolean().optional(),
+  default: z.union([z.string(), z.number(), z.boolean()]).optional(),
+  options: z.array(publicReportOptionSchema).optional(),
+  options_source: z.enum(['sites', 'body_region']).optional(),
+  units: z.array(publicReportOptionSchema).optional(),
+  default_unit: text.optional(),
+  estimated_toggle: text.optional(),
+  estimated_default: z.boolean().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  step: z.number().positive().optional(),
+  show_when: z.object({ field: text, equals: text.optional(), not_equals: text.optional() }).strict().optional(),
+}).strict().superRefine((field, context) => {
+  if ((field.type === 'select' || field.type === 'chips') && !field.options?.length && !field.options_source) {
+    context.addIssue({ code: 'custom', message: `Public report field "${field.id}" must define options or options_source` });
+  }
+  if (field.type !== 'number' && (field.units || field.default_unit || field.estimated_toggle || field.estimated_default !== undefined)) {
+    context.addIssue({ code: 'custom', message: `Only number field "${field.id}" can define units or an estimated toggle` });
+  }
+  if (field.show_when?.equals && field.show_when.not_equals) {
+    context.addIssue({ code: 'custom', message: `Public report field "${field.id}" cannot use both equals and not_equals` });
+  }
+});
+
+const publicReportSchema = z.object({
+  version: text,
+  submit_label: text,
+  saved_label: text,
+  choose_label: text,
+  units_label: template,
+  groups: z.array(z.object({
+    id: text,
+    label: text,
+    help: text.optional(),
+    fields: z.array(publicReportFieldSchema).min(1),
+  }).strict()).min(1),
+}).strict();
+
 export const speciesSchema = z.object({
   id: text,
   version: text,
@@ -327,11 +407,19 @@ export const speciesSchema = z.object({
   scientific_name: text,
   wildbook_taxonomy: text,
   fields: z.array(speciesFieldSchema).min(1),
+  public_report: publicReportSchema,
 }).strict().superRefine((species, context) => {
   const seen = new Set<string>();
   for (const field of species.fields) {
     if (seen.has(field.id)) context.addIssue({ code: 'custom', message: `Duplicate field id "${field.id}"` });
     seen.add(field.id);
+  }
+  const publicIds = new Set<string>();
+  for (const group of species.public_report.groups) {
+    for (const field of group.fields) {
+      if (publicIds.has(field.id)) context.addIssue({ code: 'custom', message: `Duplicate public report field id "${field.id}"` });
+      publicIds.add(field.id);
+    }
   }
 });
 
@@ -341,4 +429,6 @@ export type PageCopyFor<T extends PageId> = Extract<PageCopy, { page: T }>;
 export type SiteContent = z.infer<typeof siteContentSchema>;
 export type SpeciesOption = z.infer<typeof speciesOptionSchema>;
 export type SpeciesField = z.infer<typeof speciesFieldSchema>;
+export type PublicReportField = z.infer<typeof publicReportFieldSchema>;
+export type PublicReport = z.infer<typeof publicReportSchema>;
 export type Species = z.infer<typeof speciesSchema>;

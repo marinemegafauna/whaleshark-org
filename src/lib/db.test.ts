@@ -32,10 +32,18 @@ describe('mock data store', () => {
   test('persists review status and submission confirmation', async () => {
     const store = createMemoryStore();
     await store.setReviewStatus('b3453961', 'whale-shark', 'recorded', 'clare');
-    await store.updateSubmission('submission-demo', { status: 'confirmed', wildbook_encounter_id: '2fca3548' });
+    await store.updateSubmission('submission-demo', {
+      status: 'confirmed',
+      wildbook_encounter_id: '2fca3548',
+      observations_json: '{"sex":"male"}',
+    });
 
     expect(await store.getReviewStatus('b3453961')).toMatchObject({ status: 'recorded', reviewed_by: 'clare' });
-    expect(await store.getSubmission('submission-demo')).toMatchObject({ status: 'confirmed', wildbook_encounter_id: '2fca3548' });
+    expect(await store.getSubmission('submission-demo')).toMatchObject({
+      status: 'confirmed',
+      wildbook_encounter_id: '2fca3548',
+      observations_json: '{"sex":"male"}',
+    });
   });
 
   test('does not silently replace a missing production D1 binding with memory', () => {
@@ -76,21 +84,29 @@ describe('mock data store', () => {
     await store.createBatch({
       id: 'batch-new', created_at: '2026-08-22T00:00:00.000Z', updated_at: '2026-08-22T00:00:00.000Z',
       site_id: 'tofo', observed_at: '2026-08-14', photographer_name: 'A Diver', photographer_email: 'diver@example.org',
-      status: 'draft', wildbook_task_id: null,
+      status: 'draft', wildbook_task_id: null, observations_json: null,
     });
     await store.createBatchItem({
       id: 'batch-item-new', batch_id: 'batch-new', created_at: '2026-08-22T00:00:00.000Z', filename: 'IMG_4471.JPG',
       mime_type: 'image/jpeg', size_bytes: 12_000_000, image_key: '/mock/whale-shark-1.svg', status: 'queued',
-      match_json: null, wildbook_task_id: null,
+      match_json: null, wildbook_task_id: null, observations_json: null,
     });
-    await store.updateBatchItem('batch-item-new', { status: 'matched', match_json: '{"candidates":[]}' });
-    await store.updateBatch('batch-new', { status: 'review' });
+    await store.updateBatchItem('batch-item-new', { status: 'matched', match_json: '{"candidates":[]}', observations_json: '{"sex":"female"}' });
+    await store.updateBatch('batch-new', { status: 'review', observations_json: '{"observed_date":"2026-08-14"}' });
 
-    expect(await store.getBatch('batch-new')).toMatchObject({ status: 'review', photographer_name: 'A Diver' });
+    expect(await store.getBatch('batch-new')).toMatchObject({ status: 'review', photographer_name: 'A Diver', observations_json: '{"observed_date":"2026-08-14"}' });
     expect(await store.listBatches({ status: 'review' })).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'batch-new' })]));
     expect(await store.listBatches({ status: 'draft' })).toHaveLength(0);
     expect(await store.listBatchItems('batch-new')).toEqual([
-      expect.objectContaining({ id: 'batch-item-new', status: 'matched', size_bytes: 12_000_000 }),
+      expect.objectContaining({ id: 'batch-item-new', status: 'matched', size_bytes: 12_000_000, observations_json: '{"sex":"female"}' }),
     ]);
+  });
+
+  test('lists submissions so public notes can be joined to researcher encounters', async () => {
+    const submissions = await createMemoryStore().listSubmissions();
+
+    expect(submissions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'submission-demo', observations_json: expect.any(String) }),
+    ]));
   });
 });

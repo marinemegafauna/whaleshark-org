@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { parse } from 'yaml';
 import siteConfig from '../../site.config';
-import { fillTemplate } from './content-utils';
+import { fillTemplate, renderMarkdownBlocks } from './content-utils';
 
 const pageSources = import.meta.glob('../../content/pages/*.md', {
   eager: true,
@@ -38,6 +38,7 @@ describe('Astro content sources', () => {
     expect(Object.keys(pageSources).sort()).toEqual([
       '../../content/pages/app.md',
       '../../content/pages/bulk.md',
+      '../../content/pages/how-it-works.md',
       '../../content/pages/landing.md',
       '../../content/pages/match.md',
       '../../content/pages/signin.md',
@@ -49,6 +50,37 @@ describe('Astro content sources', () => {
     for (const source of Object.values(pageSources)) pageCollectionSchema.parse(frontmatter(source));
     for (const source of Object.values(siteSources)) siteContentSchema.parse(frontmatter(source));
     for (const source of Object.values(speciesSources)) speciesSchema.parse(parse(source));
+  });
+
+  test('keeps the public report, partner row, and explainer navigation content-driven', async () => {
+    const { siteContentSchema, speciesSchema } = await import('./content-schema');
+    const site = siteContentSchema.parse(frontmatter(Object.values(siteSources)[0]!));
+    const species = speciesSchema.parse(parse(Object.values(speciesSources)[0]!));
+
+    expect(site.partners.map((partner) => partner.name)).toEqual([
+      'Sharkbook.ai',
+      'Conservation X Labs — Wild Me',
+      'Marine Megafauna Foundation',
+    ]);
+    expect(site.publicNav).toContainEqual(expect.objectContaining({ label: 'How it works', href: '/how-it-works' }));
+    expect(site.howItWorksUi.build).toEqual({ label: 'Build one for your species →', href: 'https://github.com/marinemegafauna/whaleshark-org' });
+    expect(species.public_report.groups.map((group) => group.id)).toEqual([
+      'when_where',
+      'about_shark',
+      'injuries',
+      'water',
+      'about_you',
+    ]);
+    expect(species.public_report.groups.flatMap((group) => group.fields).find((field) => field.id === 'sex')).toMatchObject({
+      type: 'chips',
+      required: true,
+      default: 'unknown',
+    });
+    expect(species.public_report.groups.flatMap((group) => group.fields).find((field) => field.id === 'length')).toMatchObject({
+      type: 'number',
+      default_unit: 'm',
+      estimated_default: true,
+    });
   });
 
   test('rejects a page fixture with an unknown frontmatter key', async () => {
@@ -73,6 +105,12 @@ describe('Astro content sources', () => {
     expect(() => fillTemplate('Hello, {naem}.', { name: 'Simon' })).toThrow(/unresolved placeholder/i);
   });
 
+  test('renders controlled explainer markdown as safe paragraph blocks', () => {
+    expect(renderMarkdownBlocks('An **encounter** is one record.\n\nUse <care>.')).toBe(
+      '<p>An <strong>encounter</strong> is one record.</p><p>Use &lt;care&gt;.</p>',
+    );
+  });
+
   test('provides one site-level credit for every landing image', async () => {
     const { pageCollectionSchema, siteContentSchema } = await import('./content-schema');
     const landingSource = Object.entries(pageSources).find(([file]) => file.endsWith('/landing.md'))![1];
@@ -89,5 +127,17 @@ describe('Astro content sources', () => {
 
     expect(new Set(credits.keys()).size).toBe(site.photoCredits.length);
     expect(imagePaths.every((image) => credits.has(image))).toBe(true);
+  });
+
+  test('provides public-observation copy for single, bulk, and researcher surfaces', async () => {
+    const { pageCollectionSchema } = await import('./content-schema');
+    const pages = Object.fromEntries(Object.entries(pageSources).map(([file, source]) => [file, pageCollectionSchema.parse(frontmatter(source))]));
+    const match = pages['../../content/pages/match.md'];
+    const bulk = pages['../../content/pages/bulk.md'];
+    const app = pages['../../content/pages/app.md'];
+
+    expect(match).toMatchObject({ page: 'match', report: { heading: 'About this sighting' } });
+    expect(bulk).toMatchObject({ page: 'bulk', batchCard: { sightingHeading: 'Shared sighting details' } });
+    expect(app).toMatchObject({ page: 'app', workbench: { publicNotesLabel: 'Public notes' } });
   });
 });

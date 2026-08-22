@@ -113,6 +113,7 @@ describe('Wildbook client', () => {
     const payload = {
       uploads: [{ identifier: 'batch-1-item-1', filename: 'IMG_4471.JPG', uploadId: 'upload-4471' }],
       locationId: 'Tofo', encounterDate: '2026-08-14', photographerName: 'A Diver', photographerEmail: 'diver@example.org',
+      rows: [{ 'Encounter.genus': 'Rhincodon', 'Encounter.mediaAsset': 'IMG_4471.JPG' }],
     };
 
     await expect(startBulkImport('JSESSIONID=session', payload, fetcher)).resolves.toEqual({ taskId: 'task-42' });

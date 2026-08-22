@@ -10,6 +10,7 @@ const batch: Batch = {
   observed_at: '2026-08-14',
   photographer_name: 'A Diver',
   photographer_email: 'diver@example.org',
+  observations_json: null,
   status: 'processing',
   wildbook_task_id: null,
 };
@@ -25,6 +26,7 @@ function item(index: number): BatchItem {
     image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`,
     status: 'queued',
     match_json: null,
+    observations_json: null,
     wildbook_task_id: null,
   };
 }

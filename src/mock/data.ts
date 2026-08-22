@@ -44,18 +44,24 @@ export const mockReviewStatuses = [
 
 export const mockSubmissions = [
   {
-    id: 'submission-demo', created_at: '2026-08-21T08:30:00.000Z', photographer_name: 'Your name', photographer_email: 'photographer@example.org', site_id: 'tofo', observed_at: '2026-08-14', image_key: '/mock/whale-shark-1.svg', wildbook_encounter_id: null, status: 'matched',
+    id: 'submission-demo', created_at: '2026-08-21T08:30:00.000Z', photographer_name: 'Your name', photographer_email: 'photographer@example.org', site_id: 'tofo', observed_at: '2026-08-14', image_key: '/mock/whale-shark-1.svg', wildbook_encounter_id: '2fca3548', status: 'matched',
     match_json: JSON.stringify([
       { individualId: 'MZ-284', score: 0.68, site: 'Tofo', detail: 'last seen 14 Aug 2026 · male · ~7 m', image: '/mock/whale-shark-1.svg' },
       { individualId: 'TZ-117', score: 0.31, site: 'Mafia Island', detail: '2024', image: '/mock/whale-shark-2.svg' },
       { individualId: 'MD-393', score: 0.24, site: 'Nosy Be', detail: '2023', image: '/mock/whale-shark-3.svg' },
     ]),
+    observations_json: JSON.stringify({
+      observed_date: '2026-08-14', site_id: 'tofo', sex: 'male', life_stage: 'adult', length: { value: 7, unit: 'm', estimated: true },
+      behavior: ['feeding_surface'], living_status: 'alive', individual_count: 1,
+      injuries: { severity: 'minor', regions: ['dorsal_fin_1'], types: ['healed_scar'], description: 'Small healed mark.' },
+      submitter_name: 'Your name', submitter_email: 'photographer@example.org', inform_other: [], comments: '', consented_at: '2026-08-21T08:31:00.000Z',
+    }),
   },
 ];
 
 export const publicSubmissionDefaults = {
-  photographer_name: 'Community photographer',
-  photographer_email: 'pending@example.org',
+  photographer_name: '',
+  photographer_email: '',
   site_id: 'tofo',
   observed_at: '2026-08-14',
 };
@@ -64,7 +70,7 @@ export const mockBatches = [
   {
     id: 'batch-demo', created_at: '2026-08-21T09:00:00.000Z', updated_at: '2026-08-21T09:06:00.000Z',
     site_id: 'tofo', observed_at: '2026-08-14', photographer_name: 'O. Patterson', photographer_email: 'o.patterson@example.org',
-    status: 'review' as const, wildbook_task_id: null,
+    observations_json: null, status: 'review' as const, wildbook_task_id: null,
   },
 ];
 
@@ -74,5 +80,5 @@ export const mockBatchItems = [
   id: `batch-demo-item-${index + 1}`, batch_id: 'batch-demo', created_at: `2026-08-21T09:00:0${index}.000Z`,
   filename: `IMG_${4471 + index}.JPG`, mime_type: 'image/jpeg', size_bytes: 13_000_000 + index * 500_000,
   image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`, status: 'matched' as const,
-  match_json: JSON.stringify({ bbox: [0.14, 0.2, 0.68, 0.58], candidates: [{ individualId, score }] }), wildbook_task_id: null,
+  match_json: JSON.stringify({ bbox: [0.14, 0.2, 0.68, 0.58], candidates: [{ individualId, score }] }), observations_json: null, wildbook_task_id: null,
 }));

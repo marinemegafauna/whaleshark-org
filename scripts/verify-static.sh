@@ -15,8 +15,15 @@ assert "species/whale-shark.yaml" in repo_files, "vault sync must enumerate spec
 print("vault sync content enumeration OK")
 PY
 ruby -e "require 'yaml'; parsed = YAML.safe_load(File.read('content/species/whale-shark.yaml'), permitted_classes: [], aliases: false); abort 'wrong species id' unless parsed.fetch('id') == 'whale-shark'; puts 'species YAML OK'"
-sqlite3 :memory: < migrations/0001_init.sql
-echo "migration SQL OK"
+migration_db=$(mktemp "${TMPDIR:-/tmp}/whaleshark-migrations.XXXXXX")
+trap 'rm -f "$migration_db"' EXIT HUP INT TERM
+for migration in migrations/*.sql; do
+  sqlite3 "$migration_db" < "$migration"
+done
+sqlite3 "$migration_db" "SELECT observations_json FROM public_submissions LIMIT 0; SELECT observations_json FROM batches LIMIT 0; SELECT observations_json FROM batch_items LIMIT 0;"
+rm -f "$migration_db"
+trap - EXIT HUP INT TERM
+echo "migration SQL OK (all migrations)"
 
 image_count=$(find public/mock -type f -name '*.svg' | wc -l | tr -d ' ')
 test "$image_count" = "6"
@@ -24,22 +31,28 @@ echo "mock SVG count OK (6)"
 
 for required_path in \
   src/pages/index.astro \
+  src/pages/how-it-works.astro \
   'src/pages/match/[id].astro' \
   src/pages/signin.astro \
   src/pages/app/index.astro \
   'src/pages/app/encounters/[id]/scars.astro' \
   src/content.config.ts \
+  src/components/PartnerRow.astro \
+  src/components/PublicReportFields.astro \
   src/lib/content.ts \
   content/site.md \
   content/pages/landing.md \
   content/pages/bulk.md \
+  content/pages/how-it-works.md \
   content/pages/match.md \
   content/pages/signin.md \
   content/pages/app.md \
   content/species/whale-shark.yaml \
+  migrations/0004_submission_observations.sql \
   src/pages/api/submit.ts \
   src/pages/api/scars.ts \
-  'src/pages/api/submissions/[id]/confirm.ts'
+  'src/pages/api/submissions/[id]/confirm.ts' \
+  'src/pages/api/submissions/[id]/observations.ts'
 do
   test -f "$required_path"
 done

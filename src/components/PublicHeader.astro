@@ -1,6 +1,7 @@
 ---
 import { getSiteCopy } from '../lib/content';
-interface Props { active?: 'match' }
+import type { SiteContent } from '../lib/content-schema';
+interface Props { active?: SiteContent['publicNav'][number]['key'] }
 const { active } = Astro.props;
 const copy = await getSiteCopy();
 ---

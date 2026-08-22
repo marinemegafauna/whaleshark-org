@@ -1,8 +1,8 @@
 # whaleshark.org
 
-whaleshark.org is a community-facing front end for [Sharkbook](https://www.sharkbook.ai), the Wildbook instance for whale sharks. A photographer can upload a left-flank photo and review likely matches; signed-in researchers can work through site encounters and record scars with a form generated from the species protocol.
+whaleshark.org is a community-facing front end for [Sharkbook](https://www.sharkbook.ai), the Wildbook instance for whale sharks. A photographer can upload a left-flank photo, review likely matches, and add the date, place, animal details, measurements, injuries, contributor details, and consent that make the photo a useful sighting record. Signed-in researchers can work through site encounters and record scars with a form generated from the species protocol.
 
-Marine Megafauna Foundation stewards the project. The application is openly AI-assisted and is designed to become a reusable front-end template for other Wildbook projects.
+The project is built on Sharkbook by Wild Me / Conservation X Labs, with Marine Megafauna Foundation as a contributing partner. The application is openly AI-assisted and is designed to become a reusable front-end template for other Wildbook projects. The `/how-it-works` page explains how encounters, sightings, individuals, detection, matching, and human review fit together, and how another species project can fork the same front end.
 
 ## Editing the text
 
@@ -36,6 +36,7 @@ If installation reports `ENOTFOUND registry.npmjs.org`, the machine cannot curre
 - `/bulk` — whole-dive photo upload with per-photo matching progress
 - `/bulk/batch-demo/review` — grouped known/new-animal review before submission
 - `/match/submission-demo` — ranked example match
+- `/how-it-works` — the Wildbook, matching, review, and template explainer
 - `/signin` — accepts any non-empty username and password in mock mode
 - `/app` — researcher encounter workbench
 - `/app/encounters/2fca3548/scars` — schema-driven scar entry
@@ -54,7 +55,7 @@ npm run build
 3. Apply the schema with `npm run db:migrate`.
 4. Set a long random `SESSION_SECRET` and configure the same values as Cloudflare Worker secrets for deployment. Never commit credentials.
 5. Replace the placeholder `locationIds` in `site.config.ts` with the instance’s real Wildbook `locationId` values.
-6. Keep `PUBLIC_WRITE=dry-run` until Wild Me approves service-account public writes. When approved, add `WILDBOOK_SERVICE_USER` and `WILDBOOK_SERVICE_PASSWORD`, then explicitly set `PUBLIC_WRITE=live`.
+6. Keep `PUBLIC_WRITE=dry-run`. `live` currently exposes only the real-mode whole-dive matching client for target-instance validation; single-photo media staging and final reviewed observation publication remain deliberately gated until consent-safe object storage and idempotency are implemented.
 7. Deploy with `npm run deploy`.
 
 Researcher passwords are forwarded to Wildbook’s login endpoint once and are never stored. The Worker stores only the resulting `JSESSIONID` in D1 against an HttpOnly site session.
@@ -72,6 +73,7 @@ Implemented against real interfaces:
 - D1 sessions, scar records, encounter review status, public submissions, and bulk batches with per-photo items
 - public whole-dive upload, deterministic mock processing, grouped batch review, and a researcher batch queue
 - per-species Zod-validated YAML and schema-rendered scar forms
+- species-driven public sighting reports for one photo or a whole dive, with stored public observations and tested Wildbook bulk-import rows
 
 Currently mocked or pending agreement:
 
@@ -81,5 +83,6 @@ Currently mocked or pending agreement:
 - public writes stay in D1 while `PUBLIC_WRITE=dry-run`
 - Wild Me agreement is still needed for service-account public encounter creation
 - the real-mode bulk client implements Sharkbook’s `ResumableUpload` and v3 bulk-import/task interfaces, but needs validation against the target instance before `PUBLIC_WRITE=live`
+- single-photo media staging and final reviewed observation publication remain disabled until the live write lifecycle is consent-safe and idempotent
 
 Architecture and security boundaries are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

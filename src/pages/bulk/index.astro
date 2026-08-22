@@ -1,16 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PublicHeader from '../../components/PublicHeader.astro';
-import siteConfig from '../../../site.config';
-import { fillTemplate, getPageCopy, getSiteCopy } from '../../lib/content';
+import PublicReportFields from '../../components/PublicReportFields.astro';
+import { fillTemplate, getPageCopy } from '../../lib/content';
 import { dataStore } from '../../lib/runtime';
 import type { BatchItem } from '../../lib/db';
+import { getSpecies } from '../../lib/species';
+import { parseStoredPublicObservations } from '../../lib/public-observations';
+import { isMockMode, publicWriteMode } from '../../lib/mode';
 
-const [copy, siteCopy] = await Promise.all([getPageCopy('bulk'), getSiteCopy()]);
-const siteLabelById = new Map(siteCopy.researchSites.map((site) => [site.id, site.label]));
+const copy = await getPageCopy('bulk');
 const requestedBatchId = Astro.url.searchParams.get('batch');
 const store = dataStore(Astro.locals);
 const batch = requestedBatchId ? await store.getBatch(requestedBatchId) : null;
+const species = getSpecies('whale-shark');
+const batchObservations = parseStoredPublicObservations(batch?.observations_json);
+const batchAnimalFieldIds = ['sex','life_stage','length','behavior','living_status','injury_severity','injury_regions','injury_types','injury_description'];
+const diagnosticMode = !isMockMode() && publicWriteMode() === 'dry-run';
+const sharedObservationError = Astro.url.searchParams.get('observation_error') === '1';
 const items = batch ? await store.listBatchItems(batch.id) : [];
 const totalBytes = items.reduce((sum, item) => sum + item.size_bytes, 0);
 const finalStatuses = new Set(['matched', 'likely_new', 'no_shark', 'error']);
@@ -43,6 +50,7 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
   <main class="bulk-page" data-batch-id={batch?.id ?? ''} data-copy={clientCopy}>
     <section class="bulk-workspace">
       <div class="intro"><span>{copy.intro.eyebrow}</span><h1>{copy.intro.heading}</h1><p>{copy.intro.body}</p></div>
+      {diagnosticMode && <p class="diagnostic-notice" role="status">{copy.intro.diagnosticNotice}</p>}
 
       <div class="card drop-zone" id="drop-zone">
         <input id="bulk-files" type="file" name="files" multiple accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
@@ -68,10 +76,9 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
     <aside class="card batch-card">
       <h2>{copy.batchCard.heading}</h2><p>{copy.batchCard.help}</p>
       <form id="batch-details">
-        <label><span>{copy.batchCard.siteLabel}</span><select name="site_id">{siteConfig.sites.map((site) => <option value={site.id} selected={batch?.site_id === site.id}>{siteLabelById.get(site.id) ?? site.id}</option>)}</select></label>
-        <label><span>{copy.batchCard.dateLabel} <small id="date-source">{batch ? '' : copy.batchCard.dateSourcePending}</small></span><input type="date" name="observed_at" value={batch?.observed_at ?? new Date().toISOString().slice(0,10)} required /></label>
-        <label><span>{copy.batchCard.photographerLabel}</span><input name="photographer_name" value={batch?.photographer_name ?? ''} placeholder={copy.batchCard.photographerPlaceholder} autocomplete="name" required /></label>
-        <label><span>{copy.batchCard.emailLabel} <small>{copy.batchCard.emailHelp}</small></span><input type="email" name="photographer_email" value={batch?.photographer_email ?? ''} placeholder={copy.batchCard.emailPlaceholder} autocomplete="email" required /></label>
+        <div class="sighting-heading"><h3>{copy.batchCard.sightingHeading}</h3><p>{copy.batchCard.sightingHelp}</p><small id="date-source">{batch ? '' : copy.batchCard.dateSourcePending}</small></div>
+        <PublicReportFields species={species} groups={['when_where','about_shark','water','about_you']} excludeFieldIds={batchAnimalFieldIds} values={batchObservations} compact />
+        {sharedObservationError && <p class="shared-error" role="alert">{copy.errors.sharedDetails}</p>}
       </form>
       <div class="batch-totals"><span>{copy.batchCard.readyLabel} <b id="review-photo-count">{completed}</b></span><span>{copy.batchCard.publishNote}</span></div>
       <button class="button review-button" id="review-button" type="button" disabled={!batch || batch.status === 'draft'}>{copy.batchCard.reviewButton}</button>
@@ -86,6 +93,8 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
   .intro > span { color:var(--accent); font-size:13px; font-weight:500; }
   .intro h1 { font-size:36px; font-weight:600; letter-spacing:-.03em; line-height:1.05; margin:0; text-wrap:balance; }
   .intro p { color:var(--muted); font-size:15px; line-height:1.45; margin:0; max-width:900px; }
+  .diagnostic-notice,.shared-error { background:var(--accent-soft); border-left:2px solid var(--accent); color:var(--muted); font-size:12px; line-height:1.45; margin:0; padding:9px 11px; }
+  .shared-error { background:rgba(194,64,12,.08); border-left-color:var(--warn); color:var(--warn); }
   .drop-zone { align-items:center; border-style:dashed; display:flex; gap:16px; min-height:104px; padding:18px; position:relative; }
   .drop-zone.dragging { background:var(--accent-soft); border-color:var(--accent); }
   .drop-zone > input { height:1px; opacity:0; position:absolute; width:1px; }
@@ -126,10 +135,11 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
   .grid-foot { color:var(--muted); display:flex; font-size:14px; gap:16px; justify-content:space-between; }
   .grid-foot label { align-items:center; color:var(--ink); cursor:pointer; display:inline-flex; flex:0 0 auto; min-height:44px; text-decoration:underline; text-underline-offset:3px; }
   .upload-error { color:var(--warn); font-size:14px; margin:0; min-height:1em; }
-  .batch-card { display:flex; flex-direction:column; gap:14px; padding:18px; position:sticky; top:20px; }
+  .batch-card { display:flex; flex-direction:column; gap:14px; padding:18px; }
   .batch-card h2 { font-size:15px; font-weight:600; margin:0; }
   .batch-card > p { color:var(--muted); font-size:12px; line-height:1.5; margin:0; }
   .batch-card form { display:flex; flex-direction:column; gap:14px; }
+  .sighting-heading { border-top:1px solid var(--line); padding-top:14px; }.sighting-heading h3 { font-size:14px; margin:0; }.sighting-heading p { color:var(--muted); font-size:12px; line-height:1.45; margin:4px 0 0; }.sighting-heading small { color:var(--accent); display:block; font-size:11px; margin-top:4px; }
   .batch-card label { display:flex; flex-direction:column; font-size:12px; font-weight:500; gap:6px; }
   .batch-card small { color:var(--muted); font-size:12px; font-weight:400; }
   .batch-card input,.batch-card select { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:16px; min-height:44px; padding:10px 12px; width:100%; }
@@ -163,6 +173,7 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
 </style>
 <script>
   import { fillTemplate } from '../../lib/content-utils';
+  import { dateFromExif } from '../../lib/photo-date';
   type ApiItem = { id:string; filename:string; size_bytes:number; image_key:string; status:string; match_json:string|null };
   type EntryWithReader = FileSystemDirectoryEntry & { createReader(): FileSystemDirectoryReader };
   const page = document.querySelector<HTMLElement>('.bulk-page')!;
@@ -181,13 +192,6 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
   let pollTimer = 0;
   const finalStatuses = new Set(['matched','likely_new','no_shark','error']);
 
-  async function dateFromExif(file: File) {
-    if (!file.type.includes('jpeg') && !/\.jpe?g$/i.test(file.name)) return null;
-    const buffer = await file.slice(0, 131072).arrayBuffer();
-    const text = new TextDecoder('latin1').decode(buffer);
-    const match = text.match(/(20\d{2}):(\d{2}):(\d{2})[ T]\d{2}:\d{2}:\d{2}/);
-    return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
-  }
   function parseMatch(item: ApiItem) { try { return JSON.parse(item.match_json || '{}'); } catch { return {}; } }
   function statusLabel(item: ApiItem) {
     const match = parseMatch(item);
@@ -235,12 +239,16 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
     errorBox.textContent=''; window.clearTimeout(pollTimer);
     const localUrls = new Map(files.map((file) => [file.name, URL.createObjectURL(file)]));
     render(files.map((file,index) => ({ id:`local-${index}`, filename:file.name, size_bytes:file.size, image_key:localUrls.get(file.name)!, status:'uploading', match_json:null })), localUrls);
-    const exifDate = await dateFromExif(files[0]!); if (exifDate) { (details.elements.namedItem('observed_at') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent=copy.batchCard.dateSourcePhoto; }
+    const exifDate = await dateFromExif(files[0]!); if (exifDate) { (details.elements.namedItem('observed_date') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent=copy.batchCard.dateSourcePhoto; }
     try {
       if (!batchId) {
         const metadata = Object.fromEntries(new FormData(details));
         const created = await fetch('/api/batches', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(metadata) });
         if (!created.ok) throw new Error(); const createdPayload=await created.json() as { batch:{ id:string } }; batchId=createdPayload.batch.id; page.dataset.batchId=batchId; history.replaceState({},'',`/bulk?batch=${encodeURIComponent(batchId)}`);
+      } else {
+        const metadata = Object.fromEntries(new FormData(details));
+        const saved = await fetch(`/api/batches/${encodeURIComponent(batchId)}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(metadata) });
+        if (!saved.ok) throw new Error();
       }
       const form = new FormData(); files.forEach((file) => form.append('files',file,file.name));
       const response = await fetch(`/api/batches/${encodeURIComponent(batchId)}/items`, { method:'POST', body:form });
@@ -260,6 +268,12 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
   for (const event of ['dragleave','drop']) dropZone.addEventListener(event,(raw) => { raw.preventDefault(); dropZone.classList.remove('dragging'); });
   dropZone.addEventListener('drop',async (event) => upload((await droppedFiles(event)).filter((file) => file.type.startsWith('image/') || /\.(raw|arw|cr2|cr3|nef|dng)$/i.test(file.name))));
   fileInput.addEventListener('change',() => upload([...(fileInput.files || [])])); folderInput.addEventListener('change',() => upload([...(folderInput.files || [])]));
-  reviewButton.addEventListener('click',() => { if (batchId) location.href=`/bulk/${encodeURIComponent(batchId)}/review`; });
+  reviewButton.addEventListener('click',async () => {
+    if (!batchId || !details.reportValidity()) return;
+    const metadata = Object.fromEntries(new FormData(details));
+    const saved = await fetch(`/api/batches/${encodeURIComponent(batchId)}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(metadata) });
+    if (!saved.ok) { errorBox.textContent=copy.errors.upload; return; }
+    location.href=`/bulk/${encodeURIComponent(batchId)}/review`;
+  });
   if (batchId) poll();
 </script>

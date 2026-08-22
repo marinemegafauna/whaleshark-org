@@ -12,6 +12,7 @@ export interface Batch {
   observed_at: string;
   photographer_name: string;
   photographer_email: string;
+  observations_json: string | null;
   status: BatchStatus;
   wildbook_task_id: string | null;
 }
@@ -26,6 +27,7 @@ export interface BatchItem {
   image_key: string;
   status: BatchItemStatus;
   match_json: string | null;
+  observations_json: string | null;
   wildbook_task_id: string | null;
 }
 
@@ -65,6 +67,7 @@ export interface PublicSubmission {
   wildbook_encounter_id: string | null;
   status: string;
   match_json: string | null;
+  observations_json: string | null;
 }
 
 export interface SessionRecord {
@@ -92,6 +95,7 @@ export interface DataStore {
   setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string): Promise<EncounterReview>;
   createSubmission(submission: PublicSubmission): Promise<PublicSubmission>;
   getSubmission(id: string): Promise<PublicSubmission | null>;
+  listSubmissions(): Promise<PublicSubmission[]>;
   updateSubmission(id: string, patch: Partial<PublicSubmission>): Promise<PublicSubmission>;
   createBatch(batch: Batch): Promise<Batch>;
   getBatch(id: string): Promise<Batch | null>;
@@ -172,6 +176,10 @@ class MemoryStore implements DataStore {
 
   async getSubmission(id: string) {
     return this.submissions.find((submission) => submission.id === id) ?? null;
+  }
+
+  async listSubmissions() {
+    return structuredClone(this.submissions);
   }
 
   async updateSubmission(id: string, patch: Partial<PublicSubmission>) {
@@ -288,8 +296,8 @@ class D1Store implements DataStore {
   }
 
   async createSubmission(submission: PublicSubmission) {
-    await this.db.prepare(`INSERT INTO public_submissions (id, created_at, photographer_name, photographer_email, site_id, observed_at, image_key, wildbook_encounter_id, status, match_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(submission.id, submission.created_at, submission.photographer_name, submission.photographer_email, submission.site_id, submission.observed_at, submission.image_key, submission.wildbook_encounter_id, submission.status, submission.match_json).run();
+    await this.db.prepare(`INSERT INTO public_submissions (id, created_at, photographer_name, photographer_email, site_id, observed_at, image_key, wildbook_encounter_id, status, match_json, observations_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(submission.id, submission.created_at, submission.photographer_name, submission.photographer_email, submission.site_id, submission.observed_at, submission.image_key, submission.wildbook_encounter_id, submission.status, submission.match_json, submission.observations_json).run();
     return submission;
   }
 
@@ -297,18 +305,22 @@ class D1Store implements DataStore {
     return this.db.prepare('SELECT * FROM public_submissions WHERE id = ?').bind(id).first<PublicSubmission>();
   }
 
+  async listSubmissions() {
+    return (await this.db.prepare('SELECT * FROM public_submissions ORDER BY created_at DESC').all<PublicSubmission>()).results;
+  }
+
   async updateSubmission(id: string, patch: Partial<PublicSubmission>) {
     const current = await this.getSubmission(id);
     if (!current) throw new Error(`Submission not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE public_submissions SET created_at=?, photographer_name=?, photographer_email=?, site_id=?, observed_at=?, image_key=?, wildbook_encounter_id=?, status=?, match_json=? WHERE id=?`)
-      .bind(record.created_at, record.photographer_name, record.photographer_email, record.site_id, record.observed_at, record.image_key, record.wildbook_encounter_id, record.status, record.match_json, id).run();
+    await this.db.prepare(`UPDATE public_submissions SET created_at=?, photographer_name=?, photographer_email=?, site_id=?, observed_at=?, image_key=?, wildbook_encounter_id=?, status=?, match_json=?, observations_json=? WHERE id=?`)
+      .bind(record.created_at, record.photographer_name, record.photographer_email, record.site_id, record.observed_at, record.image_key, record.wildbook_encounter_id, record.status, record.match_json, record.observations_json, id).run();
     return record;
   }
 
   async createBatch(batch: Batch) {
-    await this.db.prepare(`INSERT INTO batches (id, created_at, updated_at, site_id, observed_at, photographer_name, photographer_email, status, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(batch.id, batch.created_at, batch.updated_at, batch.site_id, batch.observed_at, batch.photographer_name, batch.photographer_email, batch.status, batch.wildbook_task_id).run();
+    await this.db.prepare(`INSERT INTO batches (id, created_at, updated_at, site_id, observed_at, photographer_name, photographer_email, observations_json, status, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(batch.id, batch.created_at, batch.updated_at, batch.site_id, batch.observed_at, batch.photographer_name, batch.photographer_email, batch.observations_json, batch.status, batch.wildbook_task_id).run();
     return batch;
   }
 
@@ -327,14 +339,14 @@ class D1Store implements DataStore {
     const current = await this.getBatch(id);
     if (!current) throw new Error(`Batch not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE batches SET created_at=?, updated_at=?, site_id=?, observed_at=?, photographer_name=?, photographer_email=?, status=?, wildbook_task_id=? WHERE id=?`)
-      .bind(record.created_at, record.updated_at, record.site_id, record.observed_at, record.photographer_name, record.photographer_email, record.status, record.wildbook_task_id, id).run();
+    await this.db.prepare(`UPDATE batches SET created_at=?, updated_at=?, site_id=?, observed_at=?, photographer_name=?, photographer_email=?, observations_json=?, status=?, wildbook_task_id=? WHERE id=?`)
+      .bind(record.created_at, record.updated_at, record.site_id, record.observed_at, record.photographer_name, record.photographer_email, record.observations_json, record.status, record.wildbook_task_id, id).run();
     return record;
   }
 
   async createBatchItem(item: BatchItem) {
-    await this.db.prepare(`INSERT INTO batch_items (id, batch_id, created_at, filename, mime_type, size_bytes, image_key, status, match_json, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(item.id, item.batch_id, item.created_at, item.filename, item.mime_type, item.size_bytes, item.image_key, item.status, item.match_json, item.wildbook_task_id).run();
+    await this.db.prepare(`INSERT INTO batch_items (id, batch_id, created_at, filename, mime_type, size_bytes, image_key, status, match_json, observations_json, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(item.id, item.batch_id, item.created_at, item.filename, item.mime_type, item.size_bytes, item.image_key, item.status, item.match_json, item.observations_json, item.wildbook_task_id).run();
     return item;
   }
 
@@ -346,8 +358,8 @@ class D1Store implements DataStore {
     const current = await this.db.prepare('SELECT * FROM batch_items WHERE id = ?').bind(id).first<BatchItem>();
     if (!current) throw new Error(`Batch item not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE batch_items SET batch_id=?, created_at=?, filename=?, mime_type=?, size_bytes=?, image_key=?, status=?, match_json=?, wildbook_task_id=? WHERE id=?`)
-      .bind(record.batch_id, record.created_at, record.filename, record.mime_type, record.size_bytes, record.image_key, record.status, record.match_json, record.wildbook_task_id, id).run();
+    await this.db.prepare(`UPDATE batch_items SET batch_id=?, created_at=?, filename=?, mime_type=?, size_bytes=?, image_key=?, status=?, match_json=?, observations_json=?, wildbook_task_id=? WHERE id=?`)
+      .bind(record.batch_id, record.created_at, record.filename, record.mime_type, record.size_bytes, record.image_key, record.status, record.match_json, record.observations_json, record.wildbook_task_id, id).run();
     return record;
   }
 

@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicHeader from '../components/PublicHeader.astro';
+import PartnerRow from '../components/PartnerRow.astro';
 import { resolveCatalogueStats } from '../lib/catalogue-stats';
 import { fillTemplate, getPageCopy, getSiteCopy } from '../lib/content';
 import { catalogueDataStore, runtimeValue } from '../lib/runtime';
 import { publicSubmissionDefaults } from '../mock/data';
+import { localIsoDate } from '../lib/photo-date';
 
 const [copy, siteCopy] = await Promise.all([getPageCopy('landing'), getSiteCopy()]);
 const uploadErrorCode = Astro.url.searchParams.get('upload_error');
@@ -32,6 +34,7 @@ const siteChips = [
   ...copy.where.extraSites,
 ];
 const photoCreditByImage = new Map(siteCopy.photoCredits.map((credit) => [credit.image, credit.credit]));
+const today = localIsoDate();
 const creditFor = (image: string) => {
   const credit = photoCreditByImage.get(image);
   if (!credit) throw new Error(`Missing photo credit for ${image}`);
@@ -99,7 +102,7 @@ const creditFor = (image: string) => {
         <input type="hidden" name="photographer_name" value={publicSubmissionDefaults.photographer_name} />
         <input type="hidden" name="photographer_email" value={publicSubmissionDefaults.photographer_email} />
         <input type="hidden" name="site_id" value={publicSubmissionDefaults.site_id} />
-        <input type="hidden" name="observed_at" value={publicSubmissionDefaults.observed_at} />
+        <input type="hidden" name="observed_at" value={today} />
         <div class="upload-icon" aria-hidden="true">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path>
@@ -156,6 +159,7 @@ const creditFor = (image: string) => {
           <span class="step-number mono">{step.number}</span><h3>{step.heading}</h3><p>{step.body}</p>
         </article>)}
       </div>
+      <a class="how-more" href={copy.how.moreLink.href}>{copy.how.moreLink.label}</a>
     </section>
 
     <section class="where-section page-section" id="sites">
@@ -190,11 +194,12 @@ const creditFor = (image: string) => {
         <dl class="resource-list">
           {copy.community.resources.map((resource) => <div><dt>{resource.term}</dt><dd>{resource.href ? <a href={resource.href}>{resource.description}</a> : resource.description}</dd></div>)}
         </dl>
+        <PartnerRow />
       </div>
     </section>
 
     <footer id="about" class="mono">
-      <span>{siteCopy.footerText}</span>
+      <div><span>{siteCopy.footerText}</span><PartnerRow compact /></div>
       <nav aria-label={siteCopy.footerNavAriaLabel}>{copy.footerLinks.map((link) => <a href={link.href}>{link.label}</a>)}</nav>
     </footer>
   </main>
@@ -264,6 +269,7 @@ const creditFor = (image: string) => {
   .how-section { padding-top: 96px; }
   .section-intro.compact { gap: 10px; max-width: 640px; }
   .steps-grid { display: grid; gap: 20px; grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 28px; }
+  .how-more { align-items:center; display:inline-flex; font-size:14px; font-weight:600; margin-top:20px; min-height:44px; text-decoration:underline; text-underline-offset:3px; }
   .step { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .step-image { background: #e6e9ed; border-radius: 12px; height: 200px; overflow: hidden; position: relative; }
   .step-image img { height: 100%; object-fit: cover; width: 100%; }
@@ -279,7 +285,8 @@ const creditFor = (image: string) => {
   .chip.more { border-style: dashed; }
 
   .community-section { padding-top: 96px; }
-  .community-card { align-items: center; border-radius: 18px; display: grid; gap: 40px; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); padding: 36px 40px; }
+  .community-card { align-items: center; border-radius: 18px; display: grid; gap: 28px 40px; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); padding: 36px 40px; }
+  .community-card > :global(.partner-row) { grid-column:1/-1; }
   .community-card h2 { font-size: 28px; }
   .community-card .lede { font-size: 15px; }
   .resource-list { font-size: 14px; margin: 0; }
@@ -290,6 +297,7 @@ const creditFor = (image: string) => {
   .resource-list a { align-items:center; display:inline-flex; min-height:44px; text-decoration:underline; text-underline-offset:3px; }
 
   footer { color: var(--muted); display: flex; font-size: 12px; gap: 32px; justify-content: space-between; margin-inline: auto; max-width: 1440px; padding: 56px 64px 40px; }
+  footer > div { display:flex; flex-direction:column; gap:12px; }
   footer nav { display: flex; gap: 24px; }
 
   @media (max-width: 900px) {
@@ -327,10 +335,14 @@ const creditFor = (image: string) => {
 </style>
 
 <script>
+  import { dateFromExif, localIsoDate } from '../lib/photo-date';
   const input = document.querySelector<HTMLInputElement>('#photo');
   const zone = document.querySelector<HTMLFormElement>('.drop-zone');
   input?.addEventListener('change', async () => {
     const count = input.files?.length ?? 0;
+    const observedAt = zone?.elements.namedItem('observed_at');
+    const firstFile = input.files?.[0];
+    if (firstFile && observedAt instanceof HTMLInputElement) observedAt.value = await dateFromExif(firstFile) ?? localIsoDate();
     zone?.classList.toggle('has-file', count > 0);
     if (count > 1 && zone) {
       const button = zone.querySelector<HTMLButtonElement>('.upload');

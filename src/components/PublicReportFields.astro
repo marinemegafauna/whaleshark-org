@@ -1,0 +1,148 @@
+---
+import type { PublicObservations } from '../lib/public-observations';
+import { publicObservationFieldValue, publicReportFieldOptions } from '../lib/public-observations';
+import type { Species } from '../lib/species';
+import { fillTemplate, getSiteCopy } from '../lib/content';
+import { localIsoDate } from '../lib/photo-date';
+
+interface Props {
+  species: Species;
+  groups?: string[];
+  fieldIds?: string[];
+  excludeFieldIds?: string[];
+  values?: PublicObservations;
+  prefix?: string;
+  compact?: boolean;
+}
+
+const { species, groups: requestedGroups, fieldIds: requestedFieldIds, excludeFieldIds: requestedExcludedFieldIds, values, prefix = '', compact = false } = Astro.props;
+const siteCopy = await getSiteCopy();
+const included = requestedGroups ? new Set(requestedGroups) : null;
+const includedFields = requestedFieldIds ? new Set(requestedFieldIds) : null;
+const excludedFields = new Set(requestedExcludedFieldIds ?? []);
+const groups = species.public_report.groups
+  .filter((group) => !included || included.has(group.id))
+  .map((group) => ({ ...group, fields: group.fields.filter((field) => (!includedFields || includedFields.has(field.id)) && !excludedFields.has(field.id)) }))
+  .filter((group) => group.fields.length > 0);
+const empty: PublicObservations = { behavior: [], injuries: { regions: [], types: [] }, inform_other: [] };
+const current = values ?? empty;
+---
+<div class:list={['public-report-fields', { compact }]} data-public-report>
+  {groups.map((group, groupIndex) => (
+    <fieldset class="report-group">
+      <legend><span class="mono">{String(groupIndex + 1).padStart(2, '0')}</span><strong>{group.label}</strong>{group.help && <small>{group.help}</small>}</legend>
+      <div class="field-grid">
+        {group.fields.map((field) => {
+          const fieldValue = publicObservationFieldValue(current, field.id);
+          const selectedValues = Array.isArray(fieldValue) ? fieldValue.map(String) : fieldValue ? [String(fieldValue)] : [];
+          const options = publicReportFieldOptions(species, field, siteCopy.researchSites);
+          const conditionValue = field.show_when ? publicObservationFieldValue(current, field.show_when.field) : undefined;
+          const shown = !field.show_when
+            || (field.show_when.equals !== undefined && conditionValue === field.show_when.equals)
+            || (field.show_when.not_equals !== undefined && conditionValue !== field.show_when.not_equals);
+          const inputName = `${prefix}${field.id}`;
+          const wide = field.type === 'textarea' || field.type === 'chips' || field.id === 'verbatim_locality' || field.id === 'consent';
+          const unit = field.id === 'length' ? current.length?.unit : field.id === 'temperature' ? current.temperature?.unit : field.default_unit;
+          return (
+            <div
+              class:list={['report-field', { wide }]}
+              data-show-field={field.show_when?.field}
+              data-show-equals={field.show_when?.equals}
+              data-show-not-equals={field.show_when?.not_equals}
+              hidden={!shown}
+            >
+              <label class="field-label" for={field.type === 'chips' ? undefined : inputName}>{field.label}{field.required && <span aria-hidden="true"> *</span>}</label>
+              {field.help && <small class="field-help">{field.help}</small>}
+              {field.type === 'select' && <select id={inputName} name={inputName} required={field.required}>
+                <option value="" selected={!fieldValue}>{species.public_report.choose_label}</option>
+                {options.map((option) => <option value={option.id} selected={selectedValues.includes(option.id)}>{option.label}</option>)}
+              </select>}
+              {field.type === 'chips' && <div class="report-chips" role={field.multiple ? 'group' : 'radiogroup'} aria-label={field.label}>
+                {options.map((option) => {
+                  const singleCheckbox = field.multiple || options.length === 1;
+                  return <label class="report-chip"><input type={singleCheckbox ? 'checkbox' : 'radio'} name={inputName} value={option.id} checked={selectedValues.includes(option.id) || (!fieldValue && field.default === option.id)} required={field.required && (!field.multiple || options.length === 1)} /><span>{option.label}</span></label>;
+                })}
+              </div>}
+              {field.type === 'textarea' && <textarea id={inputName} name={inputName} placeholder={field.placeholder} required={field.required}>{typeof fieldValue === 'string' ? fieldValue : ''}</textarea>}
+              {(field.type === 'text' || field.type === 'email' || field.type === 'date') && <input
+                id={inputName}
+                type={field.type}
+                name={inputName}
+                value={typeof fieldValue === 'string' ? fieldValue : field.default === 'today' ? localIsoDate() : field.default === undefined ? '' : String(field.default)}
+                placeholder={field.placeholder}
+                autocomplete={field.autocomplete}
+                multiple={field.type === 'email' && field.multiple}
+                required={field.required}
+              />}
+              {field.type === 'number' && <div class="number-row">
+                <input id={inputName} type="number" name={inputName} value={typeof fieldValue === 'number' ? fieldValue : typeof field.default === 'number' ? field.default : ''} placeholder={field.placeholder} min={field.min} max={field.max} step={field.step ?? 'any'} required={field.required} />
+                {field.units && <select name={`${inputName}_unit`} aria-label={fillTemplate(species.public_report.units_label, { field: field.label })}>{field.units.map((option) => <option value={option.id} selected={(unit ?? field.default_unit) === option.id}>{option.label}</option>)}</select>}
+                {field.estimated_toggle && <label class="estimated"><input type="checkbox" name={`${inputName}_estimated`} checked={current.length ? current.length.estimated : field.estimated_default} /><span>{field.estimated_toggle}</span></label>}
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+    </fieldset>
+  ))}
+</div>
+
+<style>
+  .public-report-fields { display:flex; flex-direction:column; gap:22px; }
+  .report-group { border:0; margin:0; min-width:0; padding:0; }
+  .report-group > legend { align-items:baseline; display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; padding:0; width:100%; }
+  .report-group > legend .mono { color:var(--accent); font-size:11px; }
+  .report-group > legend strong { font-size:16px; font-weight:600; }
+  .report-group > legend small { color:var(--muted); flex-basis:100%; font-size:12px; font-weight:400; line-height:1.4; padding-left:28px; }
+  .field-grid { display:grid; gap:14px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .report-field { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .report-field.wide { grid-column:1/-1; }
+  .report-field[hidden] { display:none; }
+  .field-label { font-size:12px; font-weight:600; }
+  .field-label span { color:var(--accent); }
+  .field-help { color:var(--muted); font-size:12px; line-height:1.35; }
+  input, select, textarea { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:16px; min-height:44px; padding:9px 11px; width:100%; }
+  textarea { min-height:88px; resize:vertical; }
+  .report-chips { display:flex; flex-wrap:wrap; gap:7px; }
+  .report-chip { cursor:pointer; min-height:44px; position:relative; }
+  .report-chip input { height:1px; min-height:0; opacity:0; position:absolute; width:1px; }
+  .report-chip span { align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius-pill); display:flex; font-size:13px; min-height:44px; padding:7px 13px; }
+  .report-chip input:checked + span { background:var(--ink); border-color:var(--ink); color:#fff; }
+  .report-chip input:focus-visible + span { outline:3px solid rgba(79,70,229,.35); outline-offset:2px; }
+  .number-row { align-items:center; display:grid; gap:7px; grid-template-columns:minmax(0,1fr) auto; }
+  .number-row select { width:auto; }
+  .estimated { align-items:center; cursor:pointer; display:flex; font-size:12px; gap:7px; grid-column:1/-1; min-height:32px; }
+  .estimated input { accent-color:var(--accent); height:18px; min-height:18px; width:18px; }
+  .compact { gap:16px; }
+  .compact .report-group > legend { margin-bottom:9px; }
+  .compact .field-grid { gap:10px; }
+  @media (max-width:560px) {
+    .field-grid { grid-template-columns:minmax(0,1fr); }
+    .report-field.wide { grid-column:1; }
+    .report-group > legend small { padding-left:0; }
+    .report-chip { width:100%; }
+    .report-chip span { width:100%; }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-public-report]').forEach((report) => {
+    const readValue = (field: string) => {
+      const checked = report.querySelector(`[name$="${CSS.escape(field)}"]:checked`) as HTMLInputElement | null;
+      const control = report.querySelector(`[name$="${CSS.escape(field)}"]`) as HTMLInputElement | HTMLSelectElement | null;
+      return checked?.value ?? control?.value ?? '';
+    };
+    const sync = () => report.querySelectorAll<HTMLElement>('[data-show-field]').forEach((dependent) => {
+      const value = readValue(dependent.dataset.showField ?? '');
+      const shown = dependent.dataset.showEquals !== undefined
+        ? value === dependent.dataset.showEquals
+        : value !== dependent.dataset.showNotEquals;
+      dependent.hidden = !shown;
+      dependent.querySelectorAll('input,select,textarea').forEach((element) => {
+        (element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).disabled = !shown;
+      });
+    });
+    report.addEventListener('change', sync);
+    sync();
+  });
+</script>

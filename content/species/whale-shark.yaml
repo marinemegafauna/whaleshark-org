@@ -8,6 +8,225 @@ version: "1.0"
 common_name: Whale shark
 scientific_name: Rhincodon typus
 wildbook_taxonomy: "Rhincodon typus"
+public_report:
+  version: "1.0"
+  submit_label: Save sighting details
+  saved_label: Sighting details saved.
+  choose_label: Choose…
+  units_label: "{field} units"
+  groups:
+    - id: when_where
+      label: When and where
+      help: Tell us where and when you met the shark.
+      fields:
+        - id: observed_date
+          label: Encounter date
+          type: date
+          required: true
+          default: today
+          help: Taken from the photo when available; otherwise today.
+        - id: observed_time
+          label: Time
+          type: text
+          required: false
+          placeholder: "14:30"
+          help: Optional local time, using 24-hour time.
+        - id: site_id
+          label: Site
+          type: select
+          required: true
+          options_source: sites
+          options:
+            - { id: other, label: Other / not listed }
+        - id: verbatim_locality
+          label: Where were you?
+          type: text
+          required: true
+          placeholder: Dive site, island or nearest place
+          show_when: { field: site_id, equals: other }
+        - id: decimal_latitude
+          label: Latitude
+          type: number
+          required: false
+          min: -90
+          max: 90
+          step: 0.000001
+          placeholder: "-15.942300"
+        - id: decimal_longitude
+          label: Longitude
+          type: number
+          required: false
+          min: -180
+          max: 180
+          step: 0.000001
+          placeholder: "40.748100"
+        - id: depth
+          label: Sea-floor depth
+          type: number
+          required: false
+          min: 0
+          step: 0.1
+          units:
+            - { id: m, label: m }
+          default_unit: m
+    - id: about_shark
+      label: About the shark
+      help: What could you see in the water?
+      fields:
+        - id: sex
+          label: Sex
+          type: chips
+          required: true
+          default: unknown
+          options:
+            - { id: male, label: Male }
+            - { id: female, label: Female }
+            - { id: unknown, label: Unknown }
+        - id: life_stage
+          label: Life stage
+          type: chips
+          required: true
+          default: unknown
+          options:
+            - { id: neonate, label: Neonate }
+            - { id: juvenile, label: Juvenile }
+            - { id: sub-adult, label: Sub-adult }
+            - { id: adult, label: Adult }
+            - { id: adult-pregnant, label: "Adult, pregnant" }
+            - { id: unknown, label: Unknown }
+        - id: length
+          label: Total length
+          type: number
+          required: false
+          min: 0
+          step: 0.1
+          units:
+            - { id: m, label: m }
+            - { id: ft, label: ft }
+          default_unit: m
+          estimated_toggle: This is an estimate
+          estimated_default: true
+          help: Nose to tail.
+        - id: behavior
+          label: Behaviour
+          type: chips
+          required: false
+          multiple: true
+          options:
+            - { id: feeding_surface, label: Feeding at surface }
+            - { id: feeding_water_column, label: Feeding in water column }
+            - { id: swimming, label: Swimming }
+            - { id: resting, label: Resting }
+            - { id: other_sharks, label: With other sharks }
+            - { id: vessel_nearby, label: With a boat/vessel nearby }
+            - { id: other, label: Other }
+        - id: living_status
+          label: Status
+          type: chips
+          required: true
+          default: alive
+          options:
+            - { id: alive, label: Alive }
+            - { id: dead, label: Dead }
+        - id: individual_count
+          label: Number of sharks seen on this dive
+          type: number
+          required: true
+          default: 1
+          min: 1
+          step: 1
+    - id: injuries
+      label: Injuries and scars
+      help: A simple public observation; researchers will classify scars separately.
+      fields:
+        - id: injury_severity
+          label: Noticeable injuries or scars?
+          type: chips
+          required: true
+          default: none
+          options:
+            - { id: none, label: None seen }
+            - { id: minor, label: "Yes, minor" }
+            - { id: major, label: "Yes, major" }
+        - id: injury_regions
+          label: Where?
+          type: chips
+          required: false
+          multiple: true
+          options_source: body_region
+          show_when: { field: injury_severity, not_equals: none }
+        - id: injury_types
+          label: What did it look like?
+          type: chips
+          required: false
+          multiple: true
+          options:
+            - { id: fresh_wound, label: Fresh wound }
+            - { id: healed_scar, label: Healed scar }
+            - { id: fin_damage, label: Fin missing or damaged }
+            - { id: rope_net, label: Rope or net marks }
+            - { id: propeller, label: Propeller cuts }
+            - { id: other, label: Other }
+          show_when: { field: injury_severity, not_equals: none }
+        - id: injury_description
+          label: Describe what you saw
+          type: textarea
+          required: false
+          placeholder: Anything that would help a researcher recognise it
+          show_when: { field: injury_severity, not_equals: none }
+    - id: water
+      label: Water
+      fields:
+        - id: temperature
+          label: Water temperature
+          type: number
+          required: false
+          step: 0.1
+          units:
+            - { id: c, label: °C }
+            - { id: f, label: °F }
+          default_unit: c
+    - id: about_you
+      label: About you
+      help: We use these details to credit the sighting and return results.
+      fields:
+        - id: submitter_name
+          label: Your name
+          type: text
+          required: true
+          autocomplete: name
+        - id: submitter_email
+          label: Your email
+          type: email
+          required: true
+          autocomplete: email
+          help: For the result and re-sight emails.
+        - id: photographer_name
+          label: Photographer name, if different
+          type: text
+          required: false
+        - id: photographer_email
+          label: Photographer email, if different
+          type: email
+          required: false
+        - id: inform_other
+          label: Also inform these emails
+          type: email
+          required: false
+          multiple: true
+          placeholder: Separate addresses with commas
+        - id: comments
+          label: Additional comments
+          type: textarea
+          required: false
+          placeholder: Anything else the research team should know
+        - id: consent
+          label: Photo use
+          type: chips
+          required: true
+          multiple: true
+          options:
+            - { id: agreed, label: I agree the photos can be used for research and shown on Sharkbook with my name on them }
 fields:
   - id: body_region
     label: Body region

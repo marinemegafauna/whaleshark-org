@@ -1,0 +1,25 @@
+---
+import { getSiteCopy } from '../lib/content';
+
+interface Props { compact?: boolean; }
+const { compact = false } = Astro.props;
+const { partners, partnerAriaLabel } = await getSiteCopy();
+---
+<nav class:list={['partner-row', { compact }]} aria-label={partnerAriaLabel}>
+  {partners.map((partner) => <a href={partner.url} target="_blank" rel="noreferrer">
+    <img src={partner.logo} alt={partner.alt} loading="lazy" />
+    <span>{partner.name}</span>
+  </a>)}
+</nav>
+<style>
+  .partner-row { align-items:center; display:flex; flex-wrap:wrap; gap:18px 26px; }
+  a { align-items:center; color:var(--ink); display:inline-flex; font-family:var(--font-body); font-size:13px; font-weight:600; gap:9px; min-height:44px; opacity:.7; }
+  a:hover { color:var(--ink); opacity:1; }
+  img { filter:grayscale(1); height:28px; max-width:84px; object-fit:contain; width:auto; }
+  a:hover img { filter:none; }
+  .compact { gap:12px 18px; }
+  .compact a { font-size:12px; }
+  .compact img { height:24px; max-width:72px; }
+  @media (prefers-reduced-motion:no-preference) { a,img { transition:filter 150ms ease,opacity 150ms ease; } }
+  @media (max-width:560px) { .partner-row { align-items:flex-start; flex-direction:column; gap:4px; } a { width:100%; } }
+</style>

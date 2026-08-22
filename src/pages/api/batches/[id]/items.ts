@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const item: BatchItem = {
       id: crypto.randomUUID(), batch_id: batch.id, created_at: new Date(Date.now() + index).toISOString(), filename: file.name,
       mime_type: file.type || 'application/octet-stream', size_bytes: file.size, image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`,
-      status: 'queued', match_json: null, wildbook_task_id: null,
+      status: 'queued', match_json: null, observations_json: null, wildbook_task_id: null,
     };
     await store.createBatchItem(item);
     items.push(item);

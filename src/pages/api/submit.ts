@@ -1,8 +1,7 @@
 import type { APIRoute } from 'astro';
 import { mockSubmissions, publicSubmissionDefaults } from '../../mock/data';
-import { isMockMode, publicWriteMode } from '../../lib/mode';
-import { dataStore, runtimeValue } from '../../lib/runtime';
-import { createEncounter, login } from '../../lib/wildbook';
+import { isMockMode } from '../../lib/mode';
+import { dataStore } from '../../lib/runtime';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
@@ -11,7 +10,9 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     if (!(image instanceof File) || image.size === 0) return redirect('/?upload_error=missing#drop-photo', 303);
 
     const id = crypto.randomUUID();
-    const demoMatches = mockSubmissions[0]!.match_json;
+    const mock = isMockMode();
+    const demoMatches = mock ? JSON.parse(mockSubmissions[0]!.match_json ?? '[]') as unknown[] : [];
+    const matchEnvelope: Record<string, unknown> = { candidates: demoMatches, mediaFilename: image.name };
     const submission = {
       id,
       created_at: new Date().toISOString(),
@@ -21,25 +22,10 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
       observed_at: String(form.get('observed_at') || new Date().toISOString().slice(0, 10)),
       image_key: '/mock/whale-shark-1.svg',
       wildbook_encounter_id: null as string | null,
-      status: 'matched',
-      match_json: demoMatches,
+      status: mock ? 'matched' : 'awaiting_report',
+      match_json: JSON.stringify(matchEnvelope),
+      observations_json: null,
     };
-
-    if (!isMockMode() && publicWriteMode() === 'live') {
-      const serviceUser = runtimeValue(locals, 'WILDBOOK_SERVICE_USER');
-      const servicePassword = runtimeValue(locals, 'WILDBOOK_SERVICE_PASSWORD');
-      if (!serviceUser || !servicePassword) return redirect('/?upload_error=unavailable#drop-photo', 303);
-      const authenticated = await login(serviceUser, servicePassword);
-      const encounter = await createEncounter(authenticated.cookie, {
-        photographerName: submission.photographer_name,
-        photographerEmail: submission.photographer_email,
-        locationId: submission.site_id,
-        encounterDate: submission.observed_at,
-        sourceSubmissionId: submission.id,
-      });
-      submission.wildbook_encounter_id = encounter.id;
-      submission.status = 'submitted';
-    }
 
     await dataStore(locals).createSubmission(submission);
     return redirect(`/match/${id}`, 303);

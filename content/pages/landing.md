@@ -62,6 +62,7 @@ why:
 how:
   eyebrow: How it works
   heading: Three steps, and you get the shark’s story back.
+  moreLink: { label: Read how the whole system works →, href: /how-it-works }
   steps:
     - number: "01"
       heading: Photograph the left side
@@ -85,17 +86,16 @@ where:
     alt: Whale shark feeding beneath a bait ball at Mafia Island, Tanzania
   eyebrow: Where the sharks are
   heading: One database, every ocean.
-  body: Sharkbook holds whale shark records from dozens of sites. whaleshark.org starts with the Western Indian Ocean network, where MMF and its partners run the season-by-season science.
+  body: Sharkbook holds whale shark records from dozens of sites. whaleshark.org starts with the Western Indian Ocean network, where research teams and dive operators run the season-by-season science.
   sitesAriaLabel: Whale shark research sites
   extraSites: [Ningaloo, Galápagos, "La Paz, Mexico", Donsol, Maldives]
   manyMoreLabel: + many more
 community:
-  eyebrow: A community resource
-  heading: Built on Sharkbook. Stewarded by the Marine Megafauna Foundation. Open to everyone.
-  body: Sharkbook.ai is Wild Me’s open-source Wildbook platform for sharks — the world’s largest shark photo-ID database, built over two decades by thousands of contributors. whaleshark.org is a front door to it for whale sharks, and the code is open source so other species can have one too.
+  eyebrow: Built on open tools
+  heading: Built on Sharkbook. Open to everyone.
+  body: Sharkbook.ai is Wild Me's open-source Wildbook platform for sharks — the world's largest shark photo-ID database, built over two decades by thousands of contributors. whaleshark.org is an open front door to it for whale sharks, and the code is open source so other species can have one too.
   resources:
     - { term: Matching, description: Sharkbook.ai / Wild Me }
-    - { term: Stewardship, description: Marine Megafauna Foundation }
     - { term: Your photos, description: Yours. Credited. Never sold. }
     - { term: Code, description: github.com/marinemegafauna/whaleshark-org, href: "https://github.com/marinemegafauna/whaleshark-org" }
 footerLinks:

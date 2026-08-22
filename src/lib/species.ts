@@ -1,7 +1,7 @@
 import { parse } from 'yaml';
 import { speciesSchema, type Species } from './content-schema';
 
-export { speciesSchema, type Species, type SpeciesField, type SpeciesOption } from './content-schema';
+export { speciesSchema, type PublicReportField, type Species, type SpeciesField, type SpeciesOption } from './content-schema';
 
 export function parseSpecies(source: string): Species {
   const result = speciesSchema.safeParse(parse(source));

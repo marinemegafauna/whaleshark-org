@@ -41,4 +41,27 @@ describe('mock data store', () => {
   test('does not silently replace a missing production D1 binding with memory', () => {
     expect(() => createDataStore(undefined, false)).toThrow(/DB D1 binding/i);
   });
+
+  test('creates, lists, updates, and reloads a batch with its items', async () => {
+    const store = createMemoryStore();
+    await store.createBatch({
+      id: 'batch-new', created_at: '2026-08-22T00:00:00.000Z', updated_at: '2026-08-22T00:00:00.000Z',
+      site_id: 'tofo', observed_at: '2026-08-14', photographer_name: 'A Diver', photographer_email: 'diver@example.org',
+      status: 'draft', wildbook_task_id: null,
+    });
+    await store.createBatchItem({
+      id: 'batch-item-new', batch_id: 'batch-new', created_at: '2026-08-22T00:00:00.000Z', filename: 'IMG_4471.JPG',
+      mime_type: 'image/jpeg', size_bytes: 12_000_000, image_key: '/mock/whale-shark-1.svg', status: 'queued',
+      match_json: null, wildbook_task_id: null,
+    });
+    await store.updateBatchItem('batch-item-new', { status: 'matched', match_json: '{"candidates":[]}' });
+    await store.updateBatch('batch-new', { status: 'review' });
+
+    expect(await store.getBatch('batch-new')).toMatchObject({ status: 'review', photographer_name: 'A Diver' });
+    expect(await store.listBatches({ status: 'review' })).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'batch-new' })]));
+    expect(await store.listBatches({ status: 'draft' })).toHaveLength(0);
+    expect(await store.listBatchItems('batch-new')).toEqual([
+      expect.objectContaining({ id: 'batch-item-new', status: 'matched', size_bytes: 12_000_000 }),
+    ]);
+  });
 });

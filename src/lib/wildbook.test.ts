@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { login, resolveMedia, searchEncounters } from './wildbook';
+import { getBulkImportStatus, login, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
 
 describe('Wildbook client', () => {
   test('parses flat encounter hits and total from the response header', async () => {
@@ -51,5 +51,48 @@ describe('Wildbook client', () => {
       cookie: 'JSESSIONID=abc123',
       user: { username: 'clare', displayName: 'Clare Prebble' },
     });
+  });
+
+  test('uploads a complete file through the ResumableUpload multipart contract', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ uploadId: 'upload-4471' }));
+    const file = new File(['jpeg-data'], 'IMG_4471.JPG', { type: 'image/jpeg' });
+
+    await expect(uploadResumableFile('JSESSIONID=session', file, 'batch-1-item-1', fetcher)).resolves.toEqual({
+      identifier: 'batch-1-item-1', filename: 'IMG_4471.JPG', uploadId: 'upload-4471',
+    });
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(new URL(String(url)).pathname).toBe('/ResumableUpload');
+    expect(init?.method).toBe('POST');
+    expect(new Headers(init?.headers).get('Cookie')).toBe('JSESSIONID=session');
+    const body = init?.body as FormData;
+    expect(Object.fromEntries([...body.entries()].filter(([, value]) => typeof value === 'string'))).toEqual({
+      resumableChunkNumber: '1', resumableChunkSize: '9', resumableCurrentChunkSize: '9', resumableTotalSize: '9',
+      resumableType: 'image/jpeg', resumableIdentifier: 'batch-1-item-1', resumableFilename: 'IMG_4471.JPG',
+      resumableRelativePath: 'IMG_4471.JPG', resumableTotalChunks: '1',
+    });
+    expect((body.get('file') as File).name).toBe('IMG_4471.JPG');
+  });
+
+  test('starts a bulk import with uploaded file references and batch metadata', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ taskId: 'task-42' }));
+    const payload = {
+      uploads: [{ identifier: 'batch-1-item-1', filename: 'IMG_4471.JPG', uploadId: 'upload-4471' }],
+      locationId: 'Tofo', encounterDate: '2026-08-14', photographerName: 'A Diver', photographerEmail: 'diver@example.org',
+    };
+
+    await expect(startBulkImport('JSESSIONID=session', payload, fetcher)).resolves.toEqual({ taskId: 'task-42' });
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(new URL(String(url)).pathname).toBe('/api/v3/bulk-import');
+    expect(init?.method).toBe('POST');
+    expect(JSON.parse(String(init?.body))).toEqual(payload);
+  });
+
+  test('normalizes bulk-import task polling fields', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ id: 'task-42', state: 'COMPLETE', processed: 3, total: 3 }));
+
+    await expect(getBulkImportStatus('JSESSIONID=session', 'task-42', fetcher)).resolves.toEqual({
+      taskId: 'task-42', status: 'complete', processed: 3, total: 3,
+    });
+    expect(new URL(String(fetcher.mock.calls[0]![0])).pathname).toBe('/api/v3/bulk-import/task-42');
   });
 });

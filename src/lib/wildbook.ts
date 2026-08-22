@@ -15,6 +15,20 @@ export interface EncounterSearch {
   dateRange?: { from?: string; to?: string };
 }
 
+export interface ResumableUploadReference {
+  identifier: string;
+  filename: string;
+  uploadId: string;
+}
+
+export interface BulkImportPayload {
+  uploads: ResumableUploadReference[];
+  locationId: string;
+  encounterDate: string;
+  photographerName: string;
+  photographerEmail: string;
+}
+
 function endpoint(path: string): string {
   return new URL(path, `${siteConfig.wildbookBaseUrl.replace(/\/$/, '')}/`).toString();
 }
@@ -119,7 +133,58 @@ export async function createEncounter(cookie: string, payload: unknown, fetcher:
   return (await response.json()) as EncounterHit;
 }
 
-// Wildbook v3 can read already-computed results but cannot trigger a match.
+export async function uploadResumableFile(cookie: string, file: File, identifier: string, fetcher: Fetcher = fetch): Promise<ResumableUploadReference> {
+  const body = new FormData();
+  const fields = {
+    resumableChunkNumber: '1',
+    resumableChunkSize: String(file.size),
+    resumableCurrentChunkSize: String(file.size),
+    resumableTotalSize: String(file.size),
+    resumableType: file.type || 'application/octet-stream',
+    resumableIdentifier: identifier,
+    resumableFilename: file.name,
+    resumableRelativePath: file.name,
+    resumableTotalChunks: '1',
+  };
+  Object.entries(fields).forEach(([name, value]) => body.set(name, value));
+  body.set('file', file, file.name);
+  const response = await checked(await fetcher(endpoint('/ResumableUpload'), {
+    method: 'POST', headers: { Accept: 'application/json', Cookie: cookie }, body,
+  }));
+  const payload = (await response.json()) as { uploadId?: unknown; id?: unknown };
+  const uploadId = typeof payload.uploadId === 'string' ? payload.uploadId : typeof payload.id === 'string' ? payload.id : identifier;
+  return { identifier, filename: file.name, uploadId };
+}
+
+export async function startBulkImport(cookie: string, payload: BulkImportPayload, fetcher: Fetcher = fetch) {
+  const response = await checked(await fetcher(endpoint('/api/v3/bulk-import'), {
+    method: 'POST', headers: sessionHeaders(cookie), body: JSON.stringify(payload),
+  }));
+  const result = (await response.json()) as { taskId?: unknown; id?: unknown };
+  const taskId = typeof result.taskId === 'string' ? result.taskId : typeof result.id === 'string' ? result.id : null;
+  if (!taskId) throw new Error('Wildbook bulk import did not return a task id');
+  return { taskId };
+}
+
+export async function getBulkImportStatus(cookie: string, taskId: string, fetcher: Fetcher = fetch) {
+  const result = await getJson<Record<string, unknown>>(`/api/v3/bulk-import/${encodeURIComponent(taskId)}`, cookie, fetcher);
+  const rawStatus = String(result.status ?? result.state ?? 'queued').toLowerCase();
+  const status = rawStatus === 'complete' || rawStatus === 'completed' || rawStatus === 'done'
+    ? 'complete'
+    : rawStatus === 'failed' || rawStatus === 'error'
+      ? 'failed'
+      : rawStatus === 'running' || rawStatus === 'processing'
+        ? 'running'
+        : 'queued';
+  return {
+    taskId: String(result.taskId ?? result.id ?? taskId),
+    status,
+    processed: Number(result.processed ?? result.completed ?? 0),
+    total: Number(result.total ?? 0),
+  } as const;
+}
+
+// Matching is triggered through the bulk-import path; this reads the task results.
 export function getMatchResults(cookie: string, taskId: string, fetcher: Fetcher = fetch) {
   return getJson<Record<string, unknown>>(`/api/v3/tasks/${encodeURIComponent(taskId)}/match-results`, cookie, fetcher);
 }

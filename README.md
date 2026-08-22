@@ -23,6 +23,8 @@ If installation reports `ENOTFOUND registry.npmjs.org`, the machine cannot curre
 `MOCK=1` is the development default. It makes every screen browsable without network access or credentials:
 
 - `/` — public photo drop and matching explanation
+- `/bulk` — whole-dive photo upload with per-photo matching progress
+- `/bulk/batch-demo/review` — grouped known/new-animal review before submission
 - `/match/submission-demo` — ranked example match
 - `/signin` — accepts any non-empty username and password in mock mode
 - `/app` — researcher encounter workbench
@@ -56,16 +58,18 @@ The application shell, Wildbook client, D1 store, and workbench are species-agno
 Implemented against real interfaces:
 
 - Astro 7 server output on Cloudflare Workers
-- Wildbook v3 login, encounter search, encounter/individual reads, media resolution, encounter creation, and match-result reads
-- D1 sessions, scar records, encounter review status, and public submissions
+- Wildbook v3 login, encounter search, encounter/individual reads, media resolution, encounter creation, resumable uploads, bulk-import task polling, and match-result reads
+- D1 sessions, scar records, encounter review status, public submissions, and bulk batches with per-photo items
+- public whole-dive upload, deterministic mock processing, grouped batch review, and a researcher batch queue
 - per-species Zod-validated YAML and schema-rendered scar forms
 
 Currently mocked or pending agreement:
 
 - encounter, media, and match fixtures are used when `MOCK=1`
+- bulk items advance from queued through detection and matching to a deterministic mix of matched, likely-new, no-shark, and error results when `MOCK=1`
 - uploaded image storage is represented by local SVG fixture keys; production object storage is not selected yet
 - public writes stay in D1 while `PUBLIC_WRITE=dry-run`
 - Wild Me agreement is still needed for service-account public encounter creation
-- Wildbook v3 can read computed match results but cannot trigger a match; the production trigger/import workflow remains pending
+- the real-mode bulk client implements Sharkbook’s `ResumableUpload` and v3 bulk-import/task interfaces, but needs validation against the target instance before `PUBLIC_WRITE=live`
 
 Architecture and security boundaries are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

@@ -27,7 +27,11 @@ Server routes and middleware obtain the D1 binding from the Cloudflare adapter's
 
 ## Matching
 
-Wildbook v3 has no endpoint to *trigger* a match; detection + identification run when an encounter is created through the bulk-import path (what `/sharkbook-import` uses) and results are read back via `GET /api/v3/tasks/{taskId}/match-results`. The public flow therefore: upload → create encounter (or dry-run) → poll match results → show ranked candidates with cosine scores and the gap to the next animal. Until the write path is live, the match page runs against fixtures (`MOCK=1`).
+Detection + identification run through Wildbook's resumable-upload and bulk-import path, with task state read from `GET /api/v3/bulk-import/{taskId}` and candidates from `GET /api/v3/tasks/{taskId}/match-results`. The public flow therefore uploads or stages photos, polls results, and shows ranked candidates with cosine scores and the gap to the next animal. Until the write path is live, the single-photo and bulk match pages run against fixtures (`MOCK=1`).
+
+## Batches
+
+`batches` stores whole-dive metadata and review state, while `batch_items` stores each file's processing status, upstream task id, and match JSON. The public `/bulk` page creates a batch, uploads one or more files through Worker routes, polls the same D1-backed shape in mock or real mode, and groups review cards by best known individual or likely-new within-batch cluster. `PUBLIC_WRITE=dry-run` never calls Wildbook, and submitting a reviewed batch marks it ready for the researcher workbench without publishing it upstream.
 
 ## Modes
 

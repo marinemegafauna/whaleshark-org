@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; background: #fafafa; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .mono { font-family: 'JetBrains Mono', monospace; }
+          .muted { color: rgba(21,24,28,0.55); }
+          .card { background: #fff; border: 1px solid rgba(21,24,28,0.1); border-radius: 14px; box-shadow: 0 1px 3px rgba(21,24,28,0.05); }
+          .img { background: repeating-linear-gradient(135deg, #e6e9ed 0 8px, #eef0f3 8px 16px); }
+          .tile { display: flex; flex-direction: column; gap: 8px; }
+          .thumb { height: 118px; border-radius: 8px; position: relative; overflow: hidden; }
+          .st { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 999px; }
+          .st-done { background: rgba(79,70,229,0.08); color: #4f46e5; }
+          .st-new { background: rgba(21,24,28,0.06); color: #15181c; }
+          .st-run { background: rgba(21,24,28,0.04); color: rgba(21,24,28,0.6); }
+          .st-none { background: rgba(194,64,12,0.08); color: #c2410c; }
+          .field { display: flex; flex-direction: column; gap: 6px; }
+          .label { font-size: 12px; font-weight: 500; }
+          .input { border: 1px solid rgba(21,24,28,0.18); border-radius: 8px; padding: 10px 12px; font-size: 13px; background: #fff; min-height: 40px; box-sizing: border-box; }
+          .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        </style>
+      </helmet>
+<div data-screen-label="Bulk upload" style="width: 1440px; min-height: 900px; background: #fafafa; display: flex; flex-direction: column;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 64px; font-size: 14px;">
+    <div style="font-weight: 600; font-size: 16px;">whaleshark.org</div>
+    <div style="display: flex; gap: 28px; align-items: center;" class="muted"><div>Catalogue</div><div style="color: #15181c; font-weight: 500;">Match</div><div>Sites</div><div>Photographers</div><div>About</div><div style="background: #15181c; color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 500;">Sign in</div></div>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 360px; gap: 28px; padding: 12px 64px 0 64px; align-items: start;">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 500; color: #4f46e5;">Bulk upload</div>
+        <div style="font-size: 36px; line-height: 1.05; font-weight: 600; letter-spacing: -0.03em;">A whole dive, in one go.</div>
+        <div style="font-size: 15px;" class="muted">Drop every left-flank photo from the day. We detect the shark in each one, match it, and group the photos that are the same animal. Nothing is added to Sharkbook until you confirm.</div>
+      </div>
+      <div class="card" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;">
+        <div style="display: flex; align-items: center; gap: 18px; font-size: 13px;">
+          <div><span style="font-weight: 600;">24 photos</span> <span class="muted">· 312 MB</span></div>
+          <div style="display: flex; align-items: center; gap: 8px;"><div style="width: 220px; height: 6px; border-radius: 3px; background: rgba(21,24,28,0.08);"><div style="width: 71%; height: 6px; border-radius: 3px; background: #4f46e5;"></div></div><div class="mono" style="font-size: 12px;">17 / 24 matched</div></div>
+        </div>
+        <div style="display: flex; gap: 16px; font-size: 12px;" class="muted"><div><span class="dot" style="background: #4f46e5;"></span> Matched 11</div><div><span class="dot" style="background: #15181c;"></span> Likely new 4</div><div><span class="dot" style="background: #c2410c;"></span> No shark found 2</div><div><span class="dot" style="background: rgba(21,24,28,0.3);"></span> Working 7</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px;">
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 22px; top: 26px; width: 110px; height: 62px; border: 1.5px solid #4f46e5; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-done">MZ-284 · 0.68</span><span class="mono muted" style="font-size: 11px;">4471</span></div></div>
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 30px; top: 20px; width: 120px; height: 70px; border: 1.5px solid #4f46e5; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-done">MZ-284 · 0.64</span><span class="mono muted" style="font-size: 11px;">4472</span></div></div>
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 40px; top: 30px; width: 100px; height: 60px; border: 1.5px solid #15181c; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-new">Likely new · 0.19</span><span class="mono muted" style="font-size: 11px;">4475</span></div></div>
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 18px; top: 34px; width: 130px; height: 64px; border: 1.5px solid #4f46e5; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-done">MZ-412 · 0.57</span><span class="mono muted" style="font-size: 11px;">4478</span></div></div>
+        <div class="tile"><div class="img thumb"></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-none">No shark found</span><span class="mono muted" style="font-size: 11px;">4480</span></div></div>
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 26px; top: 28px; width: 116px; height: 66px; border: 1.5px solid #4f46e5; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-done">MZ-091 · 0.71</span><span class="mono muted" style="font-size: 11px;">4483</span></div></div>
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 26px; top: 28px; width: 116px; height: 66px; border: 1.5px solid #4f46e5; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-done">MZ-091 · 0.66</span><span class="mono muted" style="font-size: 11px;">4484</span></div></div>
+        <div class="tile"><div class="img thumb"><div style="position: absolute; left: 34px; top: 24px; width: 104px; height: 62px; border: 1.5px solid #15181c; border-radius: 3px;"></div></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-new">Likely new · 0.22</span><span class="mono muted" style="font-size: 11px;">4487</span></div></div>
+        <div class="tile"><div class="img thumb"></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-run">Matching…</span><span class="mono muted" style="font-size: 11px;">4490</span></div></div>
+        <div class="tile"><div class="img thumb"></div><div style="display: flex; justify-content: space-between; align-items: center;"><span class="st st-run">Detecting…</span><span class="mono muted" style="font-size: 11px;">4491</span></div></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;" class="muted"><div>Showing 10 of 24 · grouped by animal when matching finishes</div><div style="text-decoration: underline; text-underline-offset: 3px; color: #15181c;">Add more photos</div></div>
+    </div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 14px; padding: 18px; position: sticky; top: 20px;">
+      <div style="font-size: 15px; font-weight: 600;">About this batch</div>
+      <div style="font-size: 12px;" class="muted">Applies to every photo. You can change individual ones after matching.</div>
+      <div class="field"><div class="label">Site</div><div class="input">Tofo, Mozambique ▾</div></div>
+      <div class="field"><div class="label">Date</div><div class="input">14 Aug 2026 <span class="muted">· from the photos</span></div></div>
+      <div class="field"><div class="label">Photographer</div><div class="input muted">Your name</div></div>
+      <div class="field"><div class="label">Email <span class="muted" style="font-weight: 400;">· for the results</span></div><div class="input muted">you@example.org</div></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid rgba(21,24,28,0.1); font-size: 13px;">
+        <div style="display: flex; justify-content: space-between;"><span class="muted">Animals found so far</span><span style="font-weight: 600;">5 known · 2 likely new</span></div>
+        <div style="display: flex; justify-content: space-between;"><span class="muted">Will be added to Sharkbook</span><span style="font-weight: 600;">22 photos</span></div>
+      </div>
+      <div style="background: #15181c; color: #fff; padding: 13px 20px; border-radius: 999px; font-weight: 500; font-size: 14px; text-align: center;">Review matches →</div>
+      <div style="font-size: 12px; line-height: 1.5;" class="muted">Site researchers confirm every match before it joins a shark's history. Your credit stays on each photo.</div>
+    </div>
+  </div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

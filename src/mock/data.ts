@@ -49,3 +49,20 @@ export const mockSubmissions = [
     ]),
   },
 ];
+
+export const mockBatches = [
+  {
+    id: 'batch-demo', created_at: '2026-08-21T09:00:00.000Z', updated_at: '2026-08-21T09:06:00.000Z',
+    site_id: 'tofo', observed_at: '2026-08-14', photographer_name: 'O. Patterson', photographer_email: 'o.patterson@example.org',
+    status: 'review' as const, wildbook_task_id: null,
+  },
+];
+
+export const mockBatchItems = [
+  ['MZ-284', 0.68], ['MZ-284', 0.64], ['MZ-412', 0.57], ['MZ-091', 0.71],
+].map(([individualId, score], index) => ({
+  id: `batch-demo-item-${index + 1}`, batch_id: 'batch-demo', created_at: `2026-08-21T09:00:0${index}.000Z`,
+  filename: `IMG_${4471 + index}.JPG`, mime_type: 'image/jpeg', size_bytes: 13_000_000 + index * 500_000,
+  image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`, status: 'matched' as const,
+  match_json: JSON.stringify({ bbox: [0.14, 0.2, 0.68, 0.58], candidates: [{ individualId, score }] }), wildbook_task_id: null,
+}));

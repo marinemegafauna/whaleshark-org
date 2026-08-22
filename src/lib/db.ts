@@ -1,6 +1,33 @@
-import { mockReviewStatuses, mockScarRecords, mockSubmissions } from '../mock/data';
+import { mockBatchItems, mockBatches, mockReviewStatuses, mockScarRecords, mockSubmissions } from '../mock/data';
 
 export type ReviewStatus = 'needs_record' | 'recorded' | 'no_new_scars';
+export type BatchStatus = 'draft' | 'processing' | 'review' | 'submitted' | 'error';
+export type BatchItemStatus = 'queued' | 'uploading' | 'detecting' | 'matching' | 'matched' | 'likely_new' | 'no_shark' | 'error';
+
+export interface Batch {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  site_id: string;
+  observed_at: string;
+  photographer_name: string;
+  photographer_email: string;
+  status: BatchStatus;
+  wildbook_task_id: string | null;
+}
+
+export interface BatchItem {
+  id: string;
+  batch_id: string;
+  created_at: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  image_key: string;
+  status: BatchItemStatus;
+  match_json: string | null;
+  wildbook_task_id: string | null;
+}
 
 export interface ScarRecord {
   id: string;
@@ -58,6 +85,13 @@ export interface DataStore {
   createSubmission(submission: PublicSubmission): Promise<PublicSubmission>;
   getSubmission(id: string): Promise<PublicSubmission | null>;
   updateSubmission(id: string, patch: Partial<PublicSubmission>): Promise<PublicSubmission>;
+  createBatch(batch: Batch): Promise<Batch>;
+  getBatch(id: string): Promise<Batch | null>;
+  listBatches(filter?: { status?: BatchStatus }): Promise<Batch[]>;
+  updateBatch(id: string, patch: Partial<Batch>): Promise<Batch>;
+  createBatchItem(item: BatchItem): Promise<BatchItem>;
+  listBatchItems(batchId: string): Promise<BatchItem[]>;
+  updateBatchItem(id: string, patch: Partial<BatchItem>): Promise<BatchItem>;
   createSession(session: SessionRecord): Promise<SessionRecord>;
   getSession(id: string): Promise<SessionRecord | null>;
 }
@@ -66,6 +100,8 @@ class MemoryStore implements DataStore {
   private scars: ScarRecord[] = [];
   private reviews: EncounterReview[] = [];
   private submissions: PublicSubmission[] = [];
+  private batches: Batch[] = [];
+  private batchItems: BatchItem[] = [];
   private sessions: SessionRecord[] = [];
 
   constructor() {
@@ -76,6 +112,8 @@ class MemoryStore implements DataStore {
     this.scars = structuredClone(mockScarRecords);
     this.reviews = structuredClone(mockReviewStatuses);
     this.submissions = structuredClone(mockSubmissions);
+    this.batches = structuredClone(mockBatches);
+    this.batchItems = structuredClone(mockBatchItems);
     this.sessions = [];
     return this;
   }
@@ -129,6 +167,44 @@ class MemoryStore implements DataStore {
     if (index < 0) throw new Error(`Submission not found: ${id}`);
     const updated = { ...this.submissions[index]!, ...patch, id };
     this.submissions[index] = updated;
+    return updated;
+  }
+
+  async createBatch(batch: Batch) {
+    this.batches.push(structuredClone(batch));
+    return batch;
+  }
+
+  async getBatch(id: string) {
+    return this.batches.find((batch) => batch.id === id) ?? null;
+  }
+
+  async listBatches(filter: { status?: BatchStatus } = {}) {
+    return this.batches.filter((batch) => !filter.status || batch.status === filter.status);
+  }
+
+  async updateBatch(id: string, patch: Partial<Batch>) {
+    const index = this.batches.findIndex((batch) => batch.id === id);
+    if (index < 0) throw new Error(`Batch not found: ${id}`);
+    const updated = { ...this.batches[index]!, ...patch, id };
+    this.batches[index] = updated;
+    return updated;
+  }
+
+  async createBatchItem(item: BatchItem) {
+    this.batchItems.push(structuredClone(item));
+    return item;
+  }
+
+  async listBatchItems(batchId: string) {
+    return this.batchItems.filter((item) => item.batch_id === batchId);
+  }
+
+  async updateBatchItem(id: string, patch: Partial<BatchItem>) {
+    const index = this.batchItems.findIndex((item) => item.id === id);
+    if (index < 0) throw new Error(`Batch item not found: ${id}`);
+    const updated = { ...this.batchItems[index]!, ...patch, id };
+    this.batchItems[index] = updated;
     return updated;
   }
 
@@ -206,6 +282,51 @@ class D1Store implements DataStore {
     const record = { ...current, ...patch, id };
     await this.db.prepare(`UPDATE public_submissions SET created_at=?, photographer_name=?, photographer_email=?, site_id=?, observed_at=?, image_key=?, wildbook_encounter_id=?, status=?, match_json=? WHERE id=?`)
       .bind(record.created_at, record.photographer_name, record.photographer_email, record.site_id, record.observed_at, record.image_key, record.wildbook_encounter_id, record.status, record.match_json, id).run();
+    return record;
+  }
+
+  async createBatch(batch: Batch) {
+    await this.db.prepare(`INSERT INTO batches (id, created_at, updated_at, site_id, observed_at, photographer_name, photographer_email, status, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(batch.id, batch.created_at, batch.updated_at, batch.site_id, batch.observed_at, batch.photographer_name, batch.photographer_email, batch.status, batch.wildbook_task_id).run();
+    return batch;
+  }
+
+  getBatch(id: string) {
+    return this.db.prepare('SELECT * FROM batches WHERE id = ?').bind(id).first<Batch>();
+  }
+
+  async listBatches(filter: { status?: BatchStatus } = {}) {
+    const statement = filter.status
+      ? this.db.prepare('SELECT * FROM batches WHERE status = ? ORDER BY created_at DESC').bind(filter.status)
+      : this.db.prepare('SELECT * FROM batches ORDER BY created_at DESC');
+    return (await statement.all<Batch>()).results;
+  }
+
+  async updateBatch(id: string, patch: Partial<Batch>) {
+    const current = await this.getBatch(id);
+    if (!current) throw new Error(`Batch not found: ${id}`);
+    const record = { ...current, ...patch, id };
+    await this.db.prepare(`UPDATE batches SET created_at=?, updated_at=?, site_id=?, observed_at=?, photographer_name=?, photographer_email=?, status=?, wildbook_task_id=? WHERE id=?`)
+      .bind(record.created_at, record.updated_at, record.site_id, record.observed_at, record.photographer_name, record.photographer_email, record.status, record.wildbook_task_id, id).run();
+    return record;
+  }
+
+  async createBatchItem(item: BatchItem) {
+    await this.db.prepare(`INSERT INTO batch_items (id, batch_id, created_at, filename, mime_type, size_bytes, image_key, status, match_json, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(item.id, item.batch_id, item.created_at, item.filename, item.mime_type, item.size_bytes, item.image_key, item.status, item.match_json, item.wildbook_task_id).run();
+    return item;
+  }
+
+  async listBatchItems(batchId: string) {
+    return (await this.db.prepare('SELECT * FROM batch_items WHERE batch_id = ? ORDER BY created_at, id').bind(batchId).all<BatchItem>()).results;
+  }
+
+  async updateBatchItem(id: string, patch: Partial<BatchItem>) {
+    const current = await this.db.prepare('SELECT * FROM batch_items WHERE id = ?').bind(id).first<BatchItem>();
+    if (!current) throw new Error(`Batch item not found: ${id}`);
+    const record = { ...current, ...patch, id };
+    await this.db.prepare(`UPDATE batch_items SET batch_id=?, created_at=?, filename=?, mime_type=?, size_bytes=?, image_key=?, status=?, match_json=?, wildbook_task_id=? WHERE id=?`)
+      .bind(record.batch_id, record.created_at, record.filename, record.mime_type, record.size_bytes, record.image_key, record.status, record.match_json, record.wildbook_task_id, id).run();
     return record;
   }
 

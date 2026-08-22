@@ -1,0 +1,182 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PublicHeader from '../../components/PublicHeader.astro';
+import siteConfig from '../../../site.config';
+import { dataStore } from '../../lib/runtime';
+import type { BatchItem } from '../../lib/db';
+
+const requestedBatchId = Astro.url.searchParams.get('batch');
+const store = dataStore(Astro.locals);
+const batch = requestedBatchId ? await store.getBatch(requestedBatchId) : null;
+const items = batch ? await store.listBatchItems(batch.id) : [];
+const totalBytes = items.reduce((sum, item) => sum + item.size_bytes, 0);
+const finalStatuses = new Set(['matched', 'likely_new', 'no_shark', 'error']);
+const completed = items.filter((item) => finalStatuses.has(item.status)).length;
+const counts = {
+  matched: items.filter((item) => item.status === 'matched').length,
+  likelyNew: items.filter((item) => item.status === 'likely_new').length,
+  noShark: items.filter((item) => item.status === 'no_shark').length,
+  working: items.filter((item) => !finalStatuses.has(item.status)).length,
+};
+const folderAttributes = { webkitdirectory: true, directory: true };
+function matchFor(item: BatchItem) {
+  try { return JSON.parse(item.match_json ?? '{}') as Record<string, any>; } catch { return {}; }
+}
+function labelFor(item: BatchItem) {
+  const match = matchFor(item);
+  if (item.status === 'matched') return `${match.candidates?.[0]?.individualId ?? 'Matched'} · ${Number(match.candidates?.[0]?.score ?? 0).toFixed(2)}`;
+  if (item.status === 'likely_new') return `Likely new · ${Number(match.score ?? 0).toFixed(2)}`;
+  if (item.status === 'no_shark') return 'No shark found';
+  if (item.status === 'error') return 'Could not process';
+  if (item.status === 'matching') return 'Matching…';
+  if (item.status === 'detecting') return 'Detecting…';
+  if (item.status === 'uploading') return 'Uploading…';
+  return 'Queued';
+}
+---
+<BaseLayout title="Bulk upload · whaleshark.org" description="Upload a whole dive of whale shark photographs for matching.">
+  <PublicHeader active="match" />
+  <main class="bulk-page" data-batch-id={batch?.id ?? ''}>
+    <section class="bulk-workspace">
+      <div class="intro"><span>Bulk upload</span><h1>A whole dive, in one go.</h1><p>Drop every left-flank photo from the day. We detect the shark in each one, match it, and group the photos that are the same animal. Nothing is added to Sharkbook until you confirm.</p></div>
+
+      <div class="card drop-zone" id="drop-zone">
+        <input id="bulk-files" type="file" name="files" multiple accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>
+        <div><strong>Drop photos or a folder here</strong><span>JPEG, HEIC or RAW · each file stays credited to you</span></div>
+        <label class="choose-files" for="bulk-files">Choose photos</label>
+        <label class="choose-folder" for="bulk-folder">Choose a folder</label>
+        <input id="bulk-folder" type="file" multiple {...folderAttributes} accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
+      </div>
+
+      <div class="card summary" aria-live="polite">
+        <div class="batch-size"><strong id="photo-count">{items.length} photos</strong><span id="total-size"> · {(totalBytes / 1_000_000).toFixed(totalBytes ? 1 : 0)} MB</span></div>
+        <div class="progress-wrap"><div class="progress" aria-hidden="true"><i id="progress-bar" style={`width:${items.length ? (completed / items.length) * 100 : 0}%`}></i></div><span class="mono" id="progress-label">{completed} / {items.length} matched</span></div>
+        <div class="legend"><span><i class="dot matched"></i>Matched <b id="matched-count">{counts.matched}</b></span><span><i class="dot likely"></i>Likely new <b id="new-count">{counts.likelyNew}</b></span><span><i class="dot none"></i>No shark found <b id="none-count">{counts.noShark}</b></span><span><i class="dot working"></i>Working <b id="working-count">{counts.working}</b></span></div>
+      </div>
+
+      <div class="photo-grid" id="photo-grid">
+        {items.map((item) => { const match = matchFor(item); const bbox = Array.isArray(match.bbox) ? match.bbox : null; return <article class="tile"><div class="thumb"><img src={item.image_key} alt="Uploaded whale shark photograph" />{bbox && <i class:list={['detect-box',{new:item.status === 'likely_new'}]} style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><div class="tile-meta"><span class:list={['status',item.status]}>{labelFor(item)}</span><span class="mono suffix">{item.filename.replace(/\.[^.]+$/, '').slice(-4)}</span></div></article> })}
+      </div>
+      <div class="grid-foot"><span id="grid-note">{items.length ? `${items.length} photos · grouped by animal when matching finishes` : 'Your photos will appear here as they upload.'}</span><label for="bulk-files">Add more photos</label></div>
+      <p class="upload-error" id="upload-error" role="alert"></p>
+    </section>
+
+    <aside class="card batch-card">
+      <h2>About this batch</h2><p>Applies to every photo. You can change individual ones after matching.</p>
+      <form id="batch-details">
+        <label><span>Site</span><select name="site_id">{siteConfig.sites.map((site) => <option value={site.id} selected={batch?.site_id === site.id}>{site.label}</option>)}</select></label>
+        <label><span>Date <small id="date-source">{batch ? '' : '· from the photos when available'}</small></span><input type="date" name="observed_at" value={batch?.observed_at ?? new Date().toISOString().slice(0,10)} required /></label>
+        <label><span>Photographer</span><input name="photographer_name" value={batch?.photographer_name ?? ''} placeholder="Your name" autocomplete="name" required /></label>
+        <label><span>Email <small>· for the results</small></span><input type="email" name="photographer_email" value={batch?.photographer_email ?? ''} placeholder="you@example.org" autocomplete="email" required /></label>
+      </form>
+      <div class="batch-totals"><span>Photos ready to review <b id="review-photo-count">{completed}</b></span><span>Nothing publishes before review</span></div>
+      <button class="button review-button" id="review-button" type="button" disabled={!batch || batch.status === 'draft'}>Review matches →</button>
+      <p>Site researchers confirm every match before it joins a shark’s history. Your credit stays on each photo.</p>
+    </aside>
+  </main>
+</BaseLayout>
+<style>
+  .bulk-page { align-items:start; display:grid; gap:28px; grid-template-columns:minmax(0,1fr) 360px; padding:12px 64px 56px; }.bulk-workspace { display:flex; flex-direction:column; gap:16px; min-width:0; }.intro { display:flex; flex-direction:column; gap:6px; }.intro > span { color:var(--accent); font-size:13px; font-weight:500; }.intro h1 { font-size:36px; font-weight:600; letter-spacing:-.03em; line-height:1.05; margin:0; }.intro p { color:var(--muted); font-size:15px; line-height:1.45; margin:0; max-width:900px; }.drop-zone { align-items:center; border-style:dashed; display:flex; gap:16px; min-height:104px; padding:18px; position:relative; }.drop-zone.dragging { background:var(--accent-soft); border-color:var(--accent); }.drop-zone > input { height:1px; opacity:0; position:absolute; width:1px; }.drop-zone > div { display:flex; flex:1; flex-direction:column; gap:3px; }.drop-zone strong { font-size:14px; font-weight:600; }.drop-zone span { color:var(--muted); font-size:12px; }.choose-files,.choose-folder { align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius-pill); cursor:pointer; display:inline-flex; font-size:13px; justify-content:center; min-height:44px; padding:0 16px; position:relative; }.choose-folder { background:var(--ink); border-color:var(--ink); color:#fff; }.summary { align-items:center; display:grid; font-size:13px; gap:18px; grid-template-columns:auto minmax(240px,1fr) auto; padding:14px 18px; }.batch-size { white-space:nowrap; }.batch-size span { color:var(--muted); }.progress-wrap { align-items:center; display:flex; gap:8px; }.progress { background:rgba(21,24,28,.08); border-radius:3px; flex:1; height:6px; overflow:hidden; }.progress i { background:var(--accent); display:block; height:100%; }.progress-wrap > span { font-size:12px; white-space:nowrap; }.legend { color:var(--muted); display:flex; font-size:12px; gap:14px; white-space:nowrap; }.legend span { align-items:center; display:flex; gap:5px; }.legend b { color:inherit; font-weight:500; }.dot { border-radius:50%; display:inline-block; height:8px; width:8px; }.dot.matched { background:var(--accent); }.dot.likely { background:var(--ink); }.dot.none { background:var(--warn); }.dot.working { background:rgba(21,24,28,.3); }.photo-grid { display:grid; gap:14px; grid-template-columns:repeat(5,minmax(0,1fr)); }.tile { display:flex; flex-direction:column; gap:8px; min-width:0; }.thumb { background:repeating-linear-gradient(135deg,#e6e9ed 0 8px,#eef0f3 8px 16px); border-radius:8px; height:118px; overflow:hidden; position:relative; }.thumb img { height:100%; object-fit:cover; width:100%; }.detect-box { border:1.5px solid var(--accent); border-radius:3px; position:absolute; }.detect-box.new { border-color:var(--ink); }.tile-meta { align-items:center; display:flex; gap:6px; justify-content:space-between; min-width:0; }.status { background:rgba(21,24,28,.04); border-radius:var(--radius-pill); color:var(--muted); display:block; font-size:12px; font-weight:500; max-width:calc(100% - 42px); overflow:hidden; padding:3px 8px; text-overflow:ellipsis; white-space:nowrap; }.status.matched { background:rgba(79,70,229,.08); color:var(--accent); }.status.likely_new { background:rgba(21,24,28,.06); color:var(--ink); }.status.no_shark,.status.error { background:rgba(194,64,12,.08); color:var(--warn); }.suffix { color:var(--muted); font-size:11px; }.grid-foot { color:var(--muted); display:flex; font-size:13px; justify-content:space-between; }.grid-foot label { color:var(--ink); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }.upload-error { color:var(--warn); font-size:13px; margin:0; min-height:1em; }.batch-card { display:flex; flex-direction:column; gap:14px; padding:18px; position:sticky; top:20px; }.batch-card h2 { font-size:15px; font-weight:600; margin:0; }.batch-card > p { color:var(--muted); font-size:12px; line-height:1.5; margin:0; }.batch-card form { display:flex; flex-direction:column; gap:14px; }.batch-card label { display:flex; flex-direction:column; font-size:12px; font-weight:500; gap:6px; }.batch-card small { color:var(--muted); font-size:12px; font-weight:400; }.batch-card input,.batch-card select { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:13px; min-height:44px; padding:10px 12px; width:100%; }.batch-totals { border-top:1px solid var(--line); display:flex; flex-direction:column; font-size:12px; gap:6px; padding-top:12px; }.batch-totals span { display:flex; justify-content:space-between; }.batch-totals span:last-child { color:var(--muted); }.review-button { min-height:44px; width:100%; }.review-button:disabled { cursor:not-allowed; opacity:.4; }
+  @media (max-width:1180px) { .summary { grid-template-columns:1fr 1.2fr; }.legend { grid-column:1/-1; }.photo-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+  @media (max-width:900px) { .bulk-page { grid-template-columns:1fr; padding-inline:40px; }.batch-card { position:static; }.photo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:600px) { .bulk-page { padding:8px 20px 40px; }.intro h1 { font-size:32px; }.drop-zone { align-items:flex-start; flex-wrap:wrap; }.drop-zone > div { flex-basis:calc(100% - 50px); }.choose-files,.choose-folder { flex:1; }.summary { grid-template-columns:1fr; }.legend { grid-column:auto; flex-wrap:wrap; }.photo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.thumb { height:132px; } }
+  @media (prefers-reduced-motion:reduce) { .progress i { transition:none!important; } }
+</style>
+<script>
+  type ApiItem = { id:string; filename:string; size_bytes:number; image_key:string; status:string; match_json:string|null };
+  type EntryWithReader = FileSystemDirectoryEntry & { createReader(): FileSystemDirectoryReader };
+  const page = document.querySelector<HTMLElement>('.bulk-page')!;
+  const dropZone = document.querySelector<HTMLElement>('#drop-zone')!;
+  const fileInput = document.querySelector<HTMLInputElement>('#bulk-files')!;
+  const folderInput = document.querySelector<HTMLInputElement>('#bulk-folder')!;
+  const details = document.querySelector<HTMLFormElement>('#batch-details')!;
+  const grid = document.querySelector<HTMLElement>('#photo-grid')!;
+  const reviewButton = document.querySelector<HTMLButtonElement>('#review-button')!;
+  const errorBox = document.querySelector<HTMLElement>('#upload-error')!;
+  let batchId = page.dataset.batchId || '';
+  let pollTimer = 0;
+  const finalStatuses = new Set(['matched','likely_new','no_shark','error']);
+
+  async function dateFromExif(file: File) {
+    if (!file.type.includes('jpeg') && !/\.jpe?g$/i.test(file.name)) return null;
+    const buffer = await file.slice(0, 131072).arrayBuffer();
+    const text = new TextDecoder('latin1').decode(buffer);
+    const match = text.match(/(20\d{2}):(\d{2}):(\d{2})[ T]\d{2}:\d{2}:\d{2}/);
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+  }
+  function parseMatch(item: ApiItem) { try { return JSON.parse(item.match_json || '{}'); } catch { return {}; } }
+  function statusLabel(item: ApiItem) {
+    const match = parseMatch(item);
+    if (item.status === 'matched') return `${match.candidates?.[0]?.individualId || 'Matched'} · ${Number(match.candidates?.[0]?.score || 0).toFixed(2)}`;
+    if (item.status === 'likely_new') return `Likely new · ${Number(match.score || 0).toFixed(2)}`;
+    return { no_shark:'No shark found', error:'Could not process', matching:'Matching…', detecting:'Detecting…', uploading:'Uploading…', queued:'Queued' }[item.status] || item.status;
+  }
+  function updateSummary(items: ApiItem[]) {
+    const complete = items.filter((item) => finalStatuses.has(item.status)).length;
+    const total = items.reduce((sum,item) => sum + item.size_bytes, 0);
+    document.querySelector('#photo-count')!.textContent = `${items.length} photos`;
+    document.querySelector('#total-size')!.textContent = ` · ${(total / 1_000_000).toFixed(1)} MB`;
+    (document.querySelector('#progress-bar') as HTMLElement).style.width = `${items.length ? complete / items.length * 100 : 0}%`;
+    document.querySelector('#progress-label')!.textContent = `${complete} / ${items.length} matched`;
+    document.querySelector('#matched-count')!.textContent = String(items.filter((item) => item.status === 'matched').length);
+    document.querySelector('#new-count')!.textContent = String(items.filter((item) => item.status === 'likely_new').length);
+    document.querySelector('#none-count')!.textContent = String(items.filter((item) => item.status === 'no_shark').length);
+    document.querySelector('#working-count')!.textContent = String(items.length - complete);
+    document.querySelector('#review-photo-count')!.textContent = String(complete);
+    document.querySelector('#grid-note')!.textContent = items.length ? `${items.length} photos · grouped by animal when matching finishes` : 'Your photos will appear here as they upload.';
+  }
+  function render(items: ApiItem[], localUrls = new Map<string,string>()) {
+    grid.replaceChildren(...items.map((item) => {
+      const article = document.createElement('article'); article.className = 'tile';
+      const thumb = document.createElement('div'); thumb.className = 'thumb';
+      const image = document.createElement('img'); image.alt = 'Uploaded whale shark photograph'; image.src = localUrls.get(item.filename) || item.image_key; thumb.appendChild(image);
+      const match = parseMatch(item); if (Array.isArray(match.bbox)) { const box=document.createElement('i'); box.className=`detect-box${item.status==='likely_new'?' new':''}`; box.style.cssText=`left:${match.bbox[0]*100}%;top:${match.bbox[1]*100}%;width:${match.bbox[2]*100}%;height:${match.bbox[3]*100}%`; thumb.appendChild(box); }
+      const meta=document.createElement('div'); meta.className='tile-meta'; const status=document.createElement('span'); status.className=`status ${item.status}`; status.textContent=statusLabel(item); const suffix=document.createElement('span'); suffix.className='mono suffix'; suffix.textContent=item.filename.replace(/\.[^.]+$/,'').slice(-4); meta.appendChild(status); meta.appendChild(suffix); article.appendChild(thumb); article.appendChild(meta); return article;
+    }));
+    updateSummary(items);
+  }
+  async function poll() {
+    if (!batchId) return;
+    try {
+      const response = await fetch(`/api/batches/${encodeURIComponent(batchId)}`);
+      if (!response.ok) throw new Error(await response.text());
+      const payload = await response.json() as { batch:{ status:string }; items:ApiItem[] }; render(payload.items);
+      const ready = payload.batch.status === 'review' || payload.batch.status === 'submitted';
+      reviewButton.disabled = !ready; if (ready) return;
+      pollTimer = window.setTimeout(poll, 700);
+    } catch (error) { errorBox.textContent = error instanceof Error ? error.message : 'Could not refresh this batch.'; }
+  }
+  async function upload(files: File[]) {
+    if (!files.length || !details.reportValidity()) return;
+    errorBox.textContent=''; window.clearTimeout(pollTimer);
+    const localUrls = new Map(files.map((file) => [file.name, URL.createObjectURL(file)]));
+    render(files.map((file,index) => ({ id:`local-${index}`, filename:file.name, size_bytes:file.size, image_key:localUrls.get(file.name)!, status:'uploading', match_json:null })), localUrls);
+    const exifDate = await dateFromExif(files[0]!); if (exifDate) { (details.elements.namedItem('observed_at') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent='· from the photos'; }
+    try {
+      if (!batchId) {
+        const metadata = Object.fromEntries(new FormData(details));
+        const created = await fetch('/api/batches', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(metadata) });
+        if (!created.ok) throw new Error(await created.text()); const createdPayload=await created.json() as { batch:{ id:string } }; batchId=createdPayload.batch.id; page.dataset.batchId=batchId; history.replaceState({},'',`/bulk?batch=${encodeURIComponent(batchId)}`);
+      }
+      const form = new FormData(); files.forEach((file) => form.append('files',file,file.name));
+      const response = await fetch(`/api/batches/${encodeURIComponent(batchId)}/items`, { method:'POST', body:form });
+      if (!response.ok) throw new Error(await response.text());
+      await poll();
+    } catch (error) { errorBox.textContent=error instanceof Error ? error.message : 'The photos could not be uploaded.'; }
+  }
+  function readEntry(entry: FileSystemEntry): Promise<File[]> {
+    if (entry.isFile) return new Promise((resolve,reject) => (entry as FileSystemFileEntry).file((file) => resolve([file]),reject));
+    return new Promise((resolve,reject) => { const reader=(entry as EntryWithReader).createReader(); const found:File[]=[]; const next=() => reader.readEntries(async (entries) => { if (!entries.length) return resolve(found); try { for (const child of entries) found.push(...await readEntry(child)); next(); } catch (error) { reject(error); } },reject); next(); });
+  }
+  async function droppedFiles(event: DragEvent) {
+    const entries=[...(event.dataTransfer?.items || [])].map((item) => item.webkitGetAsEntry?.()).filter((entry):entry is FileSystemEntry => Boolean(entry));
+    return entries.length ? (await Promise.all(entries.map(readEntry))).flat() : [...(event.dataTransfer?.files || [])];
+  }
+  for (const event of ['dragenter','dragover']) dropZone.addEventListener(event,(raw) => { raw.preventDefault(); dropZone.classList.add('dragging'); });
+  for (const event of ['dragleave','drop']) dropZone.addEventListener(event,(raw) => { raw.preventDefault(); dropZone.classList.remove('dragging'); });
+  dropZone.addEventListener('drop',async (event) => upload((await droppedFiles(event)).filter((file) => file.type.startsWith('image/') || /\.(raw|arw|cr2|cr3|nef|dng)$/i.test(file.name))));
+  fileInput.addEventListener('change',() => upload([...(fileInput.files || [])])); folderInput.addEventListener('change',() => upload([...(folderInput.files || [])]));
+  reviewButton.addEventListener('click',() => { if (batchId) location.href=`/bulk/${encodeURIComponent(batchId)}/review`; });
+  if (batchId) poll();
+</script>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; background: #fafafa; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .mono { font-family: 'JetBrains Mono', monospace; }
+          .muted { color: rgba(21,24,28,0.55); }
+          .card { background: #fff; border: 1px solid rgba(21,24,28,0.1); border-radius: 14px; box-shadow: 0 1px 3px rgba(21,24,28,0.05); }
+          .img { background: repeating-linear-gradient(135deg, #dfe3e8 0 10px, #e9ecf0 10px 20px); position: relative; }
+          .ph { position: absolute; left: 14px; bottom: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.04em; color: rgba(21,24,28,0.55); }
+          .section { padding: 0 64px; }
+          .h2 { font-size: 34px; line-height: 1.1; font-weight: 600; letter-spacing: -0.03em; text-wrap: balance; }
+          .lede { font-size: 17px; line-height: 1.55; color: rgba(21,24,28,0.7); text-wrap: pretty; }
+          .eyebrow { font-size: 13px; font-weight: 500; color: #4f46e5; }
+          .chip { border: 1px solid rgba(21,24,28,0.14); border-radius: 999px; padding: 8px 14px; font-size: 13px; background: #fff; }
+          .stat { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(21,24,28,0.12); padding-top: 14px; }
+          .stat b { font-size: 34px; font-weight: 600; letter-spacing: -0.03em; }
+          .btn { background: #15181c; color: #fff; padding: 13px 22px; border-radius: 999px; font-weight: 500; font-size: 14px; display: inline-flex; }
+          .btn2 { border: 1px solid rgba(21,24,28,0.18); padding: 13px 22px; border-radius: 999px; font-weight: 500; font-size: 14px; display: inline-flex; background: #fff; }
+          .step { display: flex; flex-direction: column; gap: 12px; }
+          .step .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4f46e5; }
+          .step h3 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+          .step p { margin: 0; font-size: 14px; line-height: 1.5; color: rgba(21,24,28,0.65); }
+        </style>
+      </helmet>
+<div data-screen-label="Landing v2" style="width: 1440px; background: #fafafa; display: flex; flex-direction: column; gap: 0;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 64px; font-size: 14px;">
+    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px;">
+      <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="#15181c" stroke-width="1.5"><circle cx="9" cy="9" r="7.25"></circle><circle cx="6.5" cy="7.5" r="0.9" fill="#15181c" stroke="none"></circle><circle cx="10.5" cy="6" r="0.9" fill="#15181c" stroke="none"></circle><circle cx="11.5" cy="10.5" r="0.9" fill="#15181c" stroke="none"></circle><circle cx="7.5" cy="11.5" r="0.9" fill="#15181c" stroke="none"></circle></svg>
+      whaleshark.org
+    </div>
+    <div style="display: flex; gap: 28px; align-items: center;" class="muted"><div>Sharks</div><div>Sightings</div><div>Sites</div><div>Photographers</div><div>About</div><div style="background: #15181c; color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 500;">Sign in</div></div>
+  </div>
+
+  <div class="section" style="display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-top: 36px;">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="eyebrow">The community front door to Sharkbook</div>
+      <div style="font-size: 62px; line-height: 1.0; font-weight: 600; letter-spacing: -0.04em; text-wrap: balance;">Every whale shark has a fingerprint. Help us read it.</div>
+      <div class="lede" style="max-width: 560px;">The spots on a whale shark's flank are unique for life. Photograph them and we can tell you which shark you met, where it has been seen before, and whether it's new to science. Every photo joins the world's largest shark photo-identification database.</div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="btn">Drop a photo</div>
+        <div class="btn2">Upload a whole dive</div>
+        <div style="font-size: 13px; text-decoration: underline; text-underline-offset: 3px;" class="muted">Browse the sharks</div>
+      </div>
+      <div style="font-size: 13px;" class="muted">Free, no account needed. Your name stays on your photo.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div class="img card" style="height: 420px; border-radius: 18px; overflow: hidden;">
+        <div style="position: absolute; left: 210px; top: 120px; width: 300px; height: 170px; border: 2px solid #4f46e5; border-radius: 4px;"></div>
+        <div class="mono" style="position: absolute; left: 210px; top: 96px; font-size: 11px; color: #4f46e5;">LEFT FLANK · MATCHED MZ-284 · 0.68</div>
+        <div class="ph">HERO PHOTO · whale shark left flank, diver for scale · Simon Pierce</div>
+      </div>
+      <div class="card" style="display: flex; align-items: center; gap: 14px; padding: 12px 14px;">
+        <div class="img" style="width: 64px; height: 46px; border-radius: 6px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 14px; font-weight: 600;">MZ-284 · first seen Tofo, 2019</div><div style="font-size: 12px;" class="muted">14 sightings · last seen 14 Aug 2026 · once at Mafia Island, 1,800 km away</div></div>
+        <div class="mono" style="font-size: 12px; color: #4f46e5;">live match</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; padding-top: 64px;">
+    <div class="stat"><b>17,532</b><span class="muted" style="font-size: 13px;">Known whale sharks</span></div>
+    <div class="stat"><b>110,256</b><span class="muted" style="font-size: 13px;">Sightings on Sharkbook</span></div>
+    <div class="stat"><b>851</b><span class="muted" style="font-size: 13px;">Sightings so far in 2026</span></div>
+    <div class="stat"><b>25,975</b><span class="muted" style="font-size: 13px;">Sharks of all species on Sharkbook</span></div>
+  </div>
+
+  <div class="section" style="display: grid; grid-template-columns: 420px 1fr; gap: 56px; padding-top: 96px; align-items: start;">
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div class="eyebrow">Why it matters</div>
+      <div class="h2">Whale sharks are endangered. Photos are how we count them.</div>
+      <div class="lede">You can't tag every shark in the ocean. But a photo of the spots behind the left gills identifies an animal for the rest of its life, without touching it. Enough photos, over enough years, and we can see what a population is doing.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+      <div class="card step" style="padding: 20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15181c" stroke-width="1.5" stroke-linecap="round"><path d="M3 12c3-4 6-6 9-6s6 2 9 6c-3 4-6 6-9 6s-6-2-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><h3>How many are there</h3><p>Re-sightings of known sharks against new ones tell us population size and whether it is rising or falling at each site.</p></div>
+      <div class="card step" style="padding: 20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15181c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l5-5 4 4 7-8"></path><path d="M15 8h5v5"></path></svg><h3>Where they go</h3><p>The same shark photographed in Mozambique and Tanzania is a movement record no satellite tag was needed for.</p></div>
+      <div class="card step" style="padding: 20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15181c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"></path><path d="M9 12l2 2 4-4"></path></svg><h3>What hurts them</h3><p>Scars from propellers and nets, recorded to one standard at every site, show whether protection is working.</p></div>
+    </div>
+  </div>
+
+  <div class="section" style="display: flex; flex-direction: column; gap: 28px; padding-top: 96px;">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 640px;"><div class="eyebrow">How it works</div><div class="h2">Three steps, and you get the shark's story back.</div></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+      <div class="step"><div class="img" style="height: 200px; border-radius: 12px;"><div class="ph">PHOTO · diver photographing left flank, spots visible</div></div><div class="n">01</div><h3>Photograph the left side</h3><p>Behind the gills, above the pectoral fin, as square-on as you can. Phone, GoPro or camera all work. Right side is a bonus.</p></div>
+      <div class="step"><div class="img" style="height: 200px; border-radius: 12px;"><div style="position: absolute; left: 60px; top: 50px; width: 200px; height: 100px; border: 2px solid #4f46e5; border-radius: 4px;"></div><div class="ph">ILLUSTRATION · spot pattern to fingerprint</div></div><div class="n">02</div><h3>We match the spots</h3><p>Sharkbook's algorithm compares your shark's pattern with every known whale shark and ranks the closest matches with a confidence score.</p></div>
+      <div class="step"><div class="img" style="height: 200px; border-radius: 12px;"><div class="ph">SCREENSHOT · shark history page</div></div><div class="n">03</div><h3>Researchers confirm it</h3><p>The team at that site checks the match. You get the shark's history, and an email every time it's seen again.</p></div>
+    </div>
+  </div>
+
+  <div class="section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding-top: 96px; align-items: center;">
+    <div class="img" style="height: 360px; border-radius: 18px;"><div class="ph">MAP · sighting density, Indian Ocean to Pacific</div></div>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="eyebrow">Where the sharks are</div>
+      <div class="h2">One database, every ocean.</div>
+      <div class="lede">Sharkbook holds whale shark records from dozens of sites. whaleshark.org starts with the Western Indian Ocean network, where MMF and its partners run the season-by-season science.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;"><div class="chip">Tofo, Mozambique</div><div class="chip">Mafia Island, Tanzania</div><div class="chip">Nosy Be, Madagascar</div><div class="chip">Oman</div><div class="chip">Seychelles</div><div class="chip">Ningaloo</div><div class="chip">Galápagos</div><div class="chip">La Paz, Mexico</div><div class="chip">Donsol</div><div class="chip">Maldives</div><div class="chip" style="border-style: dashed;">+ many more</div></div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top: 96px;">
+    <div class="card" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; padding: 36px 40px; align-items: center; border-radius: 18px;">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="eyebrow">A community resource</div>
+        <div class="h2" style="font-size: 28px;">Built on Sharkbook. Stewarded by the Marine Megafauna Foundation. Open to everyone.</div>
+        <div class="lede" style="font-size: 15px;">Sharkbook.ai is Wild Me's open-source Wildbook platform for sharks — the world's largest shark photo-ID database, built over two decades by thousands of contributors. whaleshark.org is a front door to it for whale sharks, and the code is open source so other species can have one too.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(21,24,28,0.1); padding-bottom: 10px;"><span class="muted">Matching</span><span>Sharkbook.ai / Wild Me</span></div>
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(21,24,28,0.1); padding-bottom: 10px;"><span class="muted">Stewardship</span><span>Marine Megafauna Foundation</span></div>
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(21,24,28,0.1); padding-bottom: 10px;"><span class="muted">Your photos</span><span>Yours. Credited. Never sold.</span></div>
+        <div style="display: flex; justify-content: space-between;"><span class="muted">Code</span><span style="text-decoration: underline; text-underline-offset: 3px;">github.com/marinemegafauna/whaleshark-org</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; padding: 56px 64px 40px 64px; font-size: 12px;" class="muted mono">
+    <div>whaleshark.org · a community resource stewarded by the Marine Megafauna Foundation</div><div style="display: flex; gap: 24px;"><div>Privacy</div><div>Data use</div><div>Contact</div></div>
+  </div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 2460}}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+---
+import AppHeader from './AppHeader.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow: string;
+  heading: string;
+  lede: string;
+  active: 'practice' | 'contribute' | 'collaboration';
+}
+const { title, description, eyebrow, heading, lede, active } = Astro.props;
+---
+<BaseLayout app title={title} description={description}>
+  <AppHeader active={active} />
+  <main class="info-shell">
+    <header class="info-intro">
+      <span class="eyebrow">{eyebrow}</span>
+      <h1>{heading}</h1>
+      <p>{lede}</p>
+    </header>
+    <div class="info-body"><slot /></div>
+  </main>
+</BaseLayout>
+<style>
+  .info-shell { margin:0 auto; max-width:1040px; padding:48px 40px 80px; }
+  .info-intro { max-width:720px; }
+  .info-intro h1 { font-size:clamp(38px,5vw,58px); font-weight:600; letter-spacing:-.045em; line-height:1; margin:10px 0 16px; }
+  .info-intro p { color:rgba(21,24,28,.7); font-size:18px; line-height:1.55; margin:0; text-wrap:pretty; }
+  .info-body { display:flex; flex-direction:column; gap:18px; margin-top:32px; }
+  @media (max-width:900px) { .info-shell { padding:34px 28px 64px; } }
+  @media (max-width:560px) {
+    .info-shell { padding:26px 18px 52px; }
+    .info-intro h1 { font-size:40px; }
+    .info-intro p { font-size:16px; }
+  }
+</style>

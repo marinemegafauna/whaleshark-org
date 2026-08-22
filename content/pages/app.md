@@ -8,7 +8,15 @@ seo:
 header:
   menuLabel: Menu
   navAriaLabel: Application navigation
-  nav: [Encounters, Individuals, Scar records, Matches to confirm, Exports]
+  nav:
+    - { key: encounters, label: Encounters, href: /app }
+    - { key: individuals, label: Individuals }
+    - { key: scars, label: Scar records }
+    - { key: matches, label: Matches to confirm }
+    - { key: exports, label: Exports }
+    - { key: practice, label: Practice, href: /app/practice }
+    - { key: contribute, label: Contribute, href: /app/contribute }
+    - { key: collaboration, label: Collaboration, href: /app/collaboration }
   connectedLabel: SHARKBOOK · CONNECTED
   accountName: Clare Prebble
 rail:

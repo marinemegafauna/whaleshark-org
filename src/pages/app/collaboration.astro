@@ -1,0 +1,36 @@
+---
+import AppInfoLayout from '../../components/AppInfoLayout.astro';
+import { getPageCopy } from '../../lib/content';
+import { renderMarkdownBlocks } from '../../lib/content-utils';
+
+const copy = await getPageCopy('collaboration');
+---
+<AppInfoLayout active="collaboration" title={copy.seo.title} description={copy.seo.description} eyebrow={copy.eyebrow} heading={copy.title} lede={copy.lede}>
+  <aside class="draft-banner panel">
+    <strong class="mono">{copy.banner.label}</strong>
+    <p>{copy.banner.body}</p>
+  </aside>
+  {copy.sections.map((section) => <section class="panel section-card" id={section.id}>
+    <h2>{section.heading}</h2>
+    {section.body && <div class="body" set:html={renderMarkdownBlocks(section.body)} />}
+    {section.items && <ol>{section.items.map((item, index) => <li><span class="mono">{String(index + 1).padStart(2, '0')}</span><p>{item}</p></li>)}</ol>}
+  </section>)}
+  <a class="button case-link" href={copy.caseLink.href}>{copy.caseLink.label}</a>
+</AppInfoLayout>
+<style>
+  .draft-banner { align-items:flex-start; background:#fff7ed; border-color:#fed7aa; display:grid; gap:16px; grid-template-columns:190px minmax(0,1fr); padding:16px 18px; }
+  .draft-banner strong { color:var(--warn); font-size:12px; text-transform:uppercase; }
+  .draft-banner p { color:rgba(21,24,28,.7); font-size:14px; line-height:1.5; margin:0; }
+  .section-card { padding:24px; }
+  h2 { font-size:24px; letter-spacing:-.025em; margin:0 0 14px; }
+  .body { color:rgba(21,24,28,.72); font-size:15px; line-height:1.65; }
+  .body :global(p) { margin:0 0 14px; }
+  .body :global(p:last-child) { margin-bottom:0; }
+  ol { display:flex; flex-direction:column; list-style:none; margin:0; padding:0; }
+  li { border-top:1px solid var(--line); display:grid; gap:14px; grid-template-columns:32px minmax(0,1fr); padding:14px 0; }
+  li:last-child { padding-bottom:0; }
+  li span { color:var(--accent); font-size:11px; padding-top:4px; }
+  li p { color:rgba(21,24,28,.72); font-size:15px; line-height:1.55; margin:0; }
+  .case-link { align-self:flex-start; }
+  @media (max-width:560px) { .draft-banner { grid-template-columns:1fr; gap:7px; }.section-card { padding:20px; }.case-link { width:100%; } }
+</style>

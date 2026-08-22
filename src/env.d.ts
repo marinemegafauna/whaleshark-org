@@ -14,6 +14,8 @@ declare global {
     readonly MOCK_APP?: string;
     readonly PUBLIC_WRITE?: 'dry-run' | 'live';
     readonly SCAR_WRITEBACK?: 'off' | 'append';
+    readonly GITHUB_REPO?: string;
+    readonly GITHUB_TOKEN?: string;
     readonly WILDBOOK_BASE_URL?: string;
     readonly WILDBOOK_SERVICE_USER?: string;
     readonly WILDBOOK_SERVICE_PASSWORD?: string;

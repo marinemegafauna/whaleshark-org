@@ -6,6 +6,14 @@ The project is built on Sharkbook by Wild Me / Conservation X Labs, with Marine 
 
 Every uploaded photo also receives a reviewer-only provenance check. Camera metadata, Content Credentials, exact-file hashes, and detector/matcher sanity signals produce a capped 0–3 attention score stored with the submission; the score can flag an image for closer human review but never rejects it or changes the public upload flow.
 
+## Learn pages
+
+The public `/about-whale-sharks` page summarises the species, threats, 2025 IUCN Red List status, and why photo-identification matters. `/how-it-works` explains the Sharkbook data model, matching and review flow, including what happens to a contributor's photo and sighting details. Signed-in researchers have `/app/practice` for official Wild Me channels, documentation and videos, plus a draft `/app/collaboration` guide to Sharkbook access requests and current workarounds. All of their copy lives in `content/pages/`.
+
+## Contribute (GitHub issues)
+
+Signed-in users can file a feature request or problem at `/app/contribute`. The Worker stores each request in D1, rate-limits each Sharkbook username to one request per minute, and creates a labelled issue in the repository configured by `GITHUB_REPO` when the `GITHUB_TOKEN` Worker secret is present. If the token is absent or GitHub is temporarily unavailable, the D1 copy remains available rather than losing the request. Open `from-site` issues are read from GitHub, cached for five minutes in the `SESSION` KV namespace, listed on the page, and counted in the app header.
+
 ## Editing the text
 
 All maintainer-editable site copy lives in `content/`: global names, navigation, site labels, footer text, and the canonical photo-credit registry are in `content/site.md`; page copy, image paths, and alt text are in `content/pages/*.md`; species vocabularies are in `content/species/*.{yaml,yml}`. Astro validates these files during checks and builds. They can be edited directly, exposed through a git-based CMS, or reflected into Obsidian with the optional `scripts/vault_sync.py` workflow.
@@ -16,7 +24,7 @@ Screenshots will be added after the first Cloudflare preview deployment. The app
 
 ## Responsive
 
-The interface uses two shared breakpoints: 900px for compact navigation and single-column workspaces, and 560px for phone-specific spacing and sticky action bars. Public and researcher headers expose accessible disclosure menus below 900px while keeping the public sign-in action visible.
+The headers expose accessible disclosure menus below 1100px so the expanded public and researcher navigation does not crowd. Workspaces switch to their compact or single-column layouts at 900px, and 560px handles phone-specific spacing and sticky action bars. The public sign-in action remains visible when its navigation collapses.
 
 On phones, bulk-upload controls and summaries stack, batch and submit actions stay reachable above the safe area, match actions become full-width, and workbench tables become encounter or scar cards. The researcher site rail is the one intentional horizontal scroller: it becomes a single snap-scrolling row of site chips beneath the app header. Scar markers remain percentage-positioned over the naturally scaling encounter image.
 
@@ -30,6 +38,12 @@ cp .env.example .env
 npm run dev
 ```
 
+Managed sandboxes that prohibit local TCP listeners cannot run `astro dev` or browser-based local QA: Astro exits before becoming ready, and even a minimal local HTTP server fails to bind. In that environment, use `npm test`, `npx astro check`, and `npm run build`; perform rendered browser QA later in a local session that permits a loopback listener. Some managed shells also reject explicit temporary-file cleanup commands, so migration diagnostics should use an in-memory SQLite pipeline rather than a temporary database that needs removal.
+
+```bash
+{ for migration in migrations/*.sql; do sed -n '1,$p' "$migration"; done; printf '.schema contributions\n'; } | sqlite3 :memory:
+```
+
 ## Configure a real Wildbook
 
 1. Copy `.env.example` to `.env` locally and set `WILDBOOK_BASE_URL` to a Wildbook ≥ 10.12 instance.
@@ -40,6 +54,8 @@ npm run dev
 6. Keep `PUBLIC_WRITE=dry-run`. `live` currently exposes only the real-mode whole-dive matching client for target-instance validation; single-photo media staging and final reviewed observation publication remain deliberately gated until consent-safe object storage and idempotency are implemented.
 7. Keep `SCAR_WRITEBACK=off`. Switch it to `append` for one site only after a supervised test with a researcher account confirms the merged `distinguishingScar` text in Sharkbook. Write-back uses that researcher's stored session cookie, replaces only whaleshark.org's previous `[scars v…]` line, and never overwrites human text.
 8. Deploy with `npm run deploy`.
+
+To connect the signed-in contribution form, set `GITHUB_REPO` to the target `owner/repository` and add `GITHUB_TOKEN` as a Cloudflare Worker secret with permission to create issues in that repository. Do not put the token in `wrangler.toml` or commit it to `.env`.
 
 Researcher passwords are forwarded to Wildbook’s login endpoint once and are never stored. The Worker stores only the resulting `JSESSIONID` in D1 against an HttpOnly site session.
 
@@ -58,6 +74,7 @@ Implemented against real interfaces:
 - Astro 7 server output on Cloudflare Workers
 - Wildbook v3 login, encounter search, encounter/individual reads, media resolution, encounter creation, resumable uploads, bulk-import task polling, and match-result reads
 - D1 sessions, scar records, encounter review status, public submissions, and bulk batches with per-photo items
+- D1-backed signed-in contribution requests with optional GitHub issue creation, open-issue caching, and per-user rate limiting
 - public whole-dive upload, deterministic mock processing, grouped batch review, and a researcher batch queue
 - per-species Zod-validated YAML and schema-rendered scar forms
 - species-driven public sighting reports for one photo or a whole dive, with stored public observations and tested Wildbook bulk-import rows

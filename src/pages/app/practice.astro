@@ -1,0 +1,50 @@
+---
+import AppInfoLayout from '../../components/AppInfoLayout.astro';
+import { getPageCopy } from '../../lib/content';
+import { renderMarkdownBlocks } from '../../lib/content-utils';
+
+const copy = await getPageCopy('practice');
+---
+<AppInfoLayout active="practice" title={copy.seo.title} description={copy.seo.description} eyebrow={copy.eyebrow} heading={copy.title} lede={copy.lede}>
+  <section class="panel section-card">
+    <h2>{copy.official.heading}</h2>
+    <div class="body" set:html={renderMarkdownBlocks(copy.official.body)} />
+    <div class="link-list">{copy.official.links.map((link) => <a href={link.href}>{link.label}</a>)}</div>
+  </section>
+  <section class="panel section-card">
+    <h2>{copy.videos.heading}</h2>
+    <div class="body" set:html={renderMarkdownBlocks(copy.videos.body)} />
+    <div class="video-grid">{copy.videos.items.map((video) => <figure>
+      <div class="video"><iframe src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={video.title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+      <figcaption><strong>{video.title}</strong><span>{video.source}</span></figcaption>
+    </figure>)}</div>
+  </section>
+  <section class="panel section-card">
+    <h2>{copy.walkthroughs.heading}</h2>
+    {copy.walkthroughs.items.length > 0
+      ? <div class="link-list">{copy.walkthroughs.items.map((link) => <a href={link.href}>{link.label}</a>)}</div>
+      : <p class="placeholder">{copy.walkthroughs.placeholder}</p>}
+  </section>
+  <aside class="team-tip panel">
+    <span class="mono">{copy.teamAccounts.heading}</span>
+    <div class="body" set:html={renderMarkdownBlocks(copy.teamAccounts.body)} />
+  </aside>
+</AppInfoLayout>
+<style>
+  .section-card { padding:24px; }
+  h2 { font-size:24px; letter-spacing:-.025em; margin:0 0 10px; }
+  .body { color:rgba(21,24,28,.72); font-size:15px; line-height:1.6; }
+  .body :global(p) { margin:0; }
+  .link-list { display:grid; gap:8px; grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:18px; }
+  .link-list a { align-items:center; border:1px solid var(--line); border-radius:8px; color:var(--accent); display:flex; font-size:14px; font-weight:600; min-height:48px; padding:10px 12px; }
+  .video-grid { display:grid; gap:18px; grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:20px; }
+  figure { margin:0; min-width:0; }
+  .video { aspect-ratio:16/9; background:var(--ink); border-radius:10px; overflow:hidden; }
+  iframe { border:0; height:100%; width:100%; }
+  figcaption { display:flex; flex-direction:column; font-size:14px; gap:3px; margin-top:9px; }
+  figcaption span { color:var(--muted); font-size:12px; }
+  .placeholder { background:var(--accent-soft); border:1px dashed rgba(79,70,229,.25); border-radius:8px; color:var(--accent); font-size:14px; margin:16px 0 0; padding:18px; }
+  .team-tip { border-left:3px solid var(--accent); display:grid; gap:14px; grid-template-columns:150px minmax(0,1fr); padding:18px 20px; }
+  .team-tip > span { color:var(--accent); font-size:12px; padding-top:3px; text-transform:uppercase; }
+  @media (max-width:700px) { .link-list,.video-grid { grid-template-columns:1fr; }.team-tip { grid-template-columns:1fr; } }
+</style>

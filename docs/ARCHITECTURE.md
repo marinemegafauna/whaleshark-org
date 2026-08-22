@@ -6,8 +6,9 @@ whaleshark.org is a **front end for a Wildbook instance** (Sharkbook.ai for whal
 
 ```
 Browser ──▶ Astro (Cloudflare Workers) ──▶ Wildbook v3 API (sharkbook.ai)
-                    │
-                    └──▶ D1 (SQLite): scar records, sessions, public submissions
+                    │                  └──▶ GitHub Issues (signed-in requests)
+                    ├──▶ D1 (SQLite): scars, sessions, public submissions, contributions
+                    └──▶ KV: Astro sessions + five-minute open-issue cache
 ```
 
 - **Astro 7** with the Cloudflare adapter. Static pages where possible, server routes (`src/pages/api/*`) for everything that talks to Wildbook. Wildbook does not send CORS headers, so the browser never calls it directly; the Worker proxies.
@@ -25,6 +26,14 @@ Server routes and middleware obtain the D1 binding from the Cloudflare adapter's
 
 - **Researchers** sign in with their Wildbook account. The Worker forwards credentials to `POST /api/v3/login` once, keeps the `JSESSIONID` server-side in D1 against a random session id, and sets an HttpOnly cookie. The site never stores a password. Access equals the user's Wildbook access.
 - **Public uploads** are designed to run under a **service account** (Workers secret), but reviewed observation publishing remains gated. `PUBLIC_WRITE=dry-run` records the report and its exact diagnostic bulk-import row in D1 and creates nothing upstream. Real-mode whole-dive matching can stage photos through `ResumableUpload`; single-photo media staging and final reviewed-row publication stay disabled until consent-safe object storage and target-instance idempotency are in place.
+
+## Contribute data flow
+
+`/app/contribute` and `POST /api/contribute` use the same signed-in gate as the research workbench. The route validates the request, writes the full title, description, optional page URL, username and timestamp to D1 first, and uses an atomic insert guard to allow one request per username per rolling minute. The session cookie, Wildbook session cookie and Worker secrets never enter the contribution row or issue body.
+
+When `GITHUB_TOKEN` and `GITHUB_REPO` are configured through `runtimeValue`, the Worker calls GitHub's issue REST endpoint with `from-site` plus `feature-request` or `bug`. A successful issue number and URL are added to the D1 row. A missing token, network failure or non-success GitHub response leaves the complete D1 request intact and returns the calm stored-request state to the user. Open `from-site` issues are public reads; the token is optional there and is supplied only to raise the API rate limit. The mapped display list is cached under `contribute:issues` in the `SESSION` KV namespace for 300 seconds and provides the app-header count.
+
+`GITHUB_TOKEN` is an environment secret and must never be committed, rendered into HTML, returned by the API, or included in an issue. Forks set `GITHUB_REPO` to their own repository.
 
 ## Matching
 

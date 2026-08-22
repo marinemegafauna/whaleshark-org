@@ -2,6 +2,7 @@
 name: whaleshark.org
 tagline: Meet the whale shark in your photo.
 steward: Community contributors
+contactEmail: info@marinemegafauna.org
 defaultDescription: Meet the whale shark in your photo.
 brandHomeAriaLabel: whaleshark.org home
 menuLabel: Menu
@@ -17,6 +18,7 @@ publicNav:
   - { key: catalogue, label: Catalogue, href: "/#catalogue" }
   - { key: match, label: Match, href: "/match/submission-demo" }
   - { key: how, label: How it works, href: "/how-it-works" }
+  - { key: whale-sharks, label: About whale sharks, href: "/about-whale-sharks" }
   - { key: sites, label: Sites, href: "/#sites" }
   - { key: photographers, label: Photographers, href: "/#photographers" }
   - { key: about, label: About, href: "/#about" }

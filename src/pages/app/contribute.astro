@@ -1,0 +1,124 @@
+---
+import AppInfoLayout from '../../components/AppInfoLayout.astro';
+import { fillTemplate, getPageCopy, getSiteCopy } from '../../lib/content';
+import { listOpenContributionIssues, type OpenContributionIssue } from '../../lib/contribute';
+import { renderMarkdownBlocks } from '../../lib/content-utils';
+import { contributionIssueCache, runtimeValue } from '../../lib/runtime';
+
+const [copy, siteCopy] = await Promise.all([getPageCopy('contribute'), getSiteCopy()]);
+const githubRepo = runtimeValue(Astro.locals, 'GITHUB_REPO');
+let issues: OpenContributionIssue[] = [];
+let issuesUnavailable = false;
+if (githubRepo) {
+  try {
+    issues = await listOpenContributionIssues({
+      repo: githubRepo,
+      token: runtimeValue(Astro.locals, 'GITHUB_TOKEN'),
+      cache: contributionIssueCache(Astro.locals),
+    });
+  } catch {
+    issuesUnavailable = true;
+  }
+} else {
+  issuesUnavailable = true;
+}
+
+const status = Astro.url.searchParams.get('status');
+const issueUrl = Astro.url.searchParams.get('url');
+const safeIssueUrl = issueUrl?.startsWith('https://github.com/') ? issueUrl : null;
+const selectedKind = Astro.url.searchParams.get('kind') === 'problem' ? 'problem' : 'feature';
+const presetTitle = Astro.url.searchParams.get('title') ?? '';
+const dateFormat = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'medium' });
+const statusCopy = status === 'stored'
+  ? copy.form.statuses.stored
+  : status === 'rate_limited'
+    ? copy.form.statuses.rateLimited
+    : status === 'invalid'
+      ? copy.form.statuses.invalid
+      : null;
+---
+<AppInfoLayout active="contribute" title={copy.seo.title} description={copy.seo.description} eyebrow={copy.eyebrow} heading={copy.title} lede={copy.lede}>
+  {status === 'created' && safeIssueUrl && <aside class="notice success panel">
+    <span>{copy.form.statuses.created}</span><a href={safeIssueUrl}>{copy.form.statuses.createdLinkLabel}</a>
+  </aside>}
+  {statusCopy && <aside class:list={['notice','panel',{ warning:status !== 'stored' }]} set:html={renderMarkdownBlocks(fillTemplate(statusCopy, { contactEmail: siteCopy.contactEmail }))} />}
+  <section class="panel form-card">
+    <h2>{copy.form.heading}</h2>
+    <form method="post" action="/api/contribute">
+      <fieldset>
+        <legend>{copy.form.kindLabel}</legend>
+        <div class="kind-options">{copy.form.kinds.map((kind) => <label><input type="radio" name="kind" value={kind.id} checked={selectedKind === kind.id} required /><span>{kind.label}</span></label>)}</div>
+      </fieldset>
+      <label><span>{copy.form.titleLabel}</span><input name="title" value={presetTitle} placeholder={copy.form.titlePlaceholder} maxlength="160" required /></label>
+      <label><span>{copy.form.descriptionLabel}</span><textarea name="description" rows="7" maxlength="8000" required></textarea><small>{copy.form.descriptionHelp}</small></label>
+      <label><span>{copy.form.pageUrlLabel}</span><input name="page_url" type="url" placeholder={copy.form.pageUrlHelp} /></label>
+      <button class="button" type="submit">{copy.form.submitLabel}</button>
+    </form>
+  </section>
+  <section class="panel issues-card">
+    <header><div><h2>{copy.issues.heading}</h2><p>{copy.issues.body}</p></div>{!issuesUnavailable && <span class="mono">{fillTemplate(copy.issues.count, { count: issues.length })}</span>}</header>
+    {issuesUnavailable
+      ? <p class="empty">{copy.issues.unavailable}</p>
+      : issues.length === 0
+        ? <p class="empty">{copy.issues.empty}</p>
+        : <div class="issue-list">{issues.map((issue) => <article>
+          <div><strong>{issue.title}</strong><span class:list={['kind-chip',issue.kind]}>{copy.issues.kindLabels[issue.kind]}</span></div>
+          <p>{fillTemplate(copy.issues.opened, { username: issue.openedBy || copy.issues.unknownUser, date: dateFormat.format(new Date(issue.openedAt)) })}</p>
+          <a href={issue.url}>{copy.issues.openLinkLabel}</a>
+        </article>)}</div>}
+  </section>
+  <section class="panel propose-card">
+    <h2>{copy.propose.heading}</h2>
+    <div class="body" set:html={renderMarkdownBlocks(copy.propose.body)} />
+    <div>{copy.propose.links.map((link) => <a href={link.href}>{link.label}</a>)}</div>
+  </section>
+</AppInfoLayout>
+<style>
+  .notice { align-items:center; border-left:3px solid var(--accent); display:flex; font-size:14px; justify-content:space-between; padding:14px 16px; }
+  .notice.success { background:#f0fdf4; border-color:#16a34a; }
+  .notice.warning { background:#fff7ed; border-color:var(--warn); }
+  .notice a,.notice :global(a) { color:var(--accent); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+  .notice :global(p) { margin:0; }
+  .form-card,.issues-card,.propose-card { padding:24px; }
+  h2 { font-size:24px; letter-spacing:-.025em; margin:0; }
+  form { display:flex; flex-direction:column; gap:18px; margin-top:20px; }
+  form > label { display:flex; flex-direction:column; font-size:14px; font-weight:600; gap:7px; }
+  fieldset { border:0; margin:0; padding:0; }
+  legend { font-size:14px; font-weight:600; margin-bottom:8px; }
+  input,textarea { background:#fff; border:1px solid var(--line-strong); border-radius:8px; padding:10px 12px; width:100%; }
+  textarea { line-height:1.5; resize:vertical; }
+  label small { color:var(--muted); font-size:12px; font-weight:400; }
+  .kind-options { display:flex; gap:10px; }
+  .kind-options label { cursor:pointer; }
+  .kind-options input { height:1px; opacity:0; position:absolute; width:1px; }
+  .kind-options span { align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius-pill); display:flex; font-size:14px; min-height:44px; padding:8px 16px; }
+  .kind-options input:checked + span { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  form .button { align-self:flex-start; }
+  .issues-card > header { align-items:flex-start; display:flex; gap:18px; justify-content:space-between; }
+  .issues-card header p { color:var(--muted); font-size:14px; margin:6px 0 0; }
+  .issues-card header > span { color:var(--accent); font-size:11px; white-space:nowrap; }
+  .empty { color:var(--muted); font-size:14px; margin:18px 0 0; }
+  .issue-list { display:flex; flex-direction:column; margin:20px -24px -24px; }
+  .issue-list article { align-items:center; border-top:1px solid var(--line); display:grid; gap:12px; grid-template-columns:minmax(0,1fr) auto; padding:14px 24px; }
+  .issue-list article > div { align-items:center; display:flex; flex-wrap:wrap; gap:8px; }
+  .issue-list strong { font-size:15px; }
+  .issue-list p { color:var(--muted); font-size:12px; grid-column:1; margin:0; }
+  .issue-list a { color:var(--accent); font-size:13px; font-weight:600; grid-column:2; grid-row:1/3; }
+  .kind-chip { border-radius:var(--radius-pill); font-size:11px; font-weight:600; padding:3px 7px; }
+  .kind-chip.feature { background:var(--accent-soft); color:var(--accent); }
+  .kind-chip.problem { background:#fff7ed; color:var(--warn); }
+  .kind-chip.request { background:rgba(21,24,28,.06); color:var(--muted); }
+  .propose-card .body { color:rgba(21,24,28,.72); font-size:15px; line-height:1.6; margin-top:10px; }
+  .propose-card .body :global(p) { margin:0; }
+  .propose-card > div:last-child { display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+  .propose-card a { color:var(--accent); font-size:14px; font-weight:600; }
+  @media (max-width:560px) {
+    .notice,.issues-card > header { align-items:flex-start; flex-direction:column; }
+    .form-card,.issues-card,.propose-card { padding:20px; }
+    .kind-options { flex-direction:column; }
+    form .button { width:100%; }
+    .issue-list { margin:18px -20px -20px; }
+    .issue-list article { grid-template-columns:1fr; padding:14px 20px; }
+    .issue-list a { grid-column:1; grid-row:auto; min-height:36px; }
+  }
+</style>

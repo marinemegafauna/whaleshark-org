@@ -35,6 +35,14 @@ sections:
     heading: What whaleshark.org adds
     body: |
       Sharkbook's own interface is built for researchers managing many species. whaleshark.org is a simpler front door for one: drop a photo or a whole dive, see the ranked matches in plain language, and — for the research teams — record scars to one shared standard. Everything it shows comes from Sharkbook through its public API, and everything it records goes back there or is linked to it. Nothing lives only here.
+  - id: your-data
+    heading: What happens to your photo and data
+    body: |
+      Your photo and sighting details go to Sharkbook.ai, the Wildbook run by Wild Me / Conservation X Labs, where the site's research team reviews them. You are credited by the name you give. Your email is used only for the match result and re-sight notices and is never shown publicly.
+
+      Photos can be used for research and shown on the shark's public page. The provenance check — camera metadata, Content Credentials and pipeline sanity checks — only flags an image for a reviewer to look at; it never rejects a photo.
+
+      To change or remove a submission, [contact the site team](mailto:{contactEmail}).
   - id: open-source
     heading: Open source — build one for your species
     body: |

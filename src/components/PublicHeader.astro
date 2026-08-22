@@ -30,7 +30,7 @@ const copy = await getSiteCopy();
   .menu-toggle { align-items: center; background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); cursor: pointer; display: none; gap: 7px; justify-content: center; padding: 0 14px; }
   .signin { background: var(--ink); border-radius: var(--radius-pill); color: #fff; font-weight: 500; padding: 8px 16px; }
   .signin:hover { background: var(--accent); color: #fff; }
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
     .public-header { grid-template-columns: minmax(0,1fr) auto; padding: 16px 32px; }
     .header-actions { grid-column: 2; margin-left: 12px; }
     .menu-toggle { display: inline-flex; }
@@ -51,7 +51,7 @@ const copy = await getSiteCopy();
   import { initDisclosureMenu } from '../lib/disclosure-menu';
   const trigger = document.querySelector<HTMLElement>('.public-header .menu-toggle');
   const menu = document.querySelector<HTMLElement>('#public-menu');
-  const mobile = window.matchMedia('(max-width: 900px)');
+  const mobile = window.matchMedia('(max-width: 1100px)');
   if (trigger && menu) {
     const disclosure = initDisclosureMenu(trigger, menu);
     const sync = () => { if (mobile.matches) disclosure.close(); else menu.hidden = false; };

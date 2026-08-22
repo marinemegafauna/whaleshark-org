@@ -101,6 +101,20 @@ export interface CatalogueStats {
   fetched_at: string;
 }
 
+export type ContributionKind = 'feature' | 'problem';
+
+export interface Contribution {
+  id: string;
+  github_issue_number: number | null;
+  github_url: string | null;
+  username: string;
+  created_at: string;
+  kind: ContributionKind;
+  title: string;
+  description: string;
+  page_url: string | null;
+}
+
 export interface DataStore {
   listScarRecords(filter?: { encounterId?: string; individualId?: string }): Promise<ScarRecord[]>;
   createScarRecord(record: ScarRecord): Promise<ScarRecord>;
@@ -124,6 +138,9 @@ export interface DataStore {
   getSession(id: string): Promise<SessionRecord | null>;
   saveCatalogueStats(stats: CatalogueStats): Promise<CatalogueStats>;
   getCatalogueStats(): Promise<CatalogueStats | null>;
+  createContributionIfAllowed(contribution: Contribution, notBefore: string): Promise<boolean>;
+  updateContributionIssue(id: string, issueNumber: number, issueUrl: string): Promise<Contribution>;
+  listContributions(): Promise<Contribution[]>;
 }
 
 class MemoryStore implements DataStore {
@@ -133,6 +150,7 @@ class MemoryStore implements DataStore {
   private batches: Batch[] = [];
   private batchItems: BatchItem[] = [];
   private sessions: SessionRecord[] = [];
+  private contributions: Contribution[] = [];
   private catalogueStats: CatalogueStats | null = null;
 
   constructor() {
@@ -146,6 +164,7 @@ class MemoryStore implements DataStore {
     this.batches = structuredClone(mockBatches);
     this.batchItems = structuredClone(mockBatchItems);
     this.sessions = [];
+    this.contributions = [];
     this.catalogueStats = null;
     return this;
   }
@@ -268,6 +287,27 @@ class MemoryStore implements DataStore {
 
   async getCatalogueStats() {
     return this.catalogueStats ? structuredClone(this.catalogueStats) : null;
+  }
+
+  async createContributionIfAllowed(contribution: Contribution, notBefore: string) {
+    const tooRecent = this.contributions.some(
+      (candidate) => candidate.username === contribution.username && candidate.created_at > notBefore,
+    );
+    if (tooRecent) return false;
+    this.contributions.push(structuredClone(contribution));
+    return true;
+  }
+
+  async updateContributionIssue(id: string, issueNumber: number, issueUrl: string) {
+    const index = this.contributions.findIndex((contribution) => contribution.id === id);
+    if (index < 0) throw new Error(`Contribution not found: ${id}`);
+    const updated = { ...this.contributions[index]!, github_issue_number: issueNumber, github_url: issueUrl };
+    this.contributions[index] = updated;
+    return structuredClone(updated);
+  }
+
+  async listContributions() {
+    return structuredClone(this.contributions);
   }
 }
 
@@ -409,6 +449,38 @@ class D1Store implements DataStore {
 
   getCatalogueStats() {
     return this.db.prepare('SELECT whale_shark_individuals, whale_shark_encounters, whale_shark_encounters_ytd, all_individuals, fetched_at FROM catalogue_stats WHERE id = 1').first<CatalogueStats>();
+  }
+
+  async createContributionIfAllowed(contribution: Contribution, notBefore: string) {
+    const result = await this.db.prepare(`INSERT INTO contributions (id, github_issue_number, github_url, username, created_at, kind, title, description, page_url)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+      WHERE NOT EXISTS (SELECT 1 FROM contributions WHERE username = ? AND created_at > ?)`)
+      .bind(
+        contribution.id,
+        contribution.github_issue_number,
+        contribution.github_url,
+        contribution.username,
+        contribution.created_at,
+        contribution.kind,
+        contribution.title,
+        contribution.description,
+        contribution.page_url,
+        contribution.username,
+        notBefore,
+      ).run();
+    return (result.meta.changes ?? 0) > 0;
+  }
+
+  async updateContributionIssue(id: string, issueNumber: number, issueUrl: string) {
+    await this.db.prepare('UPDATE contributions SET github_issue_number = ?, github_url = ? WHERE id = ?')
+      .bind(issueNumber, issueUrl, id).run();
+    const updated = await this.db.prepare('SELECT * FROM contributions WHERE id = ?').bind(id).first<Contribution>();
+    if (!updated) throw new Error(`Contribution not found: ${id}`);
+    return updated;
+  }
+
+  async listContributions() {
+    return (await this.db.prepare('SELECT * FROM contributions ORDER BY created_at DESC').all<Contribution>()).results;
   }
 }
 

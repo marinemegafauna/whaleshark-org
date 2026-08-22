@@ -3,7 +3,7 @@ import { isMockAppMode } from './lib/mode';
 import { appDataStore } from './lib/runtime';
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const protectedPath = context.url.pathname.startsWith('/app') || context.url.pathname.startsWith('/api/scars') || context.url.pathname.startsWith('/api/review');
+  const protectedPath = context.url.pathname.startsWith('/app') || context.url.pathname.startsWith('/api/scars') || context.url.pathname.startsWith('/api/review') || context.url.pathname.startsWith('/api/contribute');
   if (!protectedPath || isMockAppMode()) return next();
 
   const sessionId = context.cookies.get('whaleshark_session')?.value;

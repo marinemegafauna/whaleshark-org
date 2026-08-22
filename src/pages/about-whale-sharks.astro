@@ -2,19 +2,22 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PartnerRow from '../components/PartnerRow.astro';
 import PublicHeader from '../components/PublicHeader.astro';
-import { fillTemplate, getPageCopy, getSiteCopy } from '../lib/content';
-import { renderMarkdownBlocks } from '../lib/content-utils';
+import { getPageCopy, getSiteCopy } from '../lib/content';
+import { renderMarkdownBlocks, renderMarkdownInline } from '../lib/content-utils';
 
-const [copy, siteCopy] = await Promise.all([getPageCopy('how-it-works'), getSiteCopy()]);
+const [copy, siteCopy] = await Promise.all([getPageCopy('about-whale-sharks'), getSiteCopy()]);
 ---
 <BaseLayout title={`${copy.title} · ${siteCopy.name}`} description={copy.lede}>
-  <PublicHeader active="how" />
+  <PublicHeader active="whale-sharks" />
   <main class="explainer">
     <header class="intro">
       <span>{copy.eyebrow}</span>
       <h1>{copy.title}</h1>
       <p>{copy.lede}</p>
-      <aside class="stage-note">{siteCopy.howItWorksUi.currentStageNotice}</aside>
+      {copy.status_card && <a class="status-card card" href={copy.status_card.href}>
+        <span><strong>{copy.status_card.heading}</strong><small>{copy.status_card.assessmentYear} · {copy.status_card.criterion}</small></span>
+        <b>{copy.status_card.linkLabel}</b>
+      </a>}
     </header>
     <aside class="contents card" aria-label={siteCopy.howItWorksUi.contentsLabel}>
       <strong class="mono">{siteCopy.howItWorksUi.contentsLabel}</strong>
@@ -23,14 +26,13 @@ const [copy, siteCopy] = await Promise.all([getPageCopy('how-it-works'), getSite
     <article class="story">
       {copy.sections.map((section, index) => <section id={section.id}>
         <span class="section-index mono">{String(index + 1).padStart(2, '0')}</span>
-        <div><h2>{section.heading}</h2><div class="body" set:html={renderMarkdownBlocks(fillTemplate(section.body, { contactEmail: siteCopy.contactEmail }))} /></div>
+        <div><h2>{section.heading}</h2><div class="body" set:html={renderMarkdownBlocks(section.body)} /></div>
       </section>)}
       <section class="credits-section" id="credits">
         <span class="section-index mono">→</span>
-        <div><h2>{siteCopy.howItWorksUi.creditsHeading}</h2><dl class="card">{copy.credits.map((credit) => <div><dt>{credit.label}</dt><dd>{credit.href ? <a href={credit.href}>{credit.value}</a> : credit.value}</dd></div>)}</dl></div>
+        <div><h2>{siteCopy.howItWorksUi.creditsHeading}</h2><dl class="card">{copy.credits.map((credit) => <div><dt>{credit.label}</dt><dd>{credit.href ? <a href={credit.href}><span set:html={renderMarkdownInline(credit.value)} /></a> : <span set:html={renderMarkdownInline(credit.value)} />}</dd></div>)}</dl></div>
       </section>
       <div class="partners"><PartnerRow /></div>
-      <a class="button build" href={siteCopy.howItWorksUi.build.href}>{siteCopy.howItWorksUi.build.label}</a>
     </article>
   </main>
 </BaseLayout>
@@ -39,8 +41,12 @@ const [copy, siteCopy] = await Promise.all([getPageCopy('how-it-works'), getSite
   .intro { grid-column:1/-1; margin-left:252px; max-width:720px; }
   .intro > span { color:var(--accent); font-size:13px; font-weight:500; }
   .intro h1 { font-size:clamp(44px,6vw,72px); font-weight:600; letter-spacing:-.045em; line-height:.98; margin:10px 0 18px; }
-  .intro p { color:rgba(21,24,28,.7); font-size:19px; line-height:1.55; margin:0; text-wrap:pretty; }
-  .stage-note { background:var(--accent-soft); border-left:2px solid var(--accent); color:var(--muted); font-size:13px; line-height:1.5; margin-top:18px; padding:10px 12px; }
+  .intro > p { color:rgba(21,24,28,.7); font-size:19px; line-height:1.55; margin:0; text-wrap:pretty; }
+  .status-card { align-items:center; display:flex; gap:20px; justify-content:space-between; margin-top:22px; padding:17px 18px; }
+  .status-card > span { display:flex; flex-direction:column; gap:4px; }
+  .status-card strong { font-size:16px; }
+  .status-card small { color:var(--muted); font-size:12px; }
+  .status-card > b { color:var(--accent); font-size:13px; white-space:nowrap; }
   .contents { align-self:start; padding:14px; position:sticky; top:22px; }
   .contents > strong { color:var(--muted); display:block; font-size:11px; letter-spacing:.06em; margin:3px 8px 8px; text-transform:uppercase; }
   .contents nav { display:flex; flex-direction:column; }
@@ -57,13 +63,14 @@ const [copy, siteCopy] = await Promise.all([getPageCopy('how-it-works'), getSite
   .body :global(p) { margin:0 0 16px; }
   .body :global(p:last-child) { margin-bottom:0; }
   .body :global(strong) { color:var(--ink); font-weight:600; }
+  .body :global(a) { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
   .credits-section dl { margin:0; overflow:hidden; }
   .credits-section dl div { display:grid; gap:20px; grid-template-columns:minmax(150px,.7fr) minmax(0,1.3fr); padding:13px 15px; }
   .credits-section dl div:not(:last-child) { border-bottom:1px solid var(--line); }
   .credits-section dt { color:var(--muted); font-size:13px; }
-  .credits-section dd { font-size:13px; margin:0; }
+  .credits-section dd { font-size:13px; line-height:1.5; margin:0; }
+  .credits-section a { color:var(--accent); }
   .partners { border-top:1px solid var(--line); margin-top:8px; padding:28px 0; }
-  .build { align-self:flex-start; }
   @media (max-width:900px) {
     .explainer { gap:28px; grid-template-columns:minmax(0,720px); padding:34px 32px 64px; }
     .intro { grid-column:1; margin-left:0; }
@@ -76,11 +83,11 @@ const [copy, siteCopy] = await Promise.all([getPageCopy('how-it-works'), getSite
   @media (max-width:560px) {
     .explainer { padding:24px 20px 52px; }
     .intro h1 { font-size:44px; }
-    .intro p { font-size:17px; }
+    .intro > p { font-size:17px; }
+    .status-card { align-items:flex-start; flex-direction:column; gap:12px; }
     .story > section { gap:10px; grid-template-columns:28px minmax(0,1fr); padding:34px 0; }
     h2 { font-size:26px; }
     .body { font-size:15px; }
     .credits-section dl div { gap:5px; grid-template-columns:1fr; }
-    .build { width:100%; }
   }
 </style>

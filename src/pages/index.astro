@@ -146,6 +146,7 @@ const creditFor = (image: string) => {
           <h3>{card.heading}</h3><p>{card.body}</p>
         </article>)}
       </div>
+      <a class="why-more" href={copy.why.moreLink.href}>{copy.why.moreLink.label}</a>
     </section>
 
     <section class="how-section page-section">
@@ -265,6 +266,7 @@ const creditFor = (image: string) => {
   .reason-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
   .reason-card h3, .step h3 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
   .reason-card p, .step p { color: rgba(21,24,28,.65); font-size: 14px; line-height: 1.5; margin: 0; }
+  .why-more { align-items:center; display:inline-flex; font-size:14px; font-weight:600; grid-column:2; min-height:44px; text-decoration:underline; text-underline-offset:3px; }
 
   .how-section { padding-top: 96px; }
   .section-intro.compact { gap: 10px; max-width: 640px; }
@@ -303,6 +305,7 @@ const creditFor = (image: string) => {
   @media (max-width: 900px) {
     .page-section { padding-inline: 32px; }
     .hero, .why-section, .where-section, .community-card { grid-template-columns: minmax(0,1fr); }
+    .why-more { grid-column:1; }
     .hero { padding-top: 28px; }
     .stats-grid, .reason-grid, .steps-grid { grid-template-columns: minmax(0,1fr); }
     .drop-zone { grid-template-columns: minmax(0,1fr); }

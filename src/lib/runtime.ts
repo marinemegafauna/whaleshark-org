@@ -1,12 +1,13 @@
 import { env } from 'cloudflare:workers';
 import type { DataStore } from './db';
+import type { ContributionIssueCache } from './contribute';
 import { createCatalogueDataStore, createDataStore } from './db';
 import { isMockAppMode, isMockMode } from './mode';
 
 // Astro 6+/@astrojs/cloudflare 14: bindings and secrets come from `cloudflare:workers`,
 // not Astro.locals.runtime.env. `locals` is kept in the signatures so call sites
 // can stay the same if a future adapter changes the access pattern again.
-type WorkerEnv = { DB?: D1Database; [key: string]: unknown };
+type WorkerEnv = { DB?: D1Database; SESSION?: KVNamespace; [key: string]: unknown };
 const workerEnv = env as unknown as WorkerEnv;
 
 export function dataStore(_locals: App.Locals): DataStore {
@@ -26,4 +27,8 @@ export function runtimeValue(_locals: App.Locals, name: keyof ImportMetaEnv): st
   if (typeof runtime === 'string') return runtime;
   const bundled = import.meta.env[name];
   return typeof bundled === 'string' ? bundled : undefined;
+}
+
+export function contributionIssueCache(_locals: App.Locals): ContributionIssueCache | undefined {
+  return workerEnv.SESSION;
 }

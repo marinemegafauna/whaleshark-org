@@ -6,6 +6,8 @@ const template = z.string().min(1);
 const linkSchema = z.object({ label: text, href: text }).strict();
 const imageSchema = z.object({ image: text, alt: text }).strict();
 const seoSchema = z.object({ title: text, description: text }).strict();
+const longFormSectionSchema = z.object({ id: text, heading: text, body: text }).strict();
+const creditSchema = z.object({ label: text, value: text, href: text.optional() }).strict();
 
 const landingSchema = z.object({
   page: z.literal('landing'),
@@ -44,6 +46,7 @@ const landingSchema = z.object({
     heading: text,
     body: text,
     cards: z.array(z.object({ icon: z.enum(['eye', 'movement', 'shield']), heading: text, body: text }).strict()).min(1),
+    moreLink: linkSchema,
   }).strict(),
   how: z.object({
     eyebrow: text,
@@ -80,8 +83,24 @@ const howItWorksSchema = z.object({
   title: text,
   eyebrow: text,
   lede: text,
-  sections: z.array(z.object({ id: text, heading: text, body: text }).strict()).min(1),
-  credits: z.array(z.object({ label: text, value: text }).strict()).min(1),
+  sections: z.array(longFormSectionSchema).min(1),
+  credits: z.array(creditSchema).min(1),
+}).strict();
+
+const aboutWhaleSharksSchema = z.object({
+  page: z.literal('about-whale-sharks'),
+  title: text,
+  eyebrow: text,
+  lede: text,
+  status_card: z.object({
+    heading: text,
+    assessmentYear: text,
+    criterion: text,
+    href: text,
+    linkLabel: text,
+  }).strict().optional(),
+  sections: z.array(longFormSectionSchema).min(1),
+  credits: z.array(creditSchema).min(1),
 }).strict();
 
 const bulkSchema = z.object({
@@ -240,7 +259,11 @@ const appSchema = z.object({
   header: z.object({
     menuLabel: text,
     navAriaLabel: text,
-    nav: z.array(text),
+    nav: z.array(z.object({
+      key: z.enum(['encounters', 'individuals', 'scars', 'matches', 'exports', 'practice', 'contribute', 'collaboration']),
+      label: text,
+      href: text.optional(),
+    }).strict()).min(1),
     connectedLabel: text,
     accountName: text,
   }).strict(),
@@ -331,20 +354,97 @@ const appSchema = z.object({
   }).strict(),
 }).strict();
 
+const practiceSchema = z.object({
+  page: z.literal('practice'),
+  seo: seoSchema,
+  title: text,
+  eyebrow: text,
+  lede: text,
+  official: z.object({ heading: text, body: text, links: z.array(linkSchema).min(1) }).strict(),
+  videos: z.object({
+    heading: text,
+    body: text,
+    items: z.array(z.object({ id: text, title: text, source: text }).strict()).min(1),
+  }).strict(),
+  walkthroughs: z.object({ heading: text, items: z.array(linkSchema), placeholder: text }).strict(),
+  teamAccounts: z.object({ heading: text, body: text }).strict(),
+}).strict();
+
+const collaborationSchema = z.object({
+  page: z.literal('collaboration'),
+  seo: seoSchema,
+  title: text,
+  eyebrow: text,
+  lede: text,
+  banner: z.object({ label: text, body: text }).strict(),
+  sections: z.array(z.object({
+    id: text,
+    heading: text,
+    body: text.optional(),
+    items: z.array(text).optional(),
+  }).strict()).min(1),
+  caseLink: linkSchema,
+}).strict();
+
+const contributeSchema = z.object({
+  page: z.literal('contribute'),
+  seo: seoSchema,
+  title: text,
+  eyebrow: text,
+  lede: text,
+  github: z.object({ pageLine: template, footer: template }).strict(),
+  form: z.object({
+    heading: text,
+    kindLabel: text,
+    kinds: z.array(z.object({ id: z.enum(['feature', 'problem']), label: text }).strict()).length(2),
+    titleLabel: text,
+    titlePlaceholder: text,
+    descriptionLabel: text,
+    descriptionHelp: text,
+    pageUrlLabel: text,
+    pageUrlHelp: text,
+    submitLabel: text,
+    statuses: z.object({
+      created: text,
+      createdLinkLabel: text,
+      stored: text,
+      rateLimited: text,
+      invalid: text,
+    }).strict(),
+  }).strict(),
+  issues: z.object({
+    heading: text,
+    body: text,
+    count: template,
+    empty: text,
+    unavailable: text,
+    kindLabels: z.object({ feature: text, problem: text, request: text }).strict(),
+    unknownUser: text,
+    opened: template,
+    openLinkLabel: text,
+  }).strict(),
+  propose: z.object({ heading: text, body: text, links: z.array(linkSchema).min(1) }).strict(),
+}).strict();
+
 export const pageCollectionSchema = z.union([
   landingSchema,
   bulkSchema,
   howItWorksSchema,
+  aboutWhaleSharksSchema,
   matchSchema,
   provenanceSchema,
   signinSchema,
   appSchema,
+  practiceSchema,
+  collaborationSchema,
+  contributeSchema,
 ]);
 
 export const siteContentSchema = z.object({
   name: text,
   tagline: text,
   steward: text,
+  contactEmail: text,
   defaultDescription: text,
   brandHomeAriaLabel: text,
   menuLabel: text,
@@ -352,7 +452,7 @@ export const siteContentSchema = z.object({
   publicNavAriaLabel: text,
   partnerAriaLabel: text,
   howItWorksUi: z.object({ contentsLabel: text, creditsHeading: text, build: linkSchema, currentStageNotice: text }).strict(),
-  publicNav: z.array(z.object({ key: z.enum(['catalogue', 'match', 'how', 'sites', 'photographers', 'about']), label: text, href: text }).strict()),
+  publicNav: z.array(z.object({ key: z.enum(['catalogue', 'match', 'how', 'whale-sharks', 'sites', 'photographers', 'about']), label: text, href: text }).strict()),
   researchSites: z.array(z.object({ id: text, label: text }).strict()),
   partners: z.array(z.object({ name: text, logo: text, url: text, alt: text }).strict()).min(1),
   footerText: text,

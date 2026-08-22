@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { parse } from 'yaml';
 import siteConfig from '../../site.config';
-import { fillTemplate, renderMarkdownBlocks } from './content-utils';
+import { fillTemplate, renderMarkdownBlocks, renderMarkdownInline } from './content-utils';
 
 const pageSources = import.meta.glob('../../content/pages/*.md', {
   eager: true,
@@ -36,11 +36,15 @@ function frontmatter(source: string): unknown {
 describe('Astro content sources', () => {
   test('loads and validates every page, site copy, and species vocabulary', async () => {
     expect(Object.keys(pageSources).sort()).toEqual([
+      '../../content/pages/about-whale-sharks.md',
       '../../content/pages/app.md',
       '../../content/pages/bulk.md',
+      '../../content/pages/collaboration.md',
+      '../../content/pages/contribute.md',
       '../../content/pages/how-it-works.md',
       '../../content/pages/landing.md',
       '../../content/pages/match.md',
+      '../../content/pages/practice.md',
       '../../content/pages/provenance.md',
       '../../content/pages/signin.md',
     ]);
@@ -64,6 +68,7 @@ describe('Astro content sources', () => {
       'Marine Megafauna Foundation',
     ]);
     expect(site.publicNav).toContainEqual(expect.objectContaining({ label: 'How it works', href: '/how-it-works' }));
+    expect(site.publicNav).toContainEqual(expect.objectContaining({ label: 'About whale sharks', href: '/about-whale-sharks' }));
     expect(site.howItWorksUi.build).toEqual({ label: 'Build one for your species →', href: 'https://github.com/marinemegafauna/whaleshark-org' });
     expect(species.public_report.groups.map((group) => group.id)).toEqual([
       'when_where',
@@ -110,6 +115,39 @@ describe('Astro content sources', () => {
     expect(renderMarkdownBlocks('An **encounter** is one record.\n\nUse <care>.')).toBe(
       '<p>An <strong>encounter</strong> is one record.</p><p>Use &lt;care&gt;.</p>',
     );
+  });
+
+  test('renders safe relative, external, and email links in controlled explainer markdown', () => {
+    expect(renderMarkdownBlocks(
+      'Read [how it works](/how-it-works), [the assessment](https://example.org/status), or [email us](mailto:team@example.org).',
+    )).toBe(
+      '<p>Read <a href="/how-it-works">how it works</a>, <a href="https://example.org/status">the assessment</a>, or <a href="mailto:team@example.org">email us</a>.</p>',
+    );
+    expect(renderMarkdownBlocks('[unsafe](javascript:alert(1))')).not.toContain('<a ');
+  });
+
+  test('renders controlled inline emphasis without exposing raw HTML', () => {
+    expect(renderMarkdownInline('Pierce et al. *Rhincodon typus*.')).toBe('Pierce et al. <em>Rhincodon typus</em>.');
+    expect(renderMarkdownInline('<em>unsafe</em>')).toBe('&lt;em&gt;unsafe&lt;/em&gt;');
+  });
+
+  test('keeps the new public and signed-in learning pages content-driven', async () => {
+    const { pageCollectionSchema } = await import('./content-schema');
+    const pages = Object.fromEntries(Object.entries(pageSources).map(([file, source]) => [file, pageCollectionSchema.parse(frontmatter(source))]));
+
+    expect(pages['../../content/pages/about-whale-sharks.md']).toMatchObject({
+      page: 'about-whale-sharks',
+      status_card: { heading: 'IUCN Red List: Endangered', assessmentYear: '2025' },
+    });
+    expect(pages['../../content/pages/practice.md']).toMatchObject({
+      page: 'practice',
+      videos: { items: [{ id: 'sJr27BJ5J7g' }, { id: '0FXIZDnC01Q' }] },
+    });
+    expect(pages['../../content/pages/collaboration.md']).toMatchObject({
+      page: 'collaboration',
+      banner: { label: 'DRAFT for Simon to edit' },
+    });
+    expect(pages['../../content/pages/contribute.md']).toMatchObject({ page: 'contribute' });
   });
 
   test('provides one site-level credit for every landing image', async () => {

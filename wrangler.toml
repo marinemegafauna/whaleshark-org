@@ -9,6 +9,7 @@ MOCK = "1"
 MOCK_APP = "0"
 PUBLIC_WRITE = "dry-run"
 SCAR_WRITEBACK = "off"
+GITHUB_REPO = "marinemegafauna/whaleshark-org"
 
 [[d1_databases]]
 binding = "DB"

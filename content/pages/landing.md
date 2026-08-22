@@ -59,6 +59,7 @@ why:
     - icon: shield
       heading: What hurts them
       body: Scars from propellers and nets, recorded to one standard at every site, show whether protection is working.
+  moreLink: { label: About whale sharks →, href: /about-whale-sharks }
 how:
   eyebrow: How it works
   heading: Three steps, and you get the shark’s story back.

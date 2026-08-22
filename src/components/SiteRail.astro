@@ -5,15 +5,22 @@ const { active = 'tofo', encounterCount = 8, individualCount = 5, scarCount = 3 
 ---
 <aside class="site-rail">
   <div class="eyebrow rail-title">Sites</div>
-  {siteConfig.sites.map((site) => <a class:list={['nav', { active: site.id === active }]} href={`/app?site=${site.id}`}>{site.label}</a>)}
+  <nav class="site-links" aria-label="Research sites">{siteConfig.sites.map((site) => <a class:list={['nav', { active: site.id === active }]} href={`/app?site=${site.id}`}>{site.label}</a>)}</nav>
   <div class="eyebrow section-title">Season · 2026</div>
   <dl><div><dt>Encounters</dt><dd>{encounterCount}</dd></div><div><dt>Individuals</dt><dd>{individualCount}</dd></div><div><dt>New this season</dt><dd>1</dd></div><div><dt>Scar records</dt><dd>{scarCount}</dd></div><div><dt>Fresh major</dt><dd class="warn">1</dd></div></dl>
   <div class="eyebrow section-title">Schema</div><div class="schema">Whale shark scars <span class="mono muted">v1.0</span></div>
 </aside>
 <style>
-  .site-rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; padding: 20px 14px; width: 232px; }
+  .site-rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; min-width:0; padding: 20px 14px; width: 232px; }
+  .site-links { display:flex; flex-direction:column; gap:2px; }
   .rail-title { padding: 0 10px 8px; }.section-title { padding: 24px 10px 8px; }
-  .nav { border-radius: 6px; font-size: 13px; padding: 8px 10px; }.nav.active { background: var(--ink); color: #fff; }
+  .nav { align-items:center; border-radius:6px; display:flex; font-size:14px; min-height:44px; padding:0 10px; }.nav.active { background: var(--ink); color: #fff; }
   dl { margin: 0; } dl div { display: flex; font-size: 13px; justify-content: space-between; padding: 5px 10px; } dt { font-weight: 400; } dd { font-family: var(--font-mono); margin: 0; }.warn { color: var(--warn); }.schema { font-size: 13px; padding: 5px 10px; }
-  @media (max-width: 760px) { .site-rail { border-bottom: 1px solid var(--line); border-right: 0; display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; } .rail-title, .section-title, dl, .schema { display: none; } }
+  @media (max-width:900px) {
+    .site-rail { border-bottom:1px solid var(--line); border-right:0; display:block; padding:10px 14px; width:100%; }
+    .site-links { display:flex; flex-direction:row; gap:8px; overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:2px; scroll-snap-type:x proximity; scrollbar-width:thin; }
+    .nav { background:var(--panel); border:1px solid var(--line); flex:0 0 auto; padding-inline:14px; scroll-snap-align:start; }
+    .nav.active { border-color:var(--ink); }
+    .rail-title, .section-title, dl, .schema { display:none; }
+  }
 </style>

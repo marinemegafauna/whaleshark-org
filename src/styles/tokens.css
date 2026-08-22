@@ -21,7 +21,10 @@
 html { color: var(--ink); background: var(--public-bg); font-family: var(--font-body); }
 body { min-width: 320px; min-height: 100vh; margin: 0; }
 button, input, select, textarea { color: inherit; font: inherit; }
+button, input, select { min-height: 44px; }
+input, select, textarea { font-size: 16px; }
 button, a { -webkit-tap-highlight-color: transparent; }
+img { height: auto; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 a:hover { color: var(--accent); }
 :focus-visible { outline: 3px solid rgba(79, 70, 229, 0.35); outline-offset: 2px; }
@@ -30,11 +33,11 @@ a:hover { color: var(--accent); }
 .panel, .card { background: var(--panel); border: 1px solid var(--line); }
 .panel { border-radius: var(--radius-md); }
 .card { border-radius: var(--radius-lg); box-shadow: 0 1px 3px rgba(21, 24, 28, 0.05); }
-.button { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-pill); background: var(--ink); color: #fff; cursor: pointer; font-size: 14px; font-weight: 500; padding: 12px 20px; }
+.button { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-pill); background: var(--ink); color: #fff; cursor: pointer; font-size: 14px; font-weight: 500; min-height: 44px; padding: 10px 20px; }
 .button:hover { color: #fff; background: var(--accent); }
 .button.secondary { border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink); }
 .button.secondary:hover { border-color: var(--accent); color: var(--accent); }
-.eyebrow { color: rgba(21,24,28,.5); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+.eyebrow { color: rgba(21,24,28,.5); font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .image-placeholder { background: #e6e9ed; object-fit: cover; }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -7,16 +7,52 @@ const { active } = Astro.props;
     <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="7.25"></circle><circle cx="6.5" cy="7.5" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="6" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="11.5" cy="10.5" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="7.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"></circle></svg>
     whaleshark.org
   </a>
-  <nav aria-label="Public navigation">
-    <a href="#catalogue">Catalogue</a><a class:list={{ active: active === 'match' }} href="/match/submission-demo">Match</a><a href="#sites">Sites</a><a href="#photographers">Photographers</a><a href="#about">About</a><a class="signin" href="/signin">Sign in</a>
+  <div class="header-actions">
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="public-menu">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg>
+      <span>Menu</span>
+    </button>
+    <a class="signin" href="/signin">Sign in</a>
+  </div>
+  <nav id="public-menu" aria-label="Public navigation">
+    <a href="/#catalogue">Catalogue</a><a class:list={{ active: active === 'match' }} href="/match/submission-demo">Match</a><a href="/#sites">Sites</a><a href="/#photographers">Photographers</a><a href="/#about">About</a>
   </nav>
 </header>
 <style>
-  .public-header { align-items: center; display: flex; font-size: 14px; justify-content: space-between; padding: 22px 64px; }
-  .brand { align-items: center; display: flex; font-size: 16px; font-weight: 600; gap: 10px; }
-  nav { align-items: center; display: flex; gap: 28px; color: var(--muted); }
+  .public-header { align-items: center; display: grid; font-size: 14px; grid-template-columns: auto minmax(0,1fr) auto; padding: 22px 64px; }
+  .brand { align-items: center; display: flex; font-size: 16px; font-weight: 600; gap: 10px; min-height:44px; }
+  nav { align-items: center; color: var(--muted); display: flex; gap: 28px; grid-column: 2; justify-self: end; }
   nav a.active { color: var(--ink); font-weight: 500; }
+  .header-actions { align-items: center; display: flex; gap: 8px; grid-column: 3; margin-left: 28px; }
+  .menu-toggle { align-items: center; background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); cursor: pointer; display: none; gap: 7px; justify-content: center; padding: 0 14px; }
   .signin { background: var(--ink); border-radius: var(--radius-pill); color: #fff; font-weight: 500; padding: 8px 16px; }
   .signin:hover { background: var(--accent); color: #fff; }
-  @media (max-width: 760px) { .public-header { padding: 18px 20px; } nav a:not(.signin) { display: none; } }
+  @media (max-width: 900px) {
+    .public-header { grid-template-columns: minmax(0,1fr) auto; padding: 16px 32px; }
+    .header-actions { grid-column: 2; margin-left: 12px; }
+    .menu-toggle { display: inline-flex; }
+    nav { align-items: stretch; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(21,24,28,.08); flex-direction: column; gap: 0; grid-column: 1 / -1; justify-self: stretch; margin-top: 12px; padding: 6px; }
+    nav[hidden] { display: none; }
+    nav a { align-items: center; border-radius: 6px; display: flex; min-height: 44px; padding: 0 12px; }
+  }
+  @media (max-width: 560px) {
+    .public-header { padding: 14px 20px; }
+    .brand { font-size: 15px; }
+    .brand svg { display: none; }
+    .header-actions { margin-left: 8px; }
+    .menu-toggle { padding-inline: 12px; }
+    .signin { align-items: center; display: inline-flex; min-height: 44px; padding: 0 14px; }
+  }
 </style>
+<script>
+  import { initDisclosureMenu } from '../lib/disclosure-menu';
+  const trigger = document.querySelector<HTMLElement>('.public-header .menu-toggle');
+  const menu = document.querySelector<HTMLElement>('#public-menu');
+  const mobile = window.matchMedia('(max-width: 900px)');
+  if (trigger && menu) {
+    const disclosure = initDisclosureMenu(trigger, menu);
+    const sync = () => { if (mobile.matches) disclosure.close(); else menu.hidden = false; };
+    mobile.addEventListener('change', sync);
+    sync();
+  }
+</script>

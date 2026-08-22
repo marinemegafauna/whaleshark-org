@@ -8,6 +8,12 @@ Marine Megafauna Foundation stewards the project. The application is openly AI-a
 
 Screenshots will be added after the first Cloudflare preview deployment. The approved screen references live in `design/reference/`.
 
+## Responsive
+
+The interface uses two shared breakpoints: 900px for compact navigation and single-column workspaces, and 560px for phone-specific spacing and sticky action bars. Public and researcher headers expose accessible disclosure menus below 900px while keeping the public sign-in action visible.
+
+On phones, bulk-upload controls and summaries stack, batch and submit actions stay reachable above the safe area, match actions become full-width, and workbench tables become encounter or scar cards. The researcher site rail is the one intentional horizontal scroller: it becomes a single snap-scrolling row of site chips beneath the app header. Scar markers remain percentage-positioned over the naturally scaling encounter image.
+
 ## Quick start (mock mode)
 
 Requirements: Node 22 or newer and npm.

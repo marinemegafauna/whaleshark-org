@@ -42,8 +42,7 @@ function labelFor(item: BatchItem) {
 
       <div class="card drop-zone" id="drop-zone">
         <input id="bulk-files" type="file" name="files" multiple accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>
-        <div><strong>Drop photos or a folder here</strong><span>JPEG, HEIC or RAW · each file stays credited to you</span></div>
+        <div class="drop-intro"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg><div><strong>Drop photos or a folder here</strong><span>JPEG, HEIC or RAW · each file stays credited to you</span></div></div>
         <label class="choose-files" for="bulk-files">Choose photos</label>
         <label class="choose-folder" for="bulk-folder">Choose a folder</label>
         <input id="bulk-folder" type="file" multiple {...folderAttributes} accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
@@ -56,7 +55,7 @@ function labelFor(item: BatchItem) {
       </div>
 
       <div class="photo-grid" id="photo-grid">
-        {items.map((item) => { const match = matchFor(item); const bbox = Array.isArray(match.bbox) ? match.bbox : null; return <article class="tile"><div class="thumb"><img src={item.image_key} alt="Uploaded whale shark photograph" />{bbox && <i class:list={['detect-box',{new:item.status === 'likely_new'}]} style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><div class="tile-meta"><span class:list={['status',item.status]}>{labelFor(item)}</span><span class="mono suffix">{item.filename.replace(/\.[^.]+$/, '').slice(-4)}</span></div></article> })}
+        {items.map((item) => { const match = matchFor(item); const bbox = Array.isArray(match.bbox) ? match.bbox : null; return <article class="tile"><div class="thumb"><img src={item.image_key} width="960" height="540" alt="Uploaded whale shark photograph" />{bbox && <i class:list={['detect-box',{new:item.status === 'likely_new'}]} style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><div class="tile-meta"><span class:list={['status',item.status]}>{labelFor(item)}</span><span class="mono suffix">{item.filename.replace(/\.[^.]+$/, '').slice(-4)}</span></div></article> })}
       </div>
       <div class="grid-foot"><span id="grid-note">{items.length ? `${items.length} photos · grouped by animal when matching finishes` : 'Your photos will appear here as they upload.'}</span><label for="bulk-files">Add more photos</label></div>
       <p class="upload-error" id="upload-error" role="alert"></p>
@@ -77,11 +76,86 @@ function labelFor(item: BatchItem) {
   </main>
 </BaseLayout>
 <style>
-  .bulk-page { align-items:start; display:grid; gap:28px; grid-template-columns:minmax(0,1fr) 360px; padding:12px 64px 56px; }.bulk-workspace { display:flex; flex-direction:column; gap:16px; min-width:0; }.intro { display:flex; flex-direction:column; gap:6px; }.intro > span { color:var(--accent); font-size:13px; font-weight:500; }.intro h1 { font-size:36px; font-weight:600; letter-spacing:-.03em; line-height:1.05; margin:0; }.intro p { color:var(--muted); font-size:15px; line-height:1.45; margin:0; max-width:900px; }.drop-zone { align-items:center; border-style:dashed; display:flex; gap:16px; min-height:104px; padding:18px; position:relative; }.drop-zone.dragging { background:var(--accent-soft); border-color:var(--accent); }.drop-zone > input { height:1px; opacity:0; position:absolute; width:1px; }.drop-zone > div { display:flex; flex:1; flex-direction:column; gap:3px; }.drop-zone strong { font-size:14px; font-weight:600; }.drop-zone span { color:var(--muted); font-size:12px; }.choose-files,.choose-folder { align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius-pill); cursor:pointer; display:inline-flex; font-size:13px; justify-content:center; min-height:44px; padding:0 16px; position:relative; }.choose-folder { background:var(--ink); border-color:var(--ink); color:#fff; }.summary { align-items:center; display:grid; font-size:13px; gap:18px; grid-template-columns:auto minmax(240px,1fr) auto; padding:14px 18px; }.batch-size { white-space:nowrap; }.batch-size span { color:var(--muted); }.progress-wrap { align-items:center; display:flex; gap:8px; }.progress { background:rgba(21,24,28,.08); border-radius:3px; flex:1; height:6px; overflow:hidden; }.progress i { background:var(--accent); display:block; height:100%; }.progress-wrap > span { font-size:12px; white-space:nowrap; }.legend { color:var(--muted); display:flex; font-size:12px; gap:14px; white-space:nowrap; }.legend span { align-items:center; display:flex; gap:5px; }.legend b { color:inherit; font-weight:500; }.dot { border-radius:50%; display:inline-block; height:8px; width:8px; }.dot.matched { background:var(--accent); }.dot.likely { background:var(--ink); }.dot.none { background:var(--warn); }.dot.working { background:rgba(21,24,28,.3); }.photo-grid { display:grid; gap:14px; grid-template-columns:repeat(5,minmax(0,1fr)); }.tile { display:flex; flex-direction:column; gap:8px; min-width:0; }.thumb { background:repeating-linear-gradient(135deg,#e6e9ed 0 8px,#eef0f3 8px 16px); border-radius:8px; height:118px; overflow:hidden; position:relative; }.thumb img { height:100%; object-fit:cover; width:100%; }.detect-box { border:1.5px solid var(--accent); border-radius:3px; position:absolute; }.detect-box.new { border-color:var(--ink); }.tile-meta { align-items:center; display:flex; gap:6px; justify-content:space-between; min-width:0; }.status { background:rgba(21,24,28,.04); border-radius:var(--radius-pill); color:var(--muted); display:block; font-size:12px; font-weight:500; max-width:calc(100% - 42px); overflow:hidden; padding:3px 8px; text-overflow:ellipsis; white-space:nowrap; }.status.matched { background:rgba(79,70,229,.08); color:var(--accent); }.status.likely_new { background:rgba(21,24,28,.06); color:var(--ink); }.status.no_shark,.status.error { background:rgba(194,64,12,.08); color:var(--warn); }.suffix { color:var(--muted); font-size:11px; }.grid-foot { color:var(--muted); display:flex; font-size:13px; justify-content:space-between; }.grid-foot label { color:var(--ink); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }.upload-error { color:var(--warn); font-size:13px; margin:0; min-height:1em; }.batch-card { display:flex; flex-direction:column; gap:14px; padding:18px; position:sticky; top:20px; }.batch-card h2 { font-size:15px; font-weight:600; margin:0; }.batch-card > p { color:var(--muted); font-size:12px; line-height:1.5; margin:0; }.batch-card form { display:flex; flex-direction:column; gap:14px; }.batch-card label { display:flex; flex-direction:column; font-size:12px; font-weight:500; gap:6px; }.batch-card small { color:var(--muted); font-size:12px; font-weight:400; }.batch-card input,.batch-card select { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:13px; min-height:44px; padding:10px 12px; width:100%; }.batch-totals { border-top:1px solid var(--line); display:flex; flex-direction:column; font-size:12px; gap:6px; padding-top:12px; }.batch-totals span { display:flex; justify-content:space-between; }.batch-totals span:last-child { color:var(--muted); }.review-button { min-height:44px; width:100%; }.review-button:disabled { cursor:not-allowed; opacity:.4; }
-  @media (max-width:1180px) { .summary { grid-template-columns:1fr 1.2fr; }.legend { grid-column:1/-1; }.photo-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
-  @media (max-width:900px) { .bulk-page { grid-template-columns:1fr; padding-inline:40px; }.batch-card { position:static; }.photo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
-  @media (max-width:600px) { .bulk-page { padding:8px 20px 40px; }.intro h1 { font-size:32px; }.drop-zone { align-items:flex-start; flex-wrap:wrap; }.drop-zone > div { flex-basis:calc(100% - 50px); }.choose-files,.choose-folder { flex:1; }.summary { grid-template-columns:1fr; }.legend { grid-column:auto; flex-wrap:wrap; }.photo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.thumb { height:132px; } }
-  @media (prefers-reduced-motion:reduce) { .progress i { transition:none!important; } }
+  .bulk-page { align-items:start; display:grid; gap:28px; grid-template-columns:minmax(0,1fr) 360px; padding:12px 64px 56px; }
+  .bulk-workspace { display:flex; flex-direction:column; gap:16px; min-width:0; }
+  .intro { display:flex; flex-direction:column; gap:6px; }
+  .intro > span { color:var(--accent); font-size:13px; font-weight:500; }
+  .intro h1 { font-size:36px; font-weight:600; letter-spacing:-.03em; line-height:1.05; margin:0; text-wrap:balance; }
+  .intro p { color:var(--muted); font-size:15px; line-height:1.45; margin:0; max-width:900px; }
+  .drop-zone { align-items:center; border-style:dashed; display:flex; gap:16px; min-height:104px; padding:18px; position:relative; }
+  .drop-zone.dragging { background:var(--accent-soft); border-color:var(--accent); }
+  .drop-zone > input { height:1px; opacity:0; position:absolute; width:1px; }
+  .drop-intro { align-items:center; display:flex; flex:1; gap:16px; min-width:0; }
+  .drop-intro > div { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .drop-intro svg { color:var(--accent); flex:0 0 auto; }
+  .drop-zone strong { font-size:14px; font-weight:600; }
+  .drop-zone span { color:var(--muted); font-size:12px; }
+  .choose-files,.choose-folder { align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius-pill); cursor:pointer; display:inline-flex; font-size:14px; justify-content:center; min-height:44px; padding:0 16px; position:relative; }
+  .choose-folder { background:var(--ink); border-color:var(--ink); color:#fff; }
+  .summary { align-items:center; display:grid; font-size:14px; gap:18px; grid-template-columns:auto minmax(240px,1fr) auto; padding:14px 18px; }
+  .batch-size { white-space:nowrap; }
+  .batch-size span { color:var(--muted); }
+  .progress-wrap { align-items:center; display:flex; gap:8px; min-width:0; }
+  .progress { background:rgba(21,24,28,.08); border-radius:3px; flex:1; height:6px; overflow:hidden; }
+  .progress i { background:var(--accent); display:block; height:100%; }
+  .progress-wrap > span { font-size:12px; white-space:nowrap; }
+  .legend { color:var(--muted); display:flex; font-size:12px; gap:14px; white-space:nowrap; }
+  .legend span { align-items:center; display:flex; gap:5px; }
+  .legend b { color:inherit; font-weight:500; }
+  .dot { border-radius:50%; display:inline-block; height:8px; width:8px; }
+  .dot.matched { background:var(--accent); }
+  .dot.likely { background:var(--ink); }
+  .dot.none { background:var(--warn); }
+  .dot.working { background:rgba(21,24,28,.3); }
+  .photo-grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+  .tile { display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .thumb { background:repeating-linear-gradient(135deg,#e6e9ed 0 8px,#eef0f3 8px 16px); border-radius:8px; height:118px; overflow:hidden; position:relative; }
+  .thumb img { height:100%; object-fit:cover; width:100%; }
+  .detect-box { border:1.5px solid var(--accent); border-radius:3px; position:absolute; }
+  .detect-box.new { border-color:var(--ink); }
+  .tile-meta { align-items:center; display:flex; gap:8px; justify-content:space-between; min-width:0; }
+  .status { align-items:center; background:rgba(21,24,28,.04); border-radius:999px; color:var(--muted); display:inline-flex; font-size:12px; font-weight:500; max-width:calc(100% - 42px); overflow:hidden; padding:3px 8px; text-overflow:ellipsis; white-space:nowrap; }
+  .status.matched { background:rgba(79,70,229,.08); color:var(--accent); }
+  .status.likely_new { background:rgba(21,24,28,.06); color:var(--ink); }
+  .status.no_shark,.status.error { background:rgba(194,64,12,.08); color:var(--warn); }
+  .suffix { color:var(--muted); flex:0 0 auto; font-size:12px; margin-left:auto; text-align:right; }
+  .grid-foot { color:var(--muted); display:flex; font-size:14px; gap:16px; justify-content:space-between; }
+  .grid-foot label { align-items:center; color:var(--ink); cursor:pointer; display:inline-flex; flex:0 0 auto; min-height:44px; text-decoration:underline; text-underline-offset:3px; }
+  .upload-error { color:var(--warn); font-size:14px; margin:0; min-height:1em; }
+  .batch-card { display:flex; flex-direction:column; gap:14px; padding:18px; position:sticky; top:20px; }
+  .batch-card h2 { font-size:15px; font-weight:600; margin:0; }
+  .batch-card > p { color:var(--muted); font-size:12px; line-height:1.5; margin:0; }
+  .batch-card form { display:flex; flex-direction:column; gap:14px; }
+  .batch-card label { display:flex; flex-direction:column; font-size:12px; font-weight:500; gap:6px; }
+  .batch-card small { color:var(--muted); font-size:12px; font-weight:400; }
+  .batch-card input,.batch-card select { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:16px; min-height:44px; padding:10px 12px; width:100%; }
+  .batch-totals { border-top:1px solid var(--line); display:flex; flex-direction:column; font-size:12px; gap:6px; padding-top:12px; }
+  .batch-totals span { display:flex; justify-content:space-between; }
+  .batch-totals span:last-child { color:var(--muted); }
+  .review-button { min-height:44px; width:100%; }
+  .review-button:disabled { cursor:not-allowed; opacity:.4; }
+  @media (max-width:1180px) {
+    .summary { grid-template-columns:auto minmax(0,1fr); }
+    .legend { grid-column:1/-1; }
+  }
+  @media (max-width:900px) {
+    .bulk-page { grid-template-columns:1fr; padding-inline:40px; }
+    .batch-card { position:static; }
+  }
+  @media (max-width:560px) {
+    .bulk-page { padding:8px 20px calc(40px + env(safe-area-inset-bottom)); }
+    .intro h1 { font-size:32px; }
+    .drop-zone { align-items:stretch; flex-direction:column; }
+    .drop-intro { align-items:center; width:100%; }
+    .choose-files,.choose-folder { width:100%; }
+    .summary { gap:12px; grid-template-columns:auto minmax(0,1fr); padding:14px; }
+    .legend { flex-wrap:wrap; grid-column:1/-1; row-gap:8px; white-space:normal; }
+    .progress-wrap { justify-content:flex-end; }
+    .progress { min-width:44px; }
+    .thumb { height:132px; }
+    .grid-foot { align-items:flex-start; flex-direction:column; }
+    .review-button { bottom:max(12px,env(safe-area-inset-bottom)); box-shadow:0 8px 24px rgba(21,24,28,.22); position:sticky; z-index:2; }
+  }
 </style>
 <script>
   type ApiItem = { id:string; filename:string; size_bytes:number; image_key:string; status:string; match_json:string|null };
@@ -130,7 +204,7 @@ function labelFor(item: BatchItem) {
     grid.replaceChildren(...items.map((item) => {
       const article = document.createElement('article'); article.className = 'tile';
       const thumb = document.createElement('div'); thumb.className = 'thumb';
-      const image = document.createElement('img'); image.alt = 'Uploaded whale shark photograph'; image.src = localUrls.get(item.filename) || item.image_key; thumb.appendChild(image);
+      const image = document.createElement('img'); image.alt = 'Uploaded whale shark photograph'; image.src = localUrls.get(item.filename) || item.image_key; image.width=960; image.height=540; thumb.appendChild(image);
       const match = parseMatch(item); if (Array.isArray(match.bbox)) { const box=document.createElement('i'); box.className=`detect-box${item.status==='likely_new'?' new':''}`; box.style.cssText=`left:${match.bbox[0]*100}%;top:${match.bbox[1]*100}%;width:${match.bbox[2]*100}%;height:${match.bbox[3]*100}%`; thumb.appendChild(box); }
       const meta=document.createElement('div'); meta.className='tile-meta'; const status=document.createElement('span'); status.className=`status ${item.status}`; status.textContent=statusLabel(item); const suffix=document.createElement('span'); suffix.className='mono suffix'; suffix.textContent=item.filename.replace(/\.[^.]+$/,'').slice(-4); meta.appendChild(status); meta.appendChild(suffix); article.appendChild(thumb); article.appendChild(meta); return article;
     }));

@@ -3,9 +3,20 @@ main = "@astrojs/cloudflare/entrypoints/server"
 compatibility_date = "2026-08-22"
 compatibility_flags = ["nodejs_compat"]
 
+# Runtime settings. MOCK="1" runs the whole site on fixtures with no Wildbook credentials —
+# the dev deployment uses this. Set MOCK="0" and add the WILDBOOK_* secrets for a live instance.
+[vars]
+MOCK = "1"
+PUBLIC_WRITE = "dry-run"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "whaleshark-org"
-# Run `npm run db:create`, then replace this placeholder with the returned id.
-database_id = "00000000-0000-0000-0000-000000000000"
+# Created with `npm run db:create` (MMF Cloudflare account). Forks: run it again and replace this id.
+database_id = "3b8081cc-3546-43a9-87d1-dc8b217fdf42"
 migrations_dir = "migrations"
+
+# Astro sessions (used by the adapter). Created on first deploy; forks: `wrangler kv namespace create whaleshark-org-session`.
+[[kv_namespaces]]
+binding = "SESSION"
+id = "1daa392ca67146239e6f72fb54135357"

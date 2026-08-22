@@ -1,17 +1,20 @@
+import { env } from 'cloudflare:workers';
 import type { DataStore } from './db';
 import { createDataStore } from './db';
 import { isMockMode } from './mode';
 
-type CloudflareLocals = App.Locals & {
-  runtime?: { env?: { DB?: D1Database; [key: string]: unknown } };
-};
+// Astro 6+/@astrojs/cloudflare 14: bindings and secrets come from `cloudflare:workers`,
+// not Astro.locals.runtime.env. `locals` is kept in the signatures so call sites
+// can stay the same if a future adapter changes the access pattern again.
+type WorkerEnv = { DB?: D1Database; [key: string]: unknown };
+const workerEnv = env as unknown as WorkerEnv;
 
-export function dataStore(locals: App.Locals): DataStore {
-  return createDataStore((locals as CloudflareLocals).runtime?.env?.DB, isMockMode());
+export function dataStore(_locals: App.Locals): DataStore {
+  return createDataStore(workerEnv.DB, isMockMode());
 }
 
-export function runtimeValue(locals: App.Locals, name: keyof ImportMetaEnv): string | undefined {
-  const runtime = (locals as CloudflareLocals).runtime?.env?.[name];
+export function runtimeValue(_locals: App.Locals, name: keyof ImportMetaEnv): string | undefined {
+  const runtime = workerEnv[name as string];
   if (typeof runtime === 'string') return runtime;
   const bundled = import.meta.env[name];
   return typeof bundled === 'string' ? bundled : undefined;

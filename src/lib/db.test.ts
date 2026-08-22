@@ -90,6 +90,7 @@ describe('mock data store', () => {
       id: 'batch-item-new', batch_id: 'batch-new', created_at: '2026-08-22T00:00:00.000Z', filename: 'IMG_4471.JPG',
       mime_type: 'image/jpeg', size_bytes: 12_000_000, image_key: '/mock/whale-shark-1.svg', status: 'queued',
       match_json: null, wildbook_task_id: null, observations_json: null,
+      provenance_json: null, sha256: null,
     });
     await store.updateBatchItem('batch-item-new', { status: 'matched', match_json: '{"candidates":[]}', observations_json: '{"sex":"female"}' });
     await store.updateBatch('batch-new', { status: 'review', observations_json: '{"observed_date":"2026-08-14"}' });
@@ -108,5 +109,25 @@ describe('mock data store', () => {
     expect(submissions).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'submission-demo', observations_json: expect.any(String) }),
     ]));
+  });
+
+  test('finds matching hashes across submissions and batch items with batch identity intact', async () => {
+    const store = createMemoryStore();
+    await store.createSubmission({
+      id: 'hash-submission', created_at: '2026-08-22T00:00:00.000Z', photographer_name: 'A Diver', photographer_email: 'diver@example.org',
+      site_id: 'tofo', observed_at: '2026-08-14', image_key: '/mock/one.svg', wildbook_encounter_id: null, status: 'matched',
+      match_json: null, observations_json: null, provenance_json: null, sha256: 'same-hash',
+    });
+    await store.createBatchItem({
+      id: 'hash-item', batch_id: 'batch-demo', created_at: '2026-08-22T00:00:01.000Z', filename: 'same.jpg', mime_type: 'image/jpeg',
+      size_bytes: 100, image_key: '/mock/two.svg', status: 'queued', match_json: null, observations_json: null, wildbook_task_id: null,
+      provenance_json: null, sha256: 'same-hash',
+    });
+
+    await expect(store.findBySha256('same-hash')).resolves.toEqual([
+      { source: 'submission', id: 'hash-submission', batch_id: null },
+      { source: 'batch_item', id: 'hash-item', batch_id: 'batch-demo' },
+    ]);
+    await expect(store.findBySha256('missing')).resolves.toEqual([]);
   });
 });

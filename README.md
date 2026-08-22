@@ -4,6 +4,8 @@ whaleshark.org is a community-facing front end for [Sharkbook](https://www.shark
 
 The project is built on Sharkbook by Wild Me / Conservation X Labs, with Marine Megafauna Foundation as a contributing partner. The application is openly AI-assisted and is designed to become a reusable front-end template for other Wildbook projects. The `/how-it-works` page explains how encounters, sightings, individuals, detection, matching, and human review fit together, and how another species project can fork the same front end.
 
+Every uploaded photo also receives a reviewer-only provenance check. Camera metadata, Content Credentials, exact-file hashes, and detector/matcher sanity signals produce a capped 0–3 attention score stored with the submission; the score can flag an image for closer human review but never rejects it or changes the public upload flow.
+
 ## Editing the text
 
 All maintainer-editable site copy lives in `content/`: global names, navigation, site labels, footer text, and the canonical photo-credit registry are in `content/site.md`; page copy, image paths, and alt text are in `content/pages/*.md`; species vocabularies are in `content/species/*.{yaml,yml}`. Astro validates these files during checks and builds. They can be edited directly, exposed through a git-based CMS, or reflected into Obsidian with the optional `scripts/vault_sync.py` workflow.
@@ -27,6 +29,8 @@ npm install
 cp .env.example .env
 npm run dev
 ```
+
+If the dev command exits before printing its ready URL, first check whether this repo already has a server listening on port 4321 (`lsof -nP -iTCP:4321 -sTCP:LISTEN`). Reuse that server or stop it explicitly before starting another; a second managed-shell launch can otherwise look like an Astro startup failure.
 
 If installation reports `ENOTFOUND registry.npmjs.org`, the machine cannot currently reach the npm registry; retry from a network-enabled shell. `npm install --offline` works only after these packages have previously been cached and otherwise reports `ENOTCACHED`.
 

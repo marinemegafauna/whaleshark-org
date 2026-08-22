@@ -50,7 +50,7 @@ workbench:
     singleLabel: Single photo
     batchLabel: Whole dive
     open: Open report →
-  tableHeaders: [Encounter, Individual, Date · photographer, Sex · size, Photos, Scar record, " "]
+  tableHeaders: [Encounter, Individual, Date · photographer, Sex · size, Photos, Provenance, Scar record, " "]
   sightings: "· {count} sightings"
   newLabel: · new
   unassignedPending: Unassigned · match pending

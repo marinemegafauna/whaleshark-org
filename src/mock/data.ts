@@ -1,3 +1,5 @@
+import type { ProvenanceResult } from '../lib/provenance';
+
 export interface MockEncounter {
   id: string;
   individualId: string | null;
@@ -10,11 +12,15 @@ export interface MockEncounter {
   siteId: string;
   image: string;
   imageFilename: string;
+  provenance?: ProvenanceResult;
 }
 
+const mockMetadata = { hasExif: false, hasXmp: false, hasIptc: false, hasC2pa: false };
+const mockProvenance = (score: 0 | 1 | 2 | 3, signals: ProvenanceResult['signals']): ProvenanceResult => ({ score, signals, metadata: mockMetadata, version: 1 });
+
 export const mockEncounters: MockEncounter[] = [
-  { id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg', imageFilename: 'IMG_4471.JPG' },
-  { id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg', imageFilename: 'IMG_4472.JPG' },
+  { id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg', imageFilename: 'IMG_4471.JPG', provenance: mockProvenance(3, [{ code: 'ai_software', weight: 2, label: 'ai_software' }, { code: 'no_camera', weight: 1, label: 'no_camera' }]) },
+  { id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg', imageFilename: 'IMG_4472.JPG', provenance: mockProvenance(1, [{ code: 'no_exif', weight: 1, label: 'no_exif' }]) },
   { id: '4935bac7', individualId: null, sightings: 0, date: '13 Aug 2026', photographer: '[guide]', sex: '—', size: '~6 m', photos: '2 · L', siteId: 'tofo', image: '/mock/whale-shark-3.svg', imageFilename: 'IMG_4473.JPG' },
   { id: 'c5983598', individualId: 'MZ-091', sightings: 31, date: '12 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~8 m', photos: '9 · L+R', siteId: 'tofo', image: '/mock/whale-shark-4.svg', imageFilename: 'IMG_4474.JPG' },
   { id: 'a17e02d9', individualId: 'MZ-284', sightings: 14, date: '9 Aug 2026', photographer: '[guide]', sex: 'M', size: '~7 m', photos: '3 · L', siteId: 'tofo', image: '/mock/whale-shark-5.svg', imageFilename: 'IMG_4475.JPG' },
@@ -56,6 +62,8 @@ export const mockSubmissions = [
       injuries: { severity: 'minor', regions: ['dorsal_fin_1'], types: ['healed_scar'], description: 'Small healed mark.' },
       submitter_name: 'Your name', submitter_email: 'photographer@example.org', inform_other: [], comments: '', consented_at: '2026-08-21T08:31:00.000Z',
     }),
+    provenance_json: JSON.stringify(mockProvenance(0, [])),
+    sha256: 'mock-submission-demo',
   },
 ];
 
@@ -81,4 +89,10 @@ export const mockBatchItems = [
   filename: `IMG_${4471 + index}.JPG`, mime_type: 'image/jpeg', size_bytes: 13_000_000 + index * 500_000,
   image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`, status: 'matched' as const,
   match_json: JSON.stringify({ bbox: [0.14, 0.2, 0.68, 0.58], candidates: [{ individualId, score }] }), observations_json: null, wildbook_task_id: null,
+  provenance_json: JSON.stringify(index === 0
+    ? mockProvenance(2, [{ code: 'ai_software', weight: 2, label: 'ai_software' }])
+    : index === 1
+      ? mockProvenance(1, [{ code: 'no_exif', weight: 1, label: 'no_exif' }])
+      : mockProvenance(0, [])),
+  sha256: `mock-batch-demo-${index + 1}`,
 }));

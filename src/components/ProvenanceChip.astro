@@ -1,0 +1,58 @@
+---
+import { getPageCopy } from '../lib/content';
+import { provenanceChip } from '../lib/provenance-display';
+import type { ProvenanceResult } from '../lib/provenance';
+
+interface Props {
+  result: ProvenanceResult | null | undefined;
+  compact?: boolean;
+}
+
+const { result, compact = false } = Astro.props;
+const copy = await getPageCopy('provenance');
+const chip = result ? provenanceChip(result, copy.chips) : null;
+const camera = result ? [result.metadata.make, result.metadata.model].filter(Boolean).join(' ') : '';
+const dimensions = result?.metadata.width && result.metadata.height ? `${result.metadata.width} × ${result.metadata.height}` : '';
+const metadata = result ? [
+  camera ? { label: copy.metadata.makeModel, value: camera } : null,
+  result.metadata.software ? { label: copy.metadata.software, value: result.metadata.software } : null,
+  result.metadata.dateTimeOriginal ? { label: copy.metadata.date, value: result.metadata.dateTimeOriginal } : null,
+  dimensions ? { label: copy.metadata.dimensions, value: dimensions } : null,
+].filter((entry): entry is { label: string; value: string } => Boolean(entry)) : [];
+---
+{chip && result && <details class:list={['provenance', chip.tone, { compact }]}>
+  <summary title={copy.guidance}><span>{chip.label}</span></summary>
+  <div class="provenance-popover">
+    <strong>{copy.detailsHeading}</strong>
+    <p>{copy.guidance}</p>
+    <ul>{result.signals.map((entry) => <li><b>{copy.signals[entry.code]}</b>{entry.detail && <small>{entry.detail}</small>}</li>)}</ul>
+    <h4>{copy.metadata.heading}</h4>
+    {metadata.length > 0 ? <dl>{metadata.map((entry) => <div><dt>{entry.label}</dt><dd>{entry.value}</dd></div>)}</dl> : <p>{copy.metadata.none}</p>}
+  </div>
+</details>}
+<style>
+  .provenance { display:inline-block; max-width:100%; position:relative; }
+  summary { align-items:center; cursor:pointer; display:inline-flex; list-style:none; min-height:44px; max-width:100%; }
+  summary::-webkit-details-marker { display:none; }
+  summary > span { border:1px solid transparent; border-radius:var(--radius-pill); display:block; font-size:12px; font-weight:600; line-height:1.2; overflow:hidden; padding:4px 9px; text-overflow:ellipsis; white-space:nowrap; }
+  .neutral summary > span { background:rgba(79,70,229,.06); border-color:rgba(79,70,229,.16); color:var(--accent); }
+  .grey summary > span { background:rgba(21,24,28,.07); color:rgba(21,24,28,.7); }
+  .amber summary > span { background:#fff3cd; border-color:#e5bd55; color:#7a4b00; }
+  .red summary > span { background:#fee2e2; border-color:#ef9a9a; color:#991b1b; }
+  .compact summary { min-height:36px; }
+  .compact summary > span { font-size:11px; padding:3px 7px; }
+  .provenance-popover { background:#fff; border:1px solid var(--line-strong); border-radius:10px; box-shadow:0 10px 30px rgba(21,24,28,.18); color:var(--ink); display:none; font-size:12px; left:0; line-height:1.4; padding:13px; position:absolute; text-align:left; top:calc(100% + 2px); width:min(320px,calc(100vw - 40px)); z-index:20; }
+  details[open] .provenance-popover, details:hover .provenance-popover { display:block; }
+  .provenance-popover > strong { display:block; font-size:13px; }
+  .provenance-popover > p { color:var(--muted); margin:5px 0 10px; }
+  ul { display:flex; flex-direction:column; gap:5px; list-style:none; margin:0; padding:0; }
+  li { display:flex; flex-direction:column; }
+  li b { font-weight:600; }
+  li small { color:var(--muted); overflow-wrap:anywhere; }
+  h4 { border-top:1px solid var(--line); font-size:11px; letter-spacing:.06em; margin:10px 0 5px; padding-top:9px; text-transform:uppercase; }
+  dl { display:flex; flex-direction:column; gap:4px; margin:0; }
+  dl div { display:grid; gap:8px; grid-template-columns:72px minmax(0,1fr); }
+  dt { color:var(--muted); }
+  dd { margin:0; overflow-wrap:anywhere; }
+  @media (max-width:560px) { .provenance-popover { left:auto; right:0; } }
+</style>

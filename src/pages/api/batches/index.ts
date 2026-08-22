@@ -4,6 +4,7 @@ import type { Batch, BatchItem } from '../../../lib/db';
 import { publicSubmissionDefaults } from '../../../mock/data';
 import { parsePublicObservationForm, validatePublicObservations } from '../../../lib/public-observations';
 import { getSpecies } from '../../../lib/species';
+import { inspectUpload } from '../../../lib/upload-provenance';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   const isJson = request.headers.get('content-type')?.includes('application/json');
@@ -43,10 +44,12 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
   if (input instanceof FormData) {
     const files = [...input.getAll('files'), ...input.getAll('image')].filter((entry): entry is File => entry instanceof File && entry.size > 0);
     for (const [index, file] of files.entries()) {
+      const upload = await inspectUpload(file, store, id);
       const item: BatchItem = {
         id: crypto.randomUUID(), batch_id: id, created_at: new Date(Date.now() + index).toISOString(), filename: file.name,
         mime_type: file.type || 'application/octet-stream', size_bytes: file.size, image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`,
         status: 'queued', match_json: null, observations_json: null, wildbook_task_id: null,
+        provenance_json: upload.provenance_json, sha256: upload.sha256,
       };
       await store.createBatchItem(item);
     }

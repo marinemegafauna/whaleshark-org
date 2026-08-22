@@ -29,6 +29,8 @@ export interface BatchItem {
   match_json: string | null;
   observations_json: string | null;
   wildbook_task_id: string | null;
+  provenance_json: string | null;
+  sha256: string | null;
 }
 
 export interface ScarRecord {
@@ -68,6 +70,14 @@ export interface PublicSubmission {
   status: string;
   match_json: string | null;
   observations_json: string | null;
+  provenance_json: string | null;
+  sha256: string | null;
+}
+
+export interface ImageHashMatch {
+  source: 'submission' | 'batch_item';
+  id: string;
+  batch_id: string | null;
 }
 
 export interface SessionRecord {
@@ -104,6 +114,7 @@ export interface DataStore {
   createBatchItem(item: BatchItem): Promise<BatchItem>;
   listBatchItems(batchId: string): Promise<BatchItem[]>;
   updateBatchItem(id: string, patch: Partial<BatchItem>): Promise<BatchItem>;
+  findBySha256(hash: string): Promise<ImageHashMatch[]>;
   createSession(session: SessionRecord): Promise<SessionRecord>;
   getSession(id: string): Promise<SessionRecord | null>;
   saveCatalogueStats(stats: CatalogueStats): Promise<CatalogueStats>;
@@ -228,6 +239,13 @@ class MemoryStore implements DataStore {
     return updated;
   }
 
+  async findBySha256(hash: string): Promise<ImageHashMatch[]> {
+    return [
+      ...this.submissions.filter((submission) => submission.sha256 === hash).map((submission) => ({ source: 'submission' as const, id: submission.id, batch_id: null })),
+      ...this.batchItems.filter((item) => item.sha256 === hash).map((item) => ({ source: 'batch_item' as const, id: item.id, batch_id: item.batch_id })),
+    ];
+  }
+
   async createSession(session: SessionRecord) {
     this.sessions.push(structuredClone(session));
     return session;
@@ -296,8 +314,8 @@ class D1Store implements DataStore {
   }
 
   async createSubmission(submission: PublicSubmission) {
-    await this.db.prepare(`INSERT INTO public_submissions (id, created_at, photographer_name, photographer_email, site_id, observed_at, image_key, wildbook_encounter_id, status, match_json, observations_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(submission.id, submission.created_at, submission.photographer_name, submission.photographer_email, submission.site_id, submission.observed_at, submission.image_key, submission.wildbook_encounter_id, submission.status, submission.match_json, submission.observations_json).run();
+    await this.db.prepare(`INSERT INTO public_submissions (id, created_at, photographer_name, photographer_email, site_id, observed_at, image_key, wildbook_encounter_id, status, match_json, observations_json, provenance_json, sha256) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(submission.id, submission.created_at, submission.photographer_name, submission.photographer_email, submission.site_id, submission.observed_at, submission.image_key, submission.wildbook_encounter_id, submission.status, submission.match_json, submission.observations_json, submission.provenance_json, submission.sha256).run();
     return submission;
   }
 
@@ -313,8 +331,8 @@ class D1Store implements DataStore {
     const current = await this.getSubmission(id);
     if (!current) throw new Error(`Submission not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE public_submissions SET created_at=?, photographer_name=?, photographer_email=?, site_id=?, observed_at=?, image_key=?, wildbook_encounter_id=?, status=?, match_json=?, observations_json=? WHERE id=?`)
-      .bind(record.created_at, record.photographer_name, record.photographer_email, record.site_id, record.observed_at, record.image_key, record.wildbook_encounter_id, record.status, record.match_json, record.observations_json, id).run();
+    await this.db.prepare(`UPDATE public_submissions SET created_at=?, photographer_name=?, photographer_email=?, site_id=?, observed_at=?, image_key=?, wildbook_encounter_id=?, status=?, match_json=?, observations_json=?, provenance_json=?, sha256=? WHERE id=?`)
+      .bind(record.created_at, record.photographer_name, record.photographer_email, record.site_id, record.observed_at, record.image_key, record.wildbook_encounter_id, record.status, record.match_json, record.observations_json, record.provenance_json, record.sha256, id).run();
     return record;
   }
 
@@ -345,8 +363,8 @@ class D1Store implements DataStore {
   }
 
   async createBatchItem(item: BatchItem) {
-    await this.db.prepare(`INSERT INTO batch_items (id, batch_id, created_at, filename, mime_type, size_bytes, image_key, status, match_json, observations_json, wildbook_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(item.id, item.batch_id, item.created_at, item.filename, item.mime_type, item.size_bytes, item.image_key, item.status, item.match_json, item.observations_json, item.wildbook_task_id).run();
+    await this.db.prepare(`INSERT INTO batch_items (id, batch_id, created_at, filename, mime_type, size_bytes, image_key, status, match_json, observations_json, wildbook_task_id, provenance_json, sha256) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(item.id, item.batch_id, item.created_at, item.filename, item.mime_type, item.size_bytes, item.image_key, item.status, item.match_json, item.observations_json, item.wildbook_task_id, item.provenance_json, item.sha256).run();
     return item;
   }
 
@@ -358,9 +376,15 @@ class D1Store implements DataStore {
     const current = await this.db.prepare('SELECT * FROM batch_items WHERE id = ?').bind(id).first<BatchItem>();
     if (!current) throw new Error(`Batch item not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE batch_items SET batch_id=?, created_at=?, filename=?, mime_type=?, size_bytes=?, image_key=?, status=?, match_json=?, observations_json=?, wildbook_task_id=? WHERE id=?`)
-      .bind(record.batch_id, record.created_at, record.filename, record.mime_type, record.size_bytes, record.image_key, record.status, record.match_json, record.observations_json, record.wildbook_task_id, id).run();
+    await this.db.prepare(`UPDATE batch_items SET batch_id=?, created_at=?, filename=?, mime_type=?, size_bytes=?, image_key=?, status=?, match_json=?, observations_json=?, wildbook_task_id=?, provenance_json=?, sha256=? WHERE id=?`)
+      .bind(record.batch_id, record.created_at, record.filename, record.mime_type, record.size_bytes, record.image_key, record.status, record.match_json, record.observations_json, record.wildbook_task_id, record.provenance_json, record.sha256, id).run();
     return record;
+  }
+
+  async findBySha256(hash: string): Promise<ImageHashMatch[]> {
+    const result = await this.db.prepare(`SELECT 'submission' AS source, id, NULL AS batch_id FROM public_submissions WHERE sha256 = ? UNION ALL SELECT 'batch_item' AS source, id, batch_id FROM batch_items WHERE sha256 = ?`)
+      .bind(hash, hash).all<ImageHashMatch>();
+    return result.results;
   }
 
   async createSession(session: SessionRecord) {

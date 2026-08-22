@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { mockSubmissions, publicSubmissionDefaults } from '../../mock/data';
 import { isMockMode } from '../../lib/mode';
 import { dataStore } from '../../lib/runtime';
+import { inspectUpload } from '../../lib/upload-provenance';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
@@ -11,6 +12,8 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
 
     const id = crypto.randomUUID();
     const mock = isMockMode();
+    const store = dataStore(locals);
+    const upload = await inspectUpload(image, store);
     const demoMatches = mock ? JSON.parse(mockSubmissions[0]!.match_json ?? '[]') as unknown[] : [];
     const matchEnvelope: Record<string, unknown> = { candidates: demoMatches, mediaFilename: image.name };
     const submission = {
@@ -25,9 +28,11 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
       status: mock ? 'matched' : 'awaiting_report',
       match_json: JSON.stringify(matchEnvelope),
       observations_json: null,
+      provenance_json: upload.provenance_json,
+      sha256: upload.sha256,
     };
 
-    await dataStore(locals).createSubmission(submission);
+    await store.createSubmission(submission);
     return redirect(`/match/${id}`, 303);
   } catch {
     return redirect('/?upload_error=unavailable#drop-photo', 303);

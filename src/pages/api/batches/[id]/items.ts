@@ -4,6 +4,7 @@ import type { BatchItem } from '../../../../lib/db';
 import { isMockMode, publicWriteMode } from '../../../../lib/mode';
 import { dataStore, runtimeValue } from '../../../../lib/runtime';
 import { login, startBulkImport, uploadResumableFile } from '../../../../lib/wildbook';
+import { inspectUpload } from '../../../../lib/upload-provenance';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const store = dataStore(locals);
@@ -15,10 +16,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   const items: BatchItem[] = [];
   for (const [index, file] of files.entries()) {
+    const upload = await inspectUpload(file, store, batch.id);
     const item: BatchItem = {
       id: crypto.randomUUID(), batch_id: batch.id, created_at: new Date(Date.now() + index).toISOString(), filename: file.name,
       mime_type: file.type || 'application/octet-stream', size_bytes: file.size, image_key: `/mock/whale-shark-${(index % 6) + 1}.svg`,
       status: 'queued', match_json: null, observations_json: null, wildbook_task_id: null,
+      provenance_json: upload.provenance_json, sha256: upload.sha256,
     };
     await store.createBatchItem(item);
     items.push(item);

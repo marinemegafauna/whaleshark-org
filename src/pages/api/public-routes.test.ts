@@ -10,6 +10,8 @@ import { mergePublicObservations, parsePublicObservationForm, parseStoredPublicO
 import { getSpecies } from '../../lib/species';
 import { POST as confirmSubmission } from './submissions/[id]/confirm';
 import { POST as submitBatchReview } from './batches/[id]/submit';
+import { POST as addBatchItems } from './batches/[id]/items';
+import { POST as createSubmission } from './submit';
 
 const redirect = (location: string, status = 302) => new Response(null, { status, headers: { Location: location } });
 
@@ -30,6 +32,8 @@ describe('public report route gates', () => {
       status: 'matched',
       match_json: '[]',
       observations_json: null,
+      provenance_json: null,
+      sha256: null,
     });
     const body = new FormData();
     body.set('decision', 'confirm');
@@ -106,5 +110,52 @@ describe('public report route gates', () => {
       'Encounter.locationID': 'Tofo',
       'Sighting.individualCount': '3',
     });
+  });
+
+  test('stores metadata provenance and the original-byte hash for a single upload', async () => {
+    const bytes = new Uint8Array(33);
+    bytes.set([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+    new DataView(bytes.buffer).setUint32(16, 1024);
+    new DataView(bytes.buffer).setUint32(20, 1024);
+    bytes.set([8, 2, 0, 0, 0], 24);
+    const body = new FormData();
+    body.set('image', new File([bytes], 'generated.png', { type: 'image/png' }));
+
+    const response = await createSubmission({
+      request: new Request('http://local/api/submit', { method: 'POST', body }),
+      locals: {},
+      redirect,
+    } as never);
+
+    expect(response.status).toBe(303);
+    const stored = (await createMemoryStore().listSubmissions()).find((submission) => submission.id !== 'submission-demo')!;
+    expect(stored.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(JSON.parse(stored.provenance_json!)).toMatchObject({
+      score: 3,
+      metadata: { width: 1024, height: 1024 },
+    });
+  });
+
+  test('marks the second identical upload in one batch without calling it an earlier catalogue image', async () => {
+    const bytes = new Uint8Array(33);
+    bytes.set([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+    new DataView(bytes.buffer).setUint32(16, 800);
+    new DataView(bytes.buffer).setUint32(20, 600);
+    bytes.set([8, 2, 0, 0, 0], 24);
+    const body = new FormData();
+    body.append('files', new File([bytes], 'first.png', { type: 'image/png' }));
+    body.append('files', new File([bytes], 'second.png', { type: 'image/png' }));
+
+    const response = await addBatchItems({
+      params: { id: 'batch-demo' },
+      request: new Request('http://local/api/batches/batch-demo/items', { method: 'POST', body }),
+      locals: {},
+    } as never);
+
+    expect(response.status).toBe(201);
+    const uploaded = (await createMemoryStore().listBatchItems('batch-demo')).filter((item) => item.filename.endsWith('.png'));
+    expect(JSON.parse(uploaded[0]!.provenance_json!).signals.map((signal: { code: string }) => signal.code)).not.toContain('duplicate_in_batch');
+    expect(JSON.parse(uploaded[1]!.provenance_json!).signals.map((signal: { code: string }) => signal.code)).toContain('duplicate_in_batch');
+    expect(JSON.parse(uploaded[1]!.provenance_json!).signals.map((signal: { code: string }) => signal.code)).not.toContain('known_catalogue_image');
   });
 });

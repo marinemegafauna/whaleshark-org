@@ -173,7 +173,7 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
 </style>
 <script>
   import { fillTemplate } from '../../lib/content-utils';
-  import { dateFromExif } from '../../lib/photo-date';
+  import exifr from 'exifr';
   type ApiItem = { id:string; filename:string; size_bytes:number; image_key:string; status:string; match_json:string|null };
   type EntryWithReader = FileSystemDirectoryEntry & { createReader(): FileSystemDirectoryReader };
   const page = document.querySelector<HTMLElement>('.bulk-page')!;
@@ -239,7 +239,18 @@ const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, stat
     errorBox.textContent=''; window.clearTimeout(pollTimer);
     const localUrls = new Map(files.map((file) => [file.name, URL.createObjectURL(file)]));
     render(files.map((file,index) => ({ id:`local-${index}`, filename:file.name, size_bytes:file.size, image_key:localUrls.get(file.name)!, status:'uploading', match_json:null })), localUrls);
-    const exifDate = await dateFromExif(files[0]!); if (exifDate) { (details.elements.namedItem('observed_date') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent=copy.batchCard.dateSourcePhoto; }
+    let exifDate: string | null = null;
+    try {
+      const parsed = await exifr.parse(files[0]!, ['DateTimeOriginal']) as { DateTimeOriginal?: unknown } | undefined;
+      const captured = parsed?.DateTimeOriginal;
+      if (captured instanceof Date && !Number.isNaN(captured.getTime())) {
+        exifDate = `${captured.getFullYear()}-${String(captured.getMonth() + 1).padStart(2,'0')}-${String(captured.getDate()).padStart(2,'0')}`;
+      } else if (typeof captured === 'string') {
+        const match = captured.match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})/);
+        if (match) exifDate = `${match[1]}-${match[2]}-${match[3]}`;
+      }
+    } catch { /* keep the existing form date when metadata is absent or unreadable */ }
+    if (exifDate) { (details.elements.namedItem('observed_date') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent=copy.batchCard.dateSourcePhoto; }
     try {
       if (!batchId) {
         const metadata = Object.fromEntries(new FormData(details));

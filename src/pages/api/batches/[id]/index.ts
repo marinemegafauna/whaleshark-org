@@ -5,6 +5,9 @@ import { dataStore, runtimeValue } from '../../../../lib/runtime';
 import { getBulkImportStatus, getMatchResults, login } from '../../../../lib/wildbook';
 import { parsePublicObservationForm, parseStoredPublicObservations, preserveConsentTimestamp, validatePublicObservations } from '../../../../lib/public-observations';
 import { getSpecies } from '../../../../lib/species';
+import { appendPipelineSignals, parseProvenanceResult, pipelineSignalsForMatch, type ProvenanceResult } from '../../../../lib/provenance';
+
+const emptyProvenance: ProvenanceResult = { score: 0, signals: [], metadata: { hasExif: false, hasXmp: false, hasIptc: false, hasC2pa: false }, version: 1 };
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   const store = dataStore(locals);
@@ -61,7 +64,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
         const result = results.find((candidate) => candidate.filename === item.filename) ?? results[index] ?? {};
         const candidates = Array.isArray(result.candidates) ? result.candidates : Array.isArray(result.matches) ? result.matches : [];
         const status = result.status === 'no_shark' ? 'no_shark' : candidates.length ? 'matched' : 'likely_new';
-        return store.updateBatchItem(item.id, { status, match_json: JSON.stringify({ ...result, candidates }) });
+        const match = { ...result, candidates };
+        const provenance = appendPipelineSignals(parseProvenanceResult(item.provenance_json) ?? emptyProvenance, pipelineSignalsForMatch(status, match));
+        return store.updateBatchItem(item.id, { status, match_json: JSON.stringify(match), provenance_json: JSON.stringify(provenance) });
       }));
       batch = await store.updateBatch(batch.id, { status: 'review', updated_at: new Date().toISOString() });
     }

@@ -28,6 +28,8 @@ sections:
     body: |
       No match is accepted automatically. A researcher at the site looks at the candidate pair side by side and confirms or rejects it. That is the step that turns "probably MZ-284" into a line in MZ-284's history, and it is why a sighting you upload may take a little while to appear.
 
+      Each photo also carries a provenance check: camera metadata, Content Credentials and pipeline sanity checks can flag an image a reviewer should look at closely. A flag never rejects a photo or decides that it is fake; it only gives the person making the final call more context.
+
       Scars and injuries are recorded the same way — by a person, against a standard vocabulary — so that sites can be compared.
   - id: this-site
     heading: What whaleshark.org adds

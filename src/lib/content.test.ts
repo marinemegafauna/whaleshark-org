@@ -41,6 +41,7 @@ describe('Astro content sources', () => {
       '../../content/pages/how-it-works.md',
       '../../content/pages/landing.md',
       '../../content/pages/match.md',
+      '../../content/pages/provenance.md',
       '../../content/pages/signin.md',
     ]);
     expect(Object.keys(siteSources)).toEqual(['../../content/site.md']);
@@ -139,5 +140,20 @@ describe('Astro content sources', () => {
     expect(match).toMatchObject({ page: 'match', report: { heading: 'About this sighting' } });
     expect(bulk).toMatchObject({ page: 'bulk', batchCard: { sightingHeading: 'Shared sighting details' } });
     expect(app).toMatchObject({ page: 'app', workbench: { publicNotesLabel: 'Public notes' } });
+  });
+
+  test('keeps provenance labels and the maintained AI tool list in content', async () => {
+    const { pageCollectionSchema } = await import('./content-schema');
+    const source = pageSources['../../content/pages/provenance.md'];
+    expect(source).toBeDefined();
+    const provenance = pageCollectionSchema.parse(frontmatter(source!));
+
+    expect(provenance).toMatchObject({
+      page: 'provenance',
+      chips: { score1: 'Check provenance', score3: 'Likely AI or synthetic' },
+      signals: { no_exif: 'No camera data', c2pa_present: 'Content Credentials' },
+    });
+    if (provenance.page !== 'provenance') throw new Error('Provenance fixture has the wrong page discriminator');
+    expect(provenance.aiTools).toEqual(expect.arrayContaining(['midjourney', 'stable diffusion', 'openai', 'ai generated']));
   });
 });

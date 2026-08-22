@@ -206,6 +206,34 @@ const signinSchema = z.object({
   footnote: text,
 }).strict();
 
+const provenanceSignalSchema = z.object({
+  no_exif: text,
+  no_camera: text,
+  ai_software: text,
+  c2pa_ai: text,
+  c2pa_present: text,
+  heavy_edit: text,
+  png_or_webp: text,
+  ai_dimensions: text,
+  stripped_thumbnail: text,
+  unreadable: text,
+  no_shark_detected: text,
+  implausible_match: text,
+  duplicate_in_batch: text,
+  known_catalogue_image: text,
+}).strict();
+
+const provenanceSchema = z.object({
+  page: z.literal('provenance'),
+  chips: z.object({ score1: text, score2: text, score3: text, credentials: text }).strict(),
+  guidance: text,
+  detailsHeading: text,
+  batchFlagged: template,
+  metadata: z.object({ heading: text, makeModel: text, software: text, date: text, dimensions: text, none: text }).strict(),
+  signals: provenanceSignalSchema,
+  aiTools: z.array(text).min(1),
+}).strict();
+
 const appSchema = z.object({
   page: z.literal('app'),
   seo: z.object({ workbenchTitle: text, workbenchDescription: text, scarTitle: template, scarDescription: text }).strict(),
@@ -235,7 +263,7 @@ const appSchema = z.object({
     stats: z.object({ needsRecord: text, recordedWeek: text, freshMajor: text, matchesAwaiting: text, batchesAwaiting: text }).strict(),
     queue: z.object({ eyebrow: text, heading: text, help: text, counts: template, review: text }).strict(),
     publicQueue: z.object({ eyebrow: text, heading: text, help: text, singleLabel: text, batchLabel: text, open: text }).strict(),
-    tableHeaders: z.array(text).length(7),
+    tableHeaders: z.array(text).length(8),
     sightings: template,
     newLabel: text,
     unassignedPending: text,
@@ -287,6 +315,7 @@ export const pageCollectionSchema = z.union([
   bulkSchema,
   howItWorksSchema,
   matchSchema,
+  provenanceSchema,
   signinSchema,
   appSchema,
 ]);

@@ -6,6 +6,7 @@ function candidate(id: string, match: object): BatchItem {
   return {
     id, batch_id: 'batch-1', created_at: '2026-08-22T00:00:00.000Z', filename: `${id}.JPG`, mime_type: 'image/jpeg',
     size_bytes: 1_000, image_key: `/mock/${id}.svg`, status: 'matched', match_json: JSON.stringify(match), observations_json: null, wildbook_task_id: null,
+    provenance_json: null, sha256: null,
   };
 }
 

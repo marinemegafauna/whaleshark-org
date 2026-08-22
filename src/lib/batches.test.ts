@@ -15,6 +15,13 @@ const batch: Batch = {
   wildbook_task_id: null,
 };
 
+const neutralProvenance = JSON.stringify({
+  score: 0,
+  signals: [],
+  metadata: { hasExif: true, hasXmp: false, hasIptc: false, hasC2pa: false },
+  version: 1,
+});
+
 function item(index: number): BatchItem {
   return {
     id: `item-${index}`,
@@ -28,6 +35,8 @@ function item(index: number): BatchItem {
     match_json: null,
     observations_json: null,
     wildbook_task_id: null,
+    provenance_json: neutralProvenance,
+    sha256: `hash-${index}`,
   };
 }
 
@@ -57,5 +66,17 @@ describe('mock batch status machine', () => {
     const finished = { ...item(0), status: 'matched' as const, match_json: '{"kept":true}' };
     const result = advanceMockBatch(batch, [finished], Date.parse(batch.created_at) + 100);
     expect(result.items[0]).toEqual(finished);
+  });
+
+  test('adds reviewer signals from mock detection and implausible fixture matches', () => {
+    const start = Date.parse(batch.created_at);
+    const result = advanceMockBatch(batch, Array.from({ length: 19 }, (_, index) => item(index)), start + 10_000);
+
+    expect(JSON.parse(result.items[11]!.provenance_json!).signals).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'implausible_match', weight: 1 }),
+    ]));
+    expect(JSON.parse(result.items[18]!.provenance_json!).signals).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'no_shark_detected', weight: 1 }),
+    ]));
   });
 });

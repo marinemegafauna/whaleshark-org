@@ -30,6 +30,12 @@ Server routes and middleware obtain the D1 binding from the Cloudflare adapter's
 
 Detection + identification run through Wildbook's resumable-upload and bulk-import path, with task state read from `GET /api/v3/bulk-import/{taskId}` and candidates from `GET /api/v3/tasks/{taskId}/match-results`. The public flow therefore uploads or stages photos, polls results, and shows ranked candidates with cosine scores and the gap to the next animal. Until the write path is live, the single-photo and bulk match pages run against fixtures (`MOCK=1`).
 
+## Provenance
+
+Photo provenance is an attention flag for reviewers, never an acceptance rule. Layer 1 runs in the upload Worker before storage: `exifr` reads EXIF, XMP, IPTC and image dimensions; a byte scan notes C2PA/JUMBF Content Credentials; and SHA-256 identifies exact re-uploads. Layer 2 appends detector and matcher sanity signals such as no shark found, implausibly perfect matches, and same-batch duplicates. Signal weights sum to a score capped at 3 (0 nothing notable, 1 check, 2 possible edit/AI, 3 likely AI or synthetic), but every upload continues through the public flow unchanged.
+
+`public_submissions` and `batch_items` store the versioned result as `provenance_json` and the original-byte digest as `sha256`, with indexed cross-table lookup. Only reviewer surfaces expose it: each `/bulk/[id]/review` photo and the signed-in `/app` workbench can show a content-driven disclosure chip. `/match/[id]` deliberately shows no provenance result to the public uploader. Reviewer wording and the maintained AI-tool string list live in `content/pages/provenance.md`.
+
 ## Batches
 
 `batches` stores whole-dive metadata and review state, while `batch_items` stores each file's processing status, upstream task id, and match JSON. The public `/bulk` page creates a batch, uploads one or more files through Worker routes, polls the same D1-backed shape in mock or real mode, and groups review cards by best known individual or likely-new within-batch cluster. `PUBLIC_WRITE=dry-run` never calls Wildbook, and submitting a reviewed batch marks it ready for the researcher workbench without publishing it upstream.

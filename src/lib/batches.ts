@@ -1,4 +1,5 @@
 import type { Batch, BatchItem } from './db';
+import { appendPipelineSignals, parseProvenanceResult, pipelineSignalsForMatch, type ProvenanceResult } from './provenance';
 
 const finalStatuses = new Set(['matched', 'likely_new', 'no_shark', 'error']);
 const knownIndividuals = ['MZ-284', 'MZ-412', 'MZ-091'];
@@ -8,10 +9,13 @@ function finalItem(item: BatchItem, index: number): BatchItem {
   const bbox = [0.14 + (index % 3) * 0.03, 0.2, 0.68, 0.58];
   if (slot < 12) {
     const score = Number((0.5 + (index % 6) * 0.05).toFixed(2));
+    const candidates = slot === 11
+      ? [{ individualId: knownIndividuals[index % knownIndividuals.length], score: 1 }, { individualId: 'MZ-999', score: 1 }]
+      : [{ individualId: knownIndividuals[index % knownIndividuals.length], score }];
     return {
       ...item,
       status: 'matched',
-      match_json: JSON.stringify({ bbox, candidates: [{ individualId: knownIndividuals[index % knownIndividuals.length], score }] }),
+      match_json: JSON.stringify({ bbox, candidates }),
     };
   }
   if (slot < 17) {
@@ -22,13 +26,27 @@ function finalItem(item: BatchItem, index: number): BatchItem {
   return { ...item, status: 'error', match_json: JSON.stringify({ error: 'Photo could not be processed' }) };
 }
 
+const emptyProvenance: ProvenanceResult = {
+  score: 0,
+  signals: [],
+  metadata: { hasExif: false, hasXmp: false, hasIptc: false, hasC2pa: false },
+  version: 1,
+};
+
+function withPipelineProvenance(item: BatchItem): BatchItem {
+  let match: Record<string, unknown> = {};
+  try { match = JSON.parse(item.match_json ?? '{}') as Record<string, unknown>; } catch { /* an unreadable match simply has no implausibility signal */ }
+  const provenance = appendPipelineSignals(parseProvenanceResult(item.provenance_json) ?? emptyProvenance, pipelineSignalsForMatch(item.status, match));
+  return { ...item, provenance_json: JSON.stringify(provenance) };
+}
+
 export function advanceMockBatch(batch: Batch, items: BatchItem[], nowMs = Date.now()): { batch: Batch; items: BatchItem[] } {
   const startedAt = Date.parse(batch.created_at);
   const elapsed = Math.max(0, nowMs - startedAt);
   const advanced = items.map((item, index) => {
     if (finalStatuses.has(item.status)) return item;
     const offset = (index * 137) % 3_000;
-    if (elapsed >= 3_000 + offset) return finalItem(item, index);
+    if (elapsed >= 3_000 + offset) return withPipelineProvenance(finalItem(item, index));
     if (elapsed >= 1_800 + Math.floor(offset / 3)) return { ...item, status: 'matching' as const };
     if (elapsed >= 700 + Math.floor(offset / 6)) return { ...item, status: 'detecting' as const };
     return { ...item, status: 'queued' as const };

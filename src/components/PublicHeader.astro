@@ -1,21 +1,23 @@
 ---
+import { getSiteCopy } from '../lib/content';
 interface Props { active?: 'match' }
 const { active } = Astro.props;
+const copy = await getSiteCopy();
 ---
 <header class="public-header">
-  <a class="brand" href="/" aria-label="whaleshark.org home">
+  <a class="brand" href="/" aria-label={copy.brandHomeAriaLabel}>
     <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="7.25"></circle><circle cx="6.5" cy="7.5" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="6" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="11.5" cy="10.5" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="7.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"></circle></svg>
-    whaleshark.org
+    {copy.name}
   </a>
   <div class="header-actions">
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="public-menu">
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg>
-      <span>Menu</span>
+      <span>{copy.menuLabel}</span>
     </button>
-    <a class="signin" href="/signin">Sign in</a>
+    <a class="signin" href="/signin">{copy.signInLabel}</a>
   </div>
-  <nav id="public-menu" aria-label="Public navigation">
-    <a href="/#catalogue">Catalogue</a><a class:list={{ active: active === 'match' }} href="/match/submission-demo">Match</a><a href="/#sites">Sites</a><a href="/#photographers">Photographers</a><a href="/#about">About</a>
+  <nav id="public-menu" aria-label={copy.publicNavAriaLabel}>
+    {copy.publicNav.map((item) => <a class:list={{ active: active === item.key }} href={item.href}>{item.label}</a>)}
   </nav>
 </header>
 <style>

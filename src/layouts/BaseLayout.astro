@@ -1,5 +1,6 @@
 ---
 import '../styles/tokens.css';
+import { getSiteCopy } from '../lib/content';
 
 interface Props {
   title?: string;
@@ -7,7 +8,8 @@ interface Props {
   app?: boolean;
 }
 
-const { title = 'whaleshark.org', description = 'Meet the whale shark in your photo.', app = false } = Astro.props;
+const siteCopy = await getSiteCopy();
+const { title = siteCopy.name, description = siteCopy.defaultDescription, app = false } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">

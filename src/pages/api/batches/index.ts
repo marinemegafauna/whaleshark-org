@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { dataStore } from '../../../lib/runtime';
 import type { Batch, BatchItem } from '../../../lib/db';
+import { publicSubmissionDefaults } from '../../../mock/data';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   const isJson = request.headers.get('content-type')?.includes('application/json');
@@ -12,10 +13,10 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     id,
     created_at: now,
     updated_at: now,
-    site_id: value('site_id') || 'tofo',
+    site_id: value('site_id') || publicSubmissionDefaults.site_id,
     observed_at: value('observed_at') || now.slice(0, 10),
-    photographer_name: value('photographer_name') || 'Community photographer',
-    photographer_email: value('photographer_email') || 'pending@example.org',
+    photographer_name: value('photographer_name') || publicSubmissionDefaults.photographer_name,
+    photographer_email: value('photographer_email') || publicSubmissionDefaults.photographer_email,
     status: 'draft',
     wildbook_task_id: null,
   };

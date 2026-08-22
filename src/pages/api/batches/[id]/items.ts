@@ -8,10 +8,10 @@ import { login, startBulkImport, uploadResumableFile } from '../../../../lib/wil
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const store = dataStore(locals);
   const batch = await store.getBatch(params.id!);
-  if (!batch) return new Response('Batch not found.', { status: 404 });
+  if (!batch) return Response.json({ error: 'batch_not_found' }, { status: 404 });
   const form = await request.formData();
   const files = [...form.getAll('files'), ...form.getAll('image')].filter((entry): entry is File => entry instanceof File && entry.size > 0);
-  if (!files.length) return new Response('Choose at least one photo.', { status: 400 });
+  if (!files.length) return Response.json({ error: 'photos_required' }, { status: 400 });
 
   const items: BatchItem[] = [];
   for (const [index, file] of files.entries()) {
@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   if (!isMockMode() && publicWriteMode() === 'live') {
     const user = runtimeValue(locals, 'WILDBOOK_SERVICE_USER');
     const password = runtimeValue(locals, 'WILDBOOK_SERVICE_PASSWORD');
-    if (!user || !password) return new Response('Public write credentials are not configured.', { status: 503 });
+    if (!user || !password) return Response.json({ error: 'public_write_unavailable' }, { status: 503 });
     const authenticated = await login(user, password);
     const uploads = await Promise.all(files.map((file, index) => uploadResumableFile(authenticated.cookie, file, items[index]!.id)));
     const site = siteConfig.sites.find((candidate) => candidate.id === batch.site_id) ?? siteConfig.sites[0];

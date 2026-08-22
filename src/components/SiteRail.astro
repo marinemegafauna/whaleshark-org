@@ -1,14 +1,17 @@
 ---
-import siteConfig from '../../site.config';
+import { fillTemplate, getPageCopy, getSiteCopy } from '../lib/content';
+import { getSpecies } from '../lib/species';
 interface Props { active?: string; encounterCount?: number; individualCount?: number; scarCount?: number; }
 const { active = 'tofo', encounterCount = 8, individualCount = 5, scarCount = 3 } = Astro.props;
+const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
+const species = getSpecies('whale-shark');
 ---
 <aside class="site-rail">
-  <div class="eyebrow rail-title">Sites</div>
-  <nav class="site-links" aria-label="Research sites">{siteConfig.sites.map((site) => <a class:list={['nav', { active: site.id === active }]} href={`/app?site=${site.id}`}>{site.label}</a>)}</nav>
-  <div class="eyebrow section-title">Season · 2026</div>
-  <dl><div><dt>Encounters</dt><dd>{encounterCount}</dd></div><div><dt>Individuals</dt><dd>{individualCount}</dd></div><div><dt>New this season</dt><dd>1</dd></div><div><dt>Scar records</dt><dd>{scarCount}</dd></div><div><dt>Fresh major</dt><dd class="warn">1</dd></div></dl>
-  <div class="eyebrow section-title">Schema</div><div class="schema">Whale shark scars <span class="mono muted">v1.0</span></div>
+  <div class="eyebrow rail-title">{copy.rail.sitesHeading}</div>
+  <nav class="site-links" aria-label={copy.rail.sitesAriaLabel}>{siteCopy.researchSites.map((site) => <a class:list={['nav', { active: site.id === active }]} href={`/app?site=${site.id}`}>{site.label}</a>)}</nav>
+  <div class="eyebrow section-title">{fillTemplate(copy.rail.seasonHeading, { year: new Date().getUTCFullYear() })}</div>
+  <dl><div><dt>{copy.rail.labels.encounters}</dt><dd>{encounterCount}</dd></div><div><dt>{copy.rail.labels.individuals}</dt><dd>{individualCount}</dd></div><div><dt>{copy.rail.labels.newThisSeason}</dt><dd>1</dd></div><div><dt>{copy.rail.labels.scarRecords}</dt><dd>{scarCount}</dd></div><div><dt>{copy.rail.labels.freshMajor}</dt><dd class="warn">1</dd></div></dl>
+  <div class="eyebrow section-title">{copy.rail.schemaHeading}</div><div class="schema">{copy.rail.schemaName} <span class="mono muted">v{species.version}</span></div>
 </aside>
 <style>
   .site-rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; min-width:0; padding: 20px 14px; width: 232px; }

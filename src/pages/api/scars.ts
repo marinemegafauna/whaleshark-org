@@ -4,7 +4,7 @@ import { dataStore } from '../../lib/runtime';
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   const form = await request.formData();
   const encounterId = String(form.get('encounter_id') ?? '');
-  if (!encounterId) return new Response('encounter_id is required', { status: 400 });
+  if (!encounterId) return Response.json({ error: 'encounter_id_required' }, { status: 400 });
   const fields: Record<string, string> = {};
   for (const [key, value] of form.entries()) {
     if (key.startsWith('field_')) fields[key.slice(6)] = String(value);

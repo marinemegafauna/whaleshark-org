@@ -4,6 +4,10 @@ whaleshark.org is a community-facing front end for [Sharkbook](https://www.shark
 
 Marine Megafauna Foundation stewards the project. The application is openly AI-assisted and is designed to become a reusable front-end template for other Wildbook projects.
 
+## Editing the text
+
+All maintainer-editable site copy lives in `content/`: global names, navigation, site labels, footer text, and the canonical photo-credit registry are in `content/site.md`; page copy, image paths, and alt text are in `content/pages/*.md`; species vocabularies are in `content/species/*.{yaml,yml}`. Astro validates these files during checks and builds. They can be edited directly, exposed through a git-based CMS, or reflected into Obsidian with the optional `scripts/vault_sync.py` workflow.
+
 ## Screenshots
 
 Screenshots will be added after the first Cloudflare preview deployment. The approved screen references live in `design/reference/`.

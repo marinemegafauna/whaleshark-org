@@ -1,8 +1,15 @@
 import { describe, expect, test } from 'vitest';
 import { getSpecies, parseSpecies } from './species';
 
+const speciesSources = import.meta.glob('../../content/species/*.{yaml,yml}', {
+  eager: true,
+  import: 'default',
+  query: '?raw',
+});
+
 describe('species schema', () => {
   test('loads the valid whale-shark file', () => {
+    expect(Object.keys(speciesSources)).toEqual(['../../content/species/whale-shark.yaml']);
     const species = getSpecies('whale-shark');
 
     expect(species.common_name).toBe('Whale shark');

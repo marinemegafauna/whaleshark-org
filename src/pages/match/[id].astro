@@ -1,23 +1,26 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PublicHeader from '../../components/PublicHeader.astro';
+import { fillTemplate, getPageCopy, getSiteCopy } from '../../lib/content';
 import { dataStore } from '../../lib/runtime';
+const [copy, siteCopy] = await Promise.all([getPageCopy('match'), getSiteCopy()]);
 const submission = await dataStore(Astro.locals).getSubmission(Astro.params.id!);
 if (!submission) return Astro.redirect('/match/submission-demo', 302);
 const matches = JSON.parse(submission.match_json ?? '[]') as { individualId:string; score:number; site:string; detail:string; image:string }[];
 const [best, second] = matches;
 const gap = best && second ? best.score - second.score : 0;
 const decision = Astro.url.searchParams.get('decision');
+const individual = best?.individualId ?? copy.heading.fallbackAnimal;
 ---
-<BaseLayout title={`Match results · ${best?.individualId ?? 'whaleshark.org'}`}>
+<BaseLayout title={fillTemplate(copy.seo.title, { individual: best?.individualId ?? siteCopy.name })} description={copy.seo.description}>
   <PublicHeader active="match" />
   <main class="match-page">
-    <section class="photo-column"><div class="card photo-card"><div class="photo"><img src={submission.image_key} width="960" height="540" alt="Your uploaded whale shark photograph" /><div class="detect-box"></div><span class="detect-label mono">LEFT FLANK · DETECTED</span><span class="file-label mono">YOUR PHOTO · IMG_4471.JPG</span></div><div class="photo-meta"><span class="muted">Photographed by <b>{submission.photographer_name}</b> · {submission.observed_at} · {submission.site_id}</span><button>Edit details</button></div></div><p class="explain muted">We compared the spot pattern inside the box with every left-flank record on Sharkbook. Scores are cosine similarity between MiewID fingerprints; what matters is the gap between the first and second animal, not the absolute number.</p></section>
-    <section class="results"><div class="heading"><span>Likely re-sight</span><h1>You met {best?.individualId ?? 'a whale shark'}.</h1><p>First identified at Tofo, Mozambique in 2019. Seen 14 times since, including once at Mafia Island, 1,800 km north.</p></div>
-      {decision && <div class="decision" role="status">{decision === 'confirm' ? 'Match sent to the site researchers for confirmation.' : decision === 'none' ? 'Marked as no match; researchers will review the sighting.' : 'Marked as uncertain; researchers will review the candidates.'}</div>}
-      <div class="card candidates">{matches.map((match,index) => <div class:list={['candidate',{best:index===0}]}><img src={match.image} width="960" height="540" alt="Candidate whale shark pattern" /><div class="copy"><strong>{match.individualId}</strong><span class="muted">{match.site} · {match.detail}</span></div><div class="score"><b class="mono">{match.score.toFixed(2)}</b><i><i style={`width:${match.score*100}%`}></i></i></div></div>)}<div class="gap"><span class="muted">Gap to next animal <b class="mono">{gap.toFixed(2)}</b></span><button>Show 10 more</button></div></div>
-      <div class="actions"><form action={`/api/submissions/${submission.id}/confirm`} method="post"><input type="hidden" name="decision" value="confirm" /><button class="button" type="submit">Yes, it’s {best?.individualId} — add my sighting</button></form><form action={`/api/submissions/${submission.id}/confirm`} method="post"><input type="hidden" name="decision" value="not_sure" /><button class="button secondary" type="submit">Not sure</button></form><form action={`/api/submissions/${submission.id}/confirm`} method="post"><input type="hidden" name="decision" value="none" /><button class="none muted" type="submit">None of these</button></form></div>
-      <p class="muted researcher-note">Researchers at Tofo will confirm the match. You’ll get an email when your sighting is added to {best?.individualId}’s history.</p>
+    <section class="photo-column"><div class="card photo-card"><div class="photo"><img src={submission.image_key} width="960" height="540" alt={copy.photo.imageAlt} /><div class="detect-box"></div><span class="detect-label mono">{copy.photo.detectionLabel}</span><span class="file-label mono">{copy.photo.fileLabel}</span></div><div class="photo-meta"><span class="muted">{copy.photo.photographedBy} <b>{submission.photographer_name}</b> · {submission.observed_at} · {submission.site_id}</span><button>{copy.photo.editDetails}</button></div></div><p class="explain muted">{copy.photo.explanation}</p></section>
+    <section class="results"><div class="heading"><span>{copy.heading.eyebrow}</span><h1>{fillTemplate(copy.heading.title, { individual })}</h1><p>{copy.heading.body}</p></div>
+      {decision && <div class="decision" role="status">{decision === 'confirm' ? copy.decisions.confirm : decision === 'none' ? copy.decisions.none : copy.decisions.uncertain}</div>}
+      <div class="card candidates">{matches.map((match,index) => <div class:list={['candidate',{best:index===0}]}><img src={match.image} width="960" height="540" alt={copy.candidates.imageAlt} /><div class="copy"><strong>{match.individualId}</strong><span class="muted">{match.site} · {match.detail}</span></div><div class="score"><b class="mono">{match.score.toFixed(2)}</b><i><i style={`width:${match.score*100}%`}></i></i></div></div>)}<div class="gap"><span class="muted">{copy.candidates.gapLabel} <b class="mono">{gap.toFixed(2)}</b></span><button>{copy.candidates.showMore}</button></div></div>
+      <div class="actions"><form action={`/api/submissions/${submission.id}/confirm`} method="post"><input type="hidden" name="decision" value="confirm" /><button class="button" type="submit">{fillTemplate(copy.actions.confirm, { individual })}</button></form><form action={`/api/submissions/${submission.id}/confirm`} method="post"><input type="hidden" name="decision" value="not_sure" /><button class="button secondary" type="submit">{copy.actions.notSure}</button></form><form action={`/api/submissions/${submission.id}/confirm`} method="post"><input type="hidden" name="decision" value="none" /><button class="none muted" type="submit">{copy.actions.none}</button></form></div>
+      <p class="muted researcher-note">{fillTemplate(copy.researcherNote, { individual })}</p>
     </section>
   </main>
 </BaseLayout>

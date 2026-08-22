@@ -9,18 +9,21 @@ export interface MockEncounter {
   photos: string;
   siteId: string;
   image: string;
+  imageFilename: string;
 }
 
 export const mockEncounters: MockEncounter[] = [
-  { id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg' },
-  { id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg' },
-  { id: '4935bac7', individualId: null, sightings: 0, date: '13 Aug 2026', photographer: '[guide]', sex: '—', size: '~6 m', photos: '2 · L', siteId: 'tofo', image: '/mock/whale-shark-3.svg' },
-  { id: 'c5983598', individualId: 'MZ-091', sightings: 31, date: '12 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~8 m', photos: '9 · L+R', siteId: 'tofo', image: '/mock/whale-shark-4.svg' },
-  { id: 'a17e02d9', individualId: 'MZ-284', sightings: 14, date: '9 Aug 2026', photographer: '[guide]', sex: 'M', size: '~7 m', photos: '3 · L', siteId: 'tofo', image: '/mock/whale-shark-5.svg' },
-  { id: 'd8f1c2a0', individualId: 'MZ-377', sightings: 1, date: '8 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~4.5 m', photos: '5 · L+R', siteId: 'tofo', image: '/mock/whale-shark-6.svg' },
-  { id: 'e92bc110', individualId: 'TZ-117', sightings: 6, date: '5 Aug 2026', photographer: 'M. Hassan', sex: 'F', size: '~6 m', photos: '4 · L+R', siteId: 'mafia-island', image: '/mock/whale-shark-2.svg' },
-  { id: 'f04ad281', individualId: 'MZ-284', sightings: 14, date: '2 Aug 2026', photographer: 'A. Said', sex: 'M', size: '~7 m', photos: '2 · L', siteId: 'mafia-island', image: '/mock/whale-shark-1.svg' },
+  { id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg', imageFilename: 'IMG_4471.JPG' },
+  { id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg', imageFilename: 'IMG_4472.JPG' },
+  { id: '4935bac7', individualId: null, sightings: 0, date: '13 Aug 2026', photographer: '[guide]', sex: '—', size: '~6 m', photos: '2 · L', siteId: 'tofo', image: '/mock/whale-shark-3.svg', imageFilename: 'IMG_4473.JPG' },
+  { id: 'c5983598', individualId: 'MZ-091', sightings: 31, date: '12 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~8 m', photos: '9 · L+R', siteId: 'tofo', image: '/mock/whale-shark-4.svg', imageFilename: 'IMG_4474.JPG' },
+  { id: 'a17e02d9', individualId: 'MZ-284', sightings: 14, date: '9 Aug 2026', photographer: '[guide]', sex: 'M', size: '~7 m', photos: '3 · L', siteId: 'tofo', image: '/mock/whale-shark-5.svg', imageFilename: 'IMG_4475.JPG' },
+  { id: 'd8f1c2a0', individualId: 'MZ-377', sightings: 1, date: '8 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~4.5 m', photos: '5 · L+R', siteId: 'tofo', image: '/mock/whale-shark-6.svg', imageFilename: 'IMG_4476.JPG' },
+  { id: 'e92bc110', individualId: 'TZ-117', sightings: 6, date: '5 Aug 2026', photographer: 'M. Hassan', sex: 'F', size: '~6 m', photos: '4 · L+R', siteId: 'mafia-island', image: '/mock/whale-shark-2.svg', imageFilename: 'IMG_4477.JPG' },
+  { id: 'f04ad281', individualId: 'MZ-284', sightings: 14, date: '2 Aug 2026', photographer: 'A. Said', sex: 'M', size: '~7 m', photos: '2 · L', siteId: 'mafia-island', image: '/mock/whale-shark-1.svg', imageFilename: 'IMG_4478.JPG' },
 ];
+
+export const mockScarFirstSeenLabels: Record<string, string> = { 'old-2023': '2 Nov 2023' };
 
 export const mockScarRecords = [
   {
@@ -49,6 +52,13 @@ export const mockSubmissions = [
     ]),
   },
 ];
+
+export const publicSubmissionDefaults = {
+  photographer_name: 'Community photographer',
+  photographer_email: 'pending@example.org',
+  site_id: 'tofo',
+  observed_at: '2026-08-14',
+};
 
 export const mockBatches = [
   {

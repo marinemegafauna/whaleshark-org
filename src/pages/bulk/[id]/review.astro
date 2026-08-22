@@ -2,8 +2,10 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import PublicHeader from '../../../components/PublicHeader.astro';
 import { groupBatchItems } from '../../../lib/batch-groups';
+import { fillTemplate, getPageCopy } from '../../../lib/content';
 import { dataStore } from '../../../lib/runtime';
 
+const copy = (await getPageCopy('bulk')).review;
 const store = dataStore(Astro.locals);
 const batch = await store.getBatch(Astro.params.id!);
 if (!batch) return Astro.redirect('/bulk', 302);
@@ -14,25 +16,25 @@ const errors = items.filter((item) => item.status === 'error').length;
 const submitted = Astro.url.searchParams.get('submitted') === '1' || batch.status === 'submitted';
 function parsed(item: typeof items[number]) { try { return JSON.parse(item.match_json ?? '{}') as Record<string, any>; } catch { return {}; } }
 ---
-<BaseLayout title={`Review ${batch.photographer_name}'s batch · whaleshark.org`}>
+<BaseLayout title={fillTemplate(copy.seoTitle, { photographer: batch.photographer_name })}>
   <PublicHeader active="match" />
   <main class="review-page">
-    <div class="review-heading"><span>Bulk upload · review</span><h1>{submitted ? 'Batch sent for researcher review.' : `${groups.length} proposed animals from ${items.length} photos.`}</h1><p>{submitted ? 'The site team can now check each grouping before any sighting joins Sharkbook.' : 'Confirm the photos that belong together. Nothing is added to Sharkbook until this review is submitted and a site researcher checks it.'}</p></div>
-    {submitted && <div class="card submitted" role="status"><strong>Review recorded</strong><span>{batch.photographer_name} · {batch.observed_at} · {batch.site_id}</span><a href="/">Back to whaleshark.org →</a></div>}
+    <div class="review-heading"><span>{copy.eyebrow}</span><h1>{submitted ? copy.headingSubmitted : fillTemplate(copy.headingPending, { groups: groups.length, photos: items.length })}</h1><p>{submitted ? copy.introSubmitted : copy.introPending}</p></div>
+    {submitted && <div class="card submitted" role="status"><strong>{copy.recordedLabel}</strong><span>{batch.photographer_name} · {batch.observed_at} · {batch.site_id}</span><a href="/">{copy.backHome}</a></div>}
     {!submitted && <form action={`/api/batches/${batch.id}/submit`} method="post" class="review-form">
       <div class="groups">
         {groups.map((group) => { const best=parsed(group.items[0]!); const candidate=best.candidates?.[0]; return <fieldset class="card group-card">
-          <legend><span>{group.kind === 'known' ? 'Proposed re-sight' : 'Proposed new animal'}</span><strong>{group.label}</strong><small>{group.items.length} photo{group.items.length === 1 ? '' : 's'}{candidate ? ` · best score ${Number(candidate.score).toFixed(2)}` : ` · within-batch score ${group.bestScore.toFixed(2)}`}</small></legend>
-          <div class="group-photos">{group.items.map((item) => { const match=parsed(item); const bbox=Array.isArray(match.bbox)?match.bbox:null; return <figure><div><img src={item.image_key} width="960" height="540" alt={`Uploaded photo ${item.filename}`} />{bbox && <i style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><figcaption class="mono">{item.filename}</figcaption></figure> })}</div>
-          {candidate && <div class="candidate"><img src={group.items[0]!.image_key} width="960" height="540" alt={`${candidate.individualId} comparison pattern`} /><span><b>{candidate.individualId}</b><small>Best proposed Sharkbook individual</small></span><strong class="mono">{Number(candidate.score).toFixed(2)}</strong></div>}
-          <div class="decisions" role="radiogroup" aria-label={`Decision for ${group.label}`}>
-            <label><input type="radio" name={`decision:${group.key}`} value="confirm" checked /><span>{group.kind === 'known' ? `Yes, this is ${group.label}` : 'Yes, group as one new animal'}</span></label>
-            <label><input type="radio" name={`decision:${group.key}`} value="not_sure" /><span>Not sure</span></label>
-            <label><input type="radio" name={`decision:${group.key}`} value="none" /><span>None of these</span></label>
+          <legend><span>{group.kind === 'known' ? copy.knownLabel : copy.newLabel}</span><strong>{group.label}</strong><small>{fillTemplate(group.items.length === 1 ? copy.photoCountSingular : copy.photoCountPlural, { count: group.items.length })}{candidate ? fillTemplate(copy.bestScore, { score: Number(candidate.score).toFixed(2) }) : fillTemplate(copy.withinBatchScore, { score: group.bestScore.toFixed(2) })}</small></legend>
+          <div class="group-photos">{group.items.map((item) => { const match=parsed(item); const bbox=Array.isArray(match.bbox)?match.bbox:null; return <figure><div><img src={item.image_key} width="960" height="540" alt={fillTemplate(copy.uploadedPhotoAlt, { filename: item.filename })} />{bbox && <i style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><figcaption class="mono">{item.filename}</figcaption></figure> })}</div>
+          {candidate && <div class="candidate"><img src={group.items[0]!.image_key} width="960" height="540" alt={fillTemplate(copy.candidateAlt, { individual: candidate.individualId })} /><span><b>{candidate.individualId}</b><small>{copy.candidateHelp}</small></span><strong class="mono">{Number(candidate.score).toFixed(2)}</strong></div>}
+          <div class="decisions" role="radiogroup" aria-label={fillTemplate(copy.decisionAria, { group: group.label })}>
+            <label><input type="radio" name={`decision:${group.key}`} value="confirm" checked /><span>{group.kind === 'known' ? fillTemplate(copy.confirmKnown, { group: group.label }) : copy.confirmNew}</span></label>
+            <label><input type="radio" name={`decision:${group.key}`} value="not_sure" /><span>{copy.notSure}</span></label>
+            <label><input type="radio" name={`decision:${group.key}`} value="none" /><span>{copy.none}</span></label>
           </div>
         </fieldset> })}
       </div>
-      <aside class="card submit-card"><h2>Submit this batch</h2><dl><div><dt>Site</dt><dd>{batch.site_id}</dd></div><div><dt>Date</dt><dd>{batch.observed_at}</dd></div><div><dt>Photographer</dt><dd>{batch.photographer_name}</dd></div><div><dt>Animal groups</dt><dd>{groups.length}</dd></div><div><dt>No shark found</dt><dd>{noShark}</dd></div>{errors > 0 && <div><dt>Needs upload help</dt><dd>{errors}</dd></div>}</dl><div class="submit-action"><button class="button" type="submit">Submit batch</button></div><a href={`/bulk?batch=${batch.id}`}>← Back to photos</a><p>Submitting records your choices. Site researchers still confirm every match before publication.</p></aside>
+      <aside class="card submit-card"><h2>{copy.submitHeading}</h2><dl><div><dt>{copy.summaryLabels.site}</dt><dd>{batch.site_id}</dd></div><div><dt>{copy.summaryLabels.date}</dt><dd>{batch.observed_at}</dd></div><div><dt>{copy.summaryLabels.photographer}</dt><dd>{batch.photographer_name}</dd></div><div><dt>{copy.summaryLabels.animalGroups}</dt><dd>{groups.length}</dd></div><div><dt>{copy.summaryLabels.noShark}</dt><dd>{noShark}</dd></div>{errors > 0 && <div><dt>{copy.summaryLabels.needsHelp}</dt><dd>{errors}</dd></div>}</dl><div class="submit-action"><button class="button" type="submit">{copy.submitButton}</button></div><a href={`/bulk?batch=${batch.id}`}>{copy.backToPhotos}</a><p>{copy.submitHelp}</p></aside>
     </form>}
   </main>
 </BaseLayout>

@@ -5,7 +5,7 @@ import { dataStore } from '../../../../lib/runtime';
 export const POST: APIRoute = async ({ params, request, locals, redirect }) => {
   const store = dataStore(locals);
   const batch = await store.getBatch(params.id!);
-  if (!batch) return new Response('Batch not found.', { status: 404 });
+  if (!batch) return Response.json({ error: 'batch_not_found' }, { status: 404 });
   const items = await store.listBatchItems(batch.id);
   const groups = groupBatchItems(items);
   const form = await request.formData();

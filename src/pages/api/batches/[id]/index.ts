@@ -7,7 +7,7 @@ import { getBulkImportStatus, getMatchResults, login } from '../../../../lib/wil
 export const GET: APIRoute = async ({ params, locals }) => {
   const store = dataStore(locals);
   let batch = await store.getBatch(params.id!);
-  if (!batch) return new Response('Batch not found.', { status: 404 });
+  if (!batch) return Response.json({ error: 'batch_not_found' }, { status: 404 });
   let items = await store.listBatchItems(batch.id);
 
   if (isMockMode() && (batch.status === 'draft' || batch.status === 'processing')) {
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
   } else if (!isMockMode() && publicWriteMode() === 'live' && batch.wildbook_task_id && batch.status === 'processing') {
     const user = runtimeValue(locals, 'WILDBOOK_SERVICE_USER');
     const password = runtimeValue(locals, 'WILDBOOK_SERVICE_PASSWORD');
-    if (!user || !password) return new Response('Public write credentials are not configured.', { status: 503 });
+    if (!user || !password) return Response.json({ error: 'public_write_unavailable' }, { status: 503 });
     const authenticated = await login(user, password);
     const task = await getBulkImportStatus(authenticated.cookie, batch.wildbook_task_id);
     if (task.status === 'failed') batch = await store.updateBatch(batch.id, { status: 'error', updated_at: new Date().toISOString() });

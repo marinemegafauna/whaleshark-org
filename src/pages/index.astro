@@ -1,10 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicHeader from '../components/PublicHeader.astro';
-import siteConfig from '../../site.config';
 import { resolveCatalogueStats } from '../lib/catalogue-stats';
+import { fillTemplate, getPageCopy, getSiteCopy } from '../lib/content';
 import { catalogueDataStore, runtimeValue } from '../lib/runtime';
+import { publicSubmissionDefaults } from '../mock/data';
 
+const [copy, siteCopy] = await Promise.all([getPageCopy('landing'), getSiteCopy()]);
+const uploadErrorCode = Astro.url.searchParams.get('upload_error');
+const uploadError = uploadErrorCode === 'missing' ? copy.upload.errors.missingPhoto : uploadErrorCode ? copy.upload.errors.unavailable : null;
 const catalogueStats = await resolveCatalogueStats({
   store: catalogueDataStore(Astro.locals),
   username: runtimeValue(Astro.locals, 'WILDBOOK_SERVICE_USER'),
@@ -13,79 +17,77 @@ const catalogueStats = await resolveCatalogueStats({
 });
 const countFormat = new Intl.NumberFormat('en-US');
 const stats = [
-  { value: countFormat.format(catalogueStats.whale_shark_individuals), label: 'Known whale sharks' },
-  { value: countFormat.format(catalogueStats.whale_shark_encounters), label: 'Sightings on Sharkbook' },
-  { value: countFormat.format(catalogueStats.whale_shark_encounters_ytd), label: `Sightings so far in ${new Date().getUTCFullYear()}` },
-  { value: countFormat.format(catalogueStats.all_individuals), label: 'Sharks of all species on Sharkbook' },
+  { value: countFormat.format(catalogueStats.whale_shark_individuals), label: copy.stats.labels.individuals },
+  { value: countFormat.format(catalogueStats.whale_shark_encounters), label: copy.stats.labels.encounters },
+  { value: countFormat.format(catalogueStats.whale_shark_encounters_ytd), label: fillTemplate(copy.stats.labels.encountersYtd, { year: new Date().getUTCFullYear() }) },
+  { value: countFormat.format(catalogueStats.all_individuals), label: copy.stats.labels.allIndividuals },
 ];
 const statsMonth = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
   .format(new Date(catalogueStats.fetched_at));
 const statsCaption = catalogueStats.source === 'live'
-  ? 'live from sharkbook.ai'
-  : `sharkbook.ai counts as of ${statsMonth}`;
+  ? copy.stats.liveCaption
+  : fillTemplate(copy.stats.cachedCaption, { month: statsMonth });
 const siteChips = [
-  ...siteConfig.sites.map((site) => site.label),
-  'Ningaloo',
-  'Galápagos',
-  'La Paz, Mexico',
-  'Donsol',
-  'Maldives',
+  ...siteCopy.researchSites.map((site) => site.label),
+  ...copy.where.extraSites,
 ];
+const photoCreditByImage = new Map(siteCopy.photoCredits.map((credit) => [credit.image, credit.credit]));
+const creditFor = (image: string) => {
+  const credit = photoCreditByImage.get(image);
+  if (!credit) throw new Error(`Missing photo credit for ${image}`);
+  return credit;
+};
 ---
 <BaseLayout
-  title="whaleshark.org · Help identify a whale shark"
-  description="Upload a whale shark photo, find its Sharkbook match, and add a sighting to the global research record."
+  title={copy.seo.title}
+  description={copy.seo.description}
 >
   <main>
     <PublicHeader />
 
     <section class="hero page-section">
       <div class="hero-copy">
-        <p class="eyebrow">The community front door to Sharkbook</p>
-        <h1>Every whale shark has a fingerprint. Help us read it.</h1>
-        <p class="lede">
-          The spots on a whale shark’s flank are unique for life. Photograph them and we can tell you which shark you met,
-          where it has been seen before, and whether it’s new to science. Every photo joins the world’s largest shark
-          photo-identification database.
-        </p>
+        <p class="eyebrow">{copy.hero.eyebrow}</p>
+        <h1>{copy.hero.heading}</h1>
+        <p class="lede">{copy.hero.body}</p>
         <div class="hero-actions">
-          <a class="button" href="#drop-photo">Drop a photo</a>
-          <a class="button secondary" href="/bulk">Upload a whole dive</a>
-          <a class="browse-link" href="https://www.sharkbook.ai">Browse the sharks</a>
+          {copy.hero.actions.map((action) => action.style === 'link'
+            ? <a class="browse-link" href={action.href}>{action.label}</a>
+            : <a class:list={['button', { secondary: action.style === 'secondary' }]} href={action.href}>{action.label}</a>)}
         </div>
-        <p class="hero-note">Free, no account needed. Your name stays on your photo.</p>
+        <p class="hero-note">{copy.hero.note}</p>
       </div>
 
       <div class="hero-visual">
         <figure class="hero-photo card">
           <img
-            src="/landing/hero-whale-shark-mafia.jpg"
+            src={copy.hero.image.image}
             width="1800"
             height="1351"
-            alt="Whale shark swimming near the surface at Mafia Island, Tanzania"
+            alt={copy.hero.image.alt}
           />
-          <span class="detection-label mono">LEFT FLANK · MATCHED MZ-284 · 0.68</span>
+          <span class="detection-label mono">{copy.hero.detectionLabel}</span>
           <span class="detection-box" aria-hidden="true"></span>
-          <figcaption class="photo-caption mono">Marine Megafauna Foundation · Mafia Island</figcaption>
+          <figcaption class="photo-caption mono">{creditFor(copy.hero.image.image)}</figcaption>
         </figure>
         <div class="live-match card">
           <img
-            src="/landing/hero-whale-shark-mafia.jpg"
+            src={copy.hero.liveMatch.image}
             width="1800"
             height="1351"
-            alt="Detail of the matched whale shark’s spot pattern"
+            alt={copy.hero.liveMatch.alt}
           />
           <div>
-            <strong>MZ-284 · first seen Tofo, 2019</strong>
-            <span>14 sightings · last seen 14 Aug 2026 · once at Mafia Island, 1,800 km away</span>
+            <strong>{copy.hero.liveMatch.heading}</strong>
+            <span>{copy.hero.liveMatch.body}</span>
           </div>
-          <span class="mono live-label">live match</span>
+          <span class="mono live-label">{copy.hero.liveMatch.label}</span>
         </div>
       </div>
     </section>
 
     <section class="upload-section page-section" id="drop-photo" aria-labelledby="drop-heading">
-      <form class="drop-zone card" action="/api/submit" method="post" enctype="multipart/form-data">
+      <form class="drop-zone card" action="/api/submit" method="post" enctype="multipart/form-data" data-bulk-starting-label={copy.upload.bulkStartingLabel}>
         <input
           id="photo"
           name="image"
@@ -94,27 +96,28 @@ const siteChips = [
           accept="image/jpeg,image/heic,image/heif,image/png,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng"
           required
         />
-        <input type="hidden" name="photographer_name" value="Community photographer" />
-        <input type="hidden" name="photographer_email" value="pending@example.org" />
-        <input type="hidden" name="site_id" value="tofo" />
-        <input type="hidden" name="observed_at" value="2026-08-14" />
+        <input type="hidden" name="photographer_name" value={publicSubmissionDefaults.photographer_name} />
+        <input type="hidden" name="photographer_email" value={publicSubmissionDefaults.photographer_email} />
+        <input type="hidden" name="site_id" value={publicSubmissionDefaults.site_id} />
+        <input type="hidden" name="observed_at" value={publicSubmissionDefaults.observed_at} />
         <div class="upload-icon" aria-hidden="true">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path>
           </svg>
         </div>
         <div class="drop-copy">
-          <p class="eyebrow">Start with one clear image</p>
-          <h2 id="drop-heading">Drop a left-flank photo here</h2>
-          <p>or <span class="choose">choose a file</span> · JPEG, HEIC or RAW</p>
-          <small>Your name stays on your photo. Nothing is published without you.</small>
+          <p class="eyebrow">{copy.upload.eyebrow}</p>
+          <h2 id="drop-heading">{copy.upload.heading}</h2>
+          <p>{copy.upload.choosePrefix} <span class="choose">{copy.upload.chooseLabel}</span> · {copy.upload.formats}</p>
+          <small>{copy.upload.help}</small>
         </div>
-        <button class="button upload" type="submit">Compare my photo</button>
+        <button class="button upload" type="submit">{copy.upload.buttonLabel}</button>
       </form>
-      <p class="bulk-entry">Have a whole dive’s worth? <a href="/bulk">Bulk upload →</a></p>
+      {uploadError && <p class="upload-error" role="alert">{uploadError}</p>}
+      <p class="bulk-entry">{copy.upload.bulkPrompt} <a href="/bulk">{copy.upload.bulkLabel}</a></p>
     </section>
 
-    <section class="stats-section page-section" id="catalogue" aria-label="Sharkbook catalogue statistics">
+    <section class="stats-section page-section" id="catalogue" aria-label={copy.stats.ariaLabel}>
       <div class="stats-grid">
         {stats.map((stat) => (
           <div class="stat">
@@ -128,107 +131,51 @@ const siteChips = [
 
     <section class="why-section page-section">
       <div class="section-intro">
-        <p class="eyebrow">Why it matters</p>
-        <h2>Whale sharks are endangered. Photos are how we count them.</h2>
-        <p class="lede">
-          You can’t tag every shark in the ocean. But a photo of the spots behind the left gills identifies an animal for
-          the rest of its life, without touching it. Enough photos, over enough years, and we can see what a population is doing.
-        </p>
+        <p class="eyebrow">{copy.why.eyebrow}</p>
+        <h2>{copy.why.heading}</h2>
+        <p class="lede">{copy.why.body}</p>
       </div>
       <div class="reason-grid">
-        <article class="reason-card card">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <path d="M3 12c3-4 6-6 9-6s6 2 9 6c-3 4-6 6-9 6s-6-2-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle>
-          </svg>
-          <h3>How many are there</h3>
-          <p>Re-sightings of known sharks against new ones tell us population size and whether it is rising or falling at each site.</p>
-        </article>
-        <article class="reason-card card">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 17l5-5 4 4 7-8"></path><path d="M15 8h5v5"></path>
-          </svg>
-          <h3>Where they go</h3>
-          <p>The same shark photographed in Mozambique and Tanzania is a movement record no satellite tag was needed for.</p>
-        </article>
-        <article class="reason-card card">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"></path><path d="M9 12l2 2 4-4"></path>
-          </svg>
-          <h3>What hurts them</h3>
-          <p>Scars from propellers and nets, recorded to one standard at every site, show whether protection is working.</p>
-        </article>
+        {copy.why.cards.map((card) => <article class="reason-card card">
+          {card.icon === 'eye' && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 12c3-4 6-6 9-6s6 2 9 6c-3 4-6 6-9 6s-6-2-9-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>}
+          {card.icon === 'movement' && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"></path><path d="M15 8h5v5"></path></svg>}
+          {card.icon === 'shield' && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"></path><path d="M9 12l2 2 4-4"></path></svg>}
+          <h3>{card.heading}</h3><p>{card.body}</p>
+        </article>)}
       </div>
     </section>
 
     <section class="how-section page-section">
       <div class="section-intro compact">
-        <p class="eyebrow">How it works</p>
-        <h2>Three steps, and you get the shark’s story back.</h2>
+        <p class="eyebrow">{copy.how.eyebrow}</p>
+        <h2>{copy.how.heading}</h2>
       </div>
       <div class="steps-grid">
-        <article class="step">
-          <figure class="step-image">
-            <img
-              src="/landing/step-photograph-left-side.jpg"
-              width="1200"
-              height="800"
-              loading="lazy"
-              alt="Diver photographing the left side of a whale shark behind its gills"
-            />
-            <figcaption class="photo-caption mono">PHOTO · left flank, spots visible · MMF</figcaption>
-          </figure>
-          <span class="step-number mono">01</span>
-          <h3>Photograph the left side</h3>
-          <p>Behind the gills, above the pectoral fin, as square-on as you can. Phone, GoPro or camera all work. Right side is a bonus.</p>
-        </article>
-        <article class="step">
-          <figure class="step-image">
-            <img
-              src="/landing/step-spot-pattern.jpg"
-              width="1200"
-              height="801"
-              loading="lazy"
-              alt="Whale shark spot pattern behind the gills used for photo identification"
-            />
-            <span class="step-detection" aria-hidden="true"></span>
-            <figcaption class="photo-caption mono">ILLUSTRATION · spot pattern to fingerprint</figcaption>
-          </figure>
-          <span class="step-number mono">02</span>
-          <h3>We match the spots</h3>
-          <p>Sharkbook’s algorithm compares your shark’s pattern with every known whale shark and ranks the closest matches with a confidence score.</p>
-        </article>
-        <article class="step">
-          <div class="step-image screenshot-placeholder">
-            <span class="photo-caption mono">SCREENSHOT · shark history page</span>
-          </div>
-          <span class="step-number mono">03</span>
-          <h3>Researchers confirm it</h3>
-          <p>The team at that site checks the match. You get the shark’s history, and an email every time it’s seen again.</p>
-        </article>
+        {copy.how.steps.map((step, index) => <article class="step">
+          {step.image ? <figure class="step-image"><img src={step.image.image} width="1200" height="800" loading="lazy" alt={step.image.alt} />{index === 1 && <span class="step-detection" aria-hidden="true"></span>}<figcaption class="photo-caption mono">{creditFor(step.image.image)}</figcaption></figure> : <div class="step-image screenshot-placeholder"><span class="photo-caption mono">{step.placeholderLabel}</span></div>}
+          <span class="step-number mono">{step.number}</span><h3>{step.heading}</h3><p>{step.body}</p>
+        </article>)}
       </div>
     </section>
 
     <section class="where-section page-section" id="sites">
       <figure class="where-photo">
         <img
-          src="/landing/where-mafia-baitball.jpg"
+          src={copy.where.image.image}
           width="1400"
           height="1082"
           loading="lazy"
-          alt="Whale shark feeding beneath a bait ball at Mafia Island, Tanzania"
+          alt={copy.where.image.alt}
         />
-        <figcaption class="photo-caption mono">Mafia Island, Tanzania · MMF</figcaption>
+        <figcaption class="photo-caption mono">{creditFor(copy.where.image.image)}</figcaption>
       </figure>
       <div class="section-intro">
-        <p class="eyebrow">Where the sharks are</p>
-        <h2>One database, every ocean.</h2>
-        <p class="lede">
-          Sharkbook holds whale shark records from dozens of sites. whaleshark.org starts with the Western Indian Ocean
-          network, where MMF and its partners run the season-by-season science.
-        </p>
-        <div class="chips" aria-label="Whale shark research sites">
+        <p class="eyebrow">{copy.where.eyebrow}</p>
+        <h2>{copy.where.heading}</h2>
+        <p class="lede">{copy.where.body}</p>
+        <div class="chips" aria-label={copy.where.sitesAriaLabel}>
           {siteChips.map((site) => <span class="chip">{site}</span>)}
-          <span class="chip more">+ many more</span>
+          <span class="chip more">{copy.where.manyMoreLabel}</span>
         </div>
       </div>
     </section>
@@ -236,29 +183,19 @@ const siteChips = [
     <section class="community-section page-section" id="photographers">
       <div class="community-card card">
         <div class="section-intro">
-          <p class="eyebrow">A community resource</p>
-          <h2>Built on Sharkbook. Stewarded by the Marine Megafauna Foundation. Open to everyone.</h2>
-          <p class="lede">
-            Sharkbook.ai is Wild Me’s open-source Wildbook platform for sharks — the world’s largest shark photo-ID database,
-            built over two decades by thousands of contributors. whaleshark.org is a front door to it for whale sharks, and
-            the code is open source so other species can have one too.
-          </p>
+          <p class="eyebrow">{copy.community.eyebrow}</p>
+          <h2>{copy.community.heading}</h2>
+          <p class="lede">{copy.community.body}</p>
         </div>
         <dl class="resource-list">
-          <div><dt>Matching</dt><dd>Sharkbook.ai / Wild Me</dd></div>
-          <div><dt>Stewardship</dt><dd>Marine Megafauna Foundation</dd></div>
-          <div><dt>Your photos</dt><dd>Yours. Credited. Never sold.</dd></div>
-          <div>
-            <dt>Code</dt>
-            <dd><a href="https://github.com/marinemegafauna/whaleshark-org">github.com/marinemegafauna/whaleshark-org</a></dd>
-          </div>
+          {copy.community.resources.map((resource) => <div><dt>{resource.term}</dt><dd>{resource.href ? <a href={resource.href}>{resource.description}</a> : resource.description}</dd></div>)}
         </dl>
       </div>
     </section>
 
     <footer id="about" class="mono">
-      <span>whaleshark.org · a community resource stewarded by the Marine Megafauna Foundation</span>
-      <nav aria-label="Legal and contact links"><span>Privacy</span><span>Data use</span><span>Contact</span></nav>
+      <span>{siteCopy.footerText}</span>
+      <nav aria-label={siteCopy.footerNavAriaLabel}>{copy.footerLinks.map((link) => <a href={link.href}>{link.label}</a>)}</nav>
     </footer>
   </main>
 </BaseLayout>
@@ -308,6 +245,7 @@ const siteChips = [
   .drop-zone:focus-within .upload, .drop-zone.has-file .upload { opacity: 1; pointer-events: auto; }
   .bulk-entry { color: var(--muted); font-size: 14px; margin: 10px 0 0; text-align: right; }
   .bulk-entry a { align-items:center; color:var(--ink); display:inline-flex; font-weight:600; min-height:44px; }
+  .upload-error { color:var(--warn); font-size:14px; margin:10px 0 0; }
 
   .stats-section { padding-top: 52px; }
   .stats-grid { display: grid; gap: 28px; grid-template-columns: repeat(4,minmax(0,1fr)); }
@@ -396,16 +334,16 @@ const siteChips = [
     zone?.classList.toggle('has-file', count > 0);
     if (count > 1 && zone) {
       const button = zone.querySelector<HTMLButtonElement>('.upload');
-      if (button) { button.textContent = 'Starting bulk upload…'; button.disabled = true; }
+      if (button) { button.textContent = zone.dataset.bulkStartingLabel ?? ''; button.disabled = true; }
       try {
         const values = new FormData(zone);
         const metadata = Object.fromEntries([...values.entries()].filter(([,value]) => typeof value === 'string'));
         const created = await fetch('/api/batches', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(metadata) });
-        if (!created.ok) throw new Error(await created.text());
+        if (!created.ok) throw new Error();
         const payload = await created.json() as { batch:{ id:string } };
         const files = new FormData(); [...(input.files || [])].forEach((file) => files.append('files',file,file.name));
         const uploaded = await fetch(`/api/batches/${encodeURIComponent(payload.batch.id)}/items`, { method:'POST', body:files });
-        if (!uploaded.ok) throw new Error(await uploaded.text());
+        if (!uploaded.ok) throw new Error();
         location.href = `/bulk?batch=${encodeURIComponent(payload.batch.id)}`;
       } catch {
         zone.action = '/api/batches';

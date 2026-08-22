@@ -2,9 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PublicHeader from '../../components/PublicHeader.astro';
 import siteConfig from '../../../site.config';
+import { fillTemplate, getPageCopy, getSiteCopy } from '../../lib/content';
 import { dataStore } from '../../lib/runtime';
 import type { BatchItem } from '../../lib/db';
 
+const [copy, siteCopy] = await Promise.all([getPageCopy('bulk'), getSiteCopy()]);
+const siteLabelById = new Map(siteCopy.researchSites.map((site) => [site.id, site.label]));
 const requestedBatchId = Astro.url.searchParams.get('batch');
 const store = dataStore(Astro.locals);
 const batch = requestedBatchId ? await store.getBatch(requestedBatchId) : null;
@@ -24,54 +27,55 @@ function matchFor(item: BatchItem) {
 }
 function labelFor(item: BatchItem) {
   const match = matchFor(item);
-  if (item.status === 'matched') return `${match.candidates?.[0]?.individualId ?? 'Matched'} · ${Number(match.candidates?.[0]?.score ?? 0).toFixed(2)}`;
-  if (item.status === 'likely_new') return `Likely new · ${Number(match.score ?? 0).toFixed(2)}`;
-  if (item.status === 'no_shark') return 'No shark found';
-  if (item.status === 'error') return 'Could not process';
-  if (item.status === 'matching') return 'Matching…';
-  if (item.status === 'detecting') return 'Detecting…';
-  if (item.status === 'uploading') return 'Uploading…';
-  return 'Queued';
+  if (item.status === 'matched') return `${match.candidates?.[0]?.individualId ?? copy.statuses.matchedFallback} · ${Number(match.candidates?.[0]?.score ?? 0).toFixed(2)}`;
+  if (item.status === 'likely_new') return fillTemplate(copy.statuses.likelyNew, { score: Number(match.score ?? 0).toFixed(2) });
+  if (item.status === 'no_shark') return copy.statuses.noShark;
+  if (item.status === 'error') return copy.statuses.error;
+  if (item.status === 'matching') return copy.statuses.matching;
+  if (item.status === 'detecting') return copy.statuses.detecting;
+  if (item.status === 'uploading') return copy.statuses.uploading;
+  return copy.statuses.queued;
 }
+const clientCopy = JSON.stringify({ summary: copy.summary, grid: copy.grid, statuses: copy.statuses, errors: copy.errors, batchCard: { dateSourcePhoto: copy.batchCard.dateSourcePhoto }, upload: { uploadedImageAlt: copy.upload.uploadedImageAlt } });
 ---
-<BaseLayout title="Bulk upload · whaleshark.org" description="Upload a whole dive of whale shark photographs for matching.">
+<BaseLayout title={copy.seo.title} description={copy.seo.description}>
   <PublicHeader active="match" />
-  <main class="bulk-page" data-batch-id={batch?.id ?? ''}>
+  <main class="bulk-page" data-batch-id={batch?.id ?? ''} data-copy={clientCopy}>
     <section class="bulk-workspace">
-      <div class="intro"><span>Bulk upload</span><h1>A whole dive, in one go.</h1><p>Drop every left-flank photo from the day. We detect the shark in each one, match it, and group the photos that are the same animal. Nothing is added to Sharkbook until you confirm.</p></div>
+      <div class="intro"><span>{copy.intro.eyebrow}</span><h1>{copy.intro.heading}</h1><p>{copy.intro.body}</p></div>
 
       <div class="card drop-zone" id="drop-zone">
         <input id="bulk-files" type="file" name="files" multiple accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
-        <div class="drop-intro"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg><div><strong>Drop photos or a folder here</strong><span>JPEG, HEIC or RAW · each file stays credited to you</span></div></div>
-        <label class="choose-files" for="bulk-files">Choose photos</label>
-        <label class="choose-folder" for="bulk-folder">Choose a folder</label>
+        <div class="drop-intro"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg><div><strong>{copy.upload.dropHeading}</strong><span>{copy.upload.help}</span></div></div>
+        <label class="choose-files" for="bulk-files">{copy.upload.choosePhotos}</label>
+        <label class="choose-folder" for="bulk-folder">{copy.upload.chooseFolder}</label>
         <input id="bulk-folder" type="file" multiple {...folderAttributes} accept="image/jpeg,image/heic,image/heif,image/tiff,.raw,.arw,.cr2,.cr3,.nef,.dng" />
       </div>
 
       <div class="card summary" aria-live="polite">
-        <div class="batch-size"><strong id="photo-count">{items.length} photos</strong><span id="total-size"> · {(totalBytes / 1_000_000).toFixed(totalBytes ? 1 : 0)} MB</span></div>
-        <div class="progress-wrap"><div class="progress" aria-hidden="true"><i id="progress-bar" style={`width:${items.length ? (completed / items.length) * 100 : 0}%`}></i></div><span class="mono" id="progress-label">{completed} / {items.length} matched</span></div>
-        <div class="legend"><span><i class="dot matched"></i>Matched <b id="matched-count">{counts.matched}</b></span><span><i class="dot likely"></i>Likely new <b id="new-count">{counts.likelyNew}</b></span><span><i class="dot none"></i>No shark found <b id="none-count">{counts.noShark}</b></span><span><i class="dot working"></i>Working <b id="working-count">{counts.working}</b></span></div>
+        <div class="batch-size"><strong id="photo-count">{fillTemplate(copy.summary.photoCount, { count: items.length })}</strong><span id="total-size">{fillTemplate(copy.summary.size, { size: (totalBytes / 1_000_000).toFixed(totalBytes ? 1 : 0) })}</span></div>
+        <div class="progress-wrap"><div class="progress" aria-hidden="true"><i id="progress-bar" style={`width:${items.length ? (completed / items.length) * 100 : 0}%`}></i></div><span class="mono" id="progress-label">{fillTemplate(copy.summary.progress, { complete: completed, total: items.length })}</span></div>
+        <div class="legend"><span><i class="dot matched"></i>{copy.summary.matched} <b id="matched-count">{counts.matched}</b></span><span><i class="dot likely"></i>{copy.summary.likelyNew} <b id="new-count">{counts.likelyNew}</b></span><span><i class="dot none"></i>{copy.summary.noShark} <b id="none-count">{counts.noShark}</b></span><span><i class="dot working"></i>{copy.summary.working} <b id="working-count">{counts.working}</b></span></div>
       </div>
 
       <div class="photo-grid" id="photo-grid">
-        {items.map((item) => { const match = matchFor(item); const bbox = Array.isArray(match.bbox) ? match.bbox : null; return <article class="tile"><div class="thumb"><img src={item.image_key} width="960" height="540" alt="Uploaded whale shark photograph" />{bbox && <i class:list={['detect-box',{new:item.status === 'likely_new'}]} style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><div class="tile-meta"><span class:list={['status',item.status]}>{labelFor(item)}</span><span class="mono suffix">{item.filename.replace(/\.[^.]+$/, '').slice(-4)}</span></div></article> })}
+        {items.map((item) => { const match = matchFor(item); const bbox = Array.isArray(match.bbox) ? match.bbox : null; return <article class="tile"><div class="thumb"><img src={item.image_key} width="960" height="540" alt={copy.upload.uploadedImageAlt} />{bbox && <i class:list={['detect-box',{new:item.status === 'likely_new'}]} style={`left:${bbox[0]*100}%;top:${bbox[1]*100}%;width:${bbox[2]*100}%;height:${bbox[3]*100}%`}></i>}</div><div class="tile-meta"><span class:list={['status',item.status]}>{labelFor(item)}</span><span class="mono suffix">{item.filename.replace(/\.[^.]+$/, '').slice(-4)}</span></div></article> })}
       </div>
-      <div class="grid-foot"><span id="grid-note">{items.length ? `${items.length} photos · grouped by animal when matching finishes` : 'Your photos will appear here as they upload.'}</span><label for="bulk-files">Add more photos</label></div>
+      <div class="grid-foot"><span id="grid-note">{items.length ? fillTemplate(copy.grid.grouped, { count: items.length }) : copy.grid.empty}</span><label for="bulk-files">{copy.grid.addMore}</label></div>
       <p class="upload-error" id="upload-error" role="alert"></p>
     </section>
 
     <aside class="card batch-card">
-      <h2>About this batch</h2><p>Applies to every photo. You can change individual ones after matching.</p>
+      <h2>{copy.batchCard.heading}</h2><p>{copy.batchCard.help}</p>
       <form id="batch-details">
-        <label><span>Site</span><select name="site_id">{siteConfig.sites.map((site) => <option value={site.id} selected={batch?.site_id === site.id}>{site.label}</option>)}</select></label>
-        <label><span>Date <small id="date-source">{batch ? '' : '· from the photos when available'}</small></span><input type="date" name="observed_at" value={batch?.observed_at ?? new Date().toISOString().slice(0,10)} required /></label>
-        <label><span>Photographer</span><input name="photographer_name" value={batch?.photographer_name ?? ''} placeholder="Your name" autocomplete="name" required /></label>
-        <label><span>Email <small>· for the results</small></span><input type="email" name="photographer_email" value={batch?.photographer_email ?? ''} placeholder="you@example.org" autocomplete="email" required /></label>
+        <label><span>{copy.batchCard.siteLabel}</span><select name="site_id">{siteConfig.sites.map((site) => <option value={site.id} selected={batch?.site_id === site.id}>{siteLabelById.get(site.id) ?? site.id}</option>)}</select></label>
+        <label><span>{copy.batchCard.dateLabel} <small id="date-source">{batch ? '' : copy.batchCard.dateSourcePending}</small></span><input type="date" name="observed_at" value={batch?.observed_at ?? new Date().toISOString().slice(0,10)} required /></label>
+        <label><span>{copy.batchCard.photographerLabel}</span><input name="photographer_name" value={batch?.photographer_name ?? ''} placeholder={copy.batchCard.photographerPlaceholder} autocomplete="name" required /></label>
+        <label><span>{copy.batchCard.emailLabel} <small>{copy.batchCard.emailHelp}</small></span><input type="email" name="photographer_email" value={batch?.photographer_email ?? ''} placeholder={copy.batchCard.emailPlaceholder} autocomplete="email" required /></label>
       </form>
-      <div class="batch-totals"><span>Photos ready to review <b id="review-photo-count">{completed}</b></span><span>Nothing publishes before review</span></div>
-      <button class="button review-button" id="review-button" type="button" disabled={!batch || batch.status === 'draft'}>Review matches →</button>
-      <p>Site researchers confirm every match before it joins a shark’s history. Your credit stays on each photo.</p>
+      <div class="batch-totals"><span>{copy.batchCard.readyLabel} <b id="review-photo-count">{completed}</b></span><span>{copy.batchCard.publishNote}</span></div>
+      <button class="button review-button" id="review-button" type="button" disabled={!batch || batch.status === 'draft'}>{copy.batchCard.reviewButton}</button>
+      <p>{copy.batchCard.confirmationHelp}</p>
     </aside>
   </main>
 </BaseLayout>
@@ -158,6 +162,7 @@ function labelFor(item: BatchItem) {
   }
 </style>
 <script>
+  import { fillTemplate } from '../../lib/content-utils';
   type ApiItem = { id:string; filename:string; size_bytes:number; image_key:string; status:string; match_json:string|null };
   type EntryWithReader = FileSystemDirectoryEntry & { createReader(): FileSystemDirectoryReader };
   const page = document.querySelector<HTMLElement>('.bulk-page')!;
@@ -168,6 +173,10 @@ function labelFor(item: BatchItem) {
   const grid = document.querySelector<HTMLElement>('#photo-grid')!;
   const reviewButton = document.querySelector<HTMLButtonElement>('#review-button')!;
   const errorBox = document.querySelector<HTMLElement>('#upload-error')!;
+  const copy = JSON.parse(page.dataset.copy || '{}') as {
+    summary: Record<string,string>; grid: Record<string,string>; statuses: Record<string,string>;
+    errors: Record<string,string>; batchCard: { dateSourcePhoto:string }; upload: { uploadedImageAlt:string };
+  };
   let batchId = page.dataset.batchId || '';
   let pollTimer = 0;
   const finalStatuses = new Set(['matched','likely_new','no_shark','error']);
@@ -182,29 +191,29 @@ function labelFor(item: BatchItem) {
   function parseMatch(item: ApiItem) { try { return JSON.parse(item.match_json || '{}'); } catch { return {}; } }
   function statusLabel(item: ApiItem) {
     const match = parseMatch(item);
-    if (item.status === 'matched') return `${match.candidates?.[0]?.individualId || 'Matched'} · ${Number(match.candidates?.[0]?.score || 0).toFixed(2)}`;
-    if (item.status === 'likely_new') return `Likely new · ${Number(match.score || 0).toFixed(2)}`;
-    return { no_shark:'No shark found', error:'Could not process', matching:'Matching…', detecting:'Detecting…', uploading:'Uploading…', queued:'Queued' }[item.status] || item.status;
+    if (item.status === 'matched') return `${match.candidates?.[0]?.individualId || copy.statuses.matchedFallback} · ${Number(match.candidates?.[0]?.score || 0).toFixed(2)}`;
+    if (item.status === 'likely_new') return fillTemplate(copy.statuses.likelyNew, { score: Number(match.score || 0).toFixed(2) });
+    return { no_shark:copy.statuses.noShark, error:copy.statuses.error, matching:copy.statuses.matching, detecting:copy.statuses.detecting, uploading:copy.statuses.uploading, queued:copy.statuses.queued }[item.status] || item.status;
   }
   function updateSummary(items: ApiItem[]) {
     const complete = items.filter((item) => finalStatuses.has(item.status)).length;
     const total = items.reduce((sum,item) => sum + item.size_bytes, 0);
-    document.querySelector('#photo-count')!.textContent = `${items.length} photos`;
-    document.querySelector('#total-size')!.textContent = ` · ${(total / 1_000_000).toFixed(1)} MB`;
+    document.querySelector('#photo-count')!.textContent = fillTemplate(copy.summary.photoCount, { count: items.length });
+    document.querySelector('#total-size')!.textContent = fillTemplate(copy.summary.size, { size: (total / 1_000_000).toFixed(1) });
     (document.querySelector('#progress-bar') as HTMLElement).style.width = `${items.length ? complete / items.length * 100 : 0}%`;
-    document.querySelector('#progress-label')!.textContent = `${complete} / ${items.length} matched`;
+    document.querySelector('#progress-label')!.textContent = fillTemplate(copy.summary.progress, { complete, total: items.length });
     document.querySelector('#matched-count')!.textContent = String(items.filter((item) => item.status === 'matched').length);
     document.querySelector('#new-count')!.textContent = String(items.filter((item) => item.status === 'likely_new').length);
     document.querySelector('#none-count')!.textContent = String(items.filter((item) => item.status === 'no_shark').length);
     document.querySelector('#working-count')!.textContent = String(items.length - complete);
     document.querySelector('#review-photo-count')!.textContent = String(complete);
-    document.querySelector('#grid-note')!.textContent = items.length ? `${items.length} photos · grouped by animal when matching finishes` : 'Your photos will appear here as they upload.';
+    document.querySelector('#grid-note')!.textContent = items.length ? fillTemplate(copy.grid.grouped, { count: items.length }) : copy.grid.empty;
   }
   function render(items: ApiItem[], localUrls = new Map<string,string>()) {
     grid.replaceChildren(...items.map((item) => {
       const article = document.createElement('article'); article.className = 'tile';
       const thumb = document.createElement('div'); thumb.className = 'thumb';
-      const image = document.createElement('img'); image.alt = 'Uploaded whale shark photograph'; image.src = localUrls.get(item.filename) || item.image_key; image.width=960; image.height=540; thumb.appendChild(image);
+      const image = document.createElement('img'); image.alt = copy.upload.uploadedImageAlt; image.src = localUrls.get(item.filename) || item.image_key; image.width=960; image.height=540; thumb.appendChild(image);
       const match = parseMatch(item); if (Array.isArray(match.bbox)) { const box=document.createElement('i'); box.className=`detect-box${item.status==='likely_new'?' new':''}`; box.style.cssText=`left:${match.bbox[0]*100}%;top:${match.bbox[1]*100}%;width:${match.bbox[2]*100}%;height:${match.bbox[3]*100}%`; thumb.appendChild(box); }
       const meta=document.createElement('div'); meta.className='tile-meta'; const status=document.createElement('span'); status.className=`status ${item.status}`; status.textContent=statusLabel(item); const suffix=document.createElement('span'); suffix.className='mono suffix'; suffix.textContent=item.filename.replace(/\.[^.]+$/,'').slice(-4); meta.appendChild(status); meta.appendChild(suffix); article.appendChild(thumb); article.appendChild(meta); return article;
     }));
@@ -214,30 +223,30 @@ function labelFor(item: BatchItem) {
     if (!batchId) return;
     try {
       const response = await fetch(`/api/batches/${encodeURIComponent(batchId)}`);
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) throw new Error();
       const payload = await response.json() as { batch:{ status:string }; items:ApiItem[] }; render(payload.items);
       const ready = payload.batch.status === 'review' || payload.batch.status === 'submitted';
       reviewButton.disabled = !ready; if (ready) return;
       pollTimer = window.setTimeout(poll, 700);
-    } catch (error) { errorBox.textContent = error instanceof Error ? error.message : 'Could not refresh this batch.'; }
+    } catch { errorBox.textContent = copy.errors.refresh; }
   }
   async function upload(files: File[]) {
     if (!files.length || !details.reportValidity()) return;
     errorBox.textContent=''; window.clearTimeout(pollTimer);
     const localUrls = new Map(files.map((file) => [file.name, URL.createObjectURL(file)]));
     render(files.map((file,index) => ({ id:`local-${index}`, filename:file.name, size_bytes:file.size, image_key:localUrls.get(file.name)!, status:'uploading', match_json:null })), localUrls);
-    const exifDate = await dateFromExif(files[0]!); if (exifDate) { (details.elements.namedItem('observed_at') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent='· from the photos'; }
+    const exifDate = await dateFromExif(files[0]!); if (exifDate) { (details.elements.namedItem('observed_at') as HTMLInputElement).value=exifDate; document.querySelector('#date-source')!.textContent=copy.batchCard.dateSourcePhoto; }
     try {
       if (!batchId) {
         const metadata = Object.fromEntries(new FormData(details));
         const created = await fetch('/api/batches', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(metadata) });
-        if (!created.ok) throw new Error(await created.text()); const createdPayload=await created.json() as { batch:{ id:string } }; batchId=createdPayload.batch.id; page.dataset.batchId=batchId; history.replaceState({},'',`/bulk?batch=${encodeURIComponent(batchId)}`);
+        if (!created.ok) throw new Error(); const createdPayload=await created.json() as { batch:{ id:string } }; batchId=createdPayload.batch.id; page.dataset.batchId=batchId; history.replaceState({},'',`/bulk?batch=${encodeURIComponent(batchId)}`);
       }
       const form = new FormData(); files.forEach((file) => form.append('files',file,file.name));
       const response = await fetch(`/api/batches/${encodeURIComponent(batchId)}/items`, { method:'POST', body:form });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) throw new Error();
       await poll();
-    } catch (error) { errorBox.textContent=error instanceof Error ? error.message : 'The photos could not be uploaded.'; }
+    } catch { errorBox.textContent=copy.errors.upload; }
   }
   function readEntry(entry: FileSystemEntry): Promise<File[]> {
     if (entry.isFile) return new Promise((resolve,reject) => (entry as FileSystemFileEntry).file((file) => resolve([file]),reject));

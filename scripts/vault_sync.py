@@ -29,6 +29,7 @@ VAULT_ROOT = (
     "Documents/Simon's Vault/02_MARINE MEGAFAUNA/WHALESHARK.ORG/CONTENT"
 )
 COLLECTIONS = ["pages", "species"]
+ROOT_FILES = ["site.md"]
 EXTS = (".md", ".yaml", ".yml")
 STATE_PATH = os.path.join(VAULT_ROOT, ".sync-state.json")
 LOCK_PATH = os.path.join(VAULT_ROOT, ".sync.lock")
@@ -127,8 +128,12 @@ def release_lock():
 
 # --- File enumeration --------------------------------------------------------
 def list_repo_files():
-    """{relkey: abspath} for every .md under each collection (recursive)."""
+    """{relkey: abspath} for root content files and every collection file."""
     out = {}
+    for name in ROOT_FILES:
+        abspath = os.path.join(CONTENT_ROOT, name)
+        if os.path.isfile(abspath):
+            out[name] = abspath
     for coll in COLLECTIONS:
         base = os.path.join(CONTENT_ROOT, coll)
         if not os.path.isdir(base):
@@ -150,6 +155,14 @@ def list_vault_files():
                   the real file is not present locally.
     """
     materialised, placeholders = {}, set()
+    for name in ROOT_FILES:
+        abspath = os.path.join(VAULT_ROOT, name)
+        placeholder = os.path.join(VAULT_ROOT, f".{name}.icloud")
+        if os.path.isfile(abspath):
+            materialised[name] = abspath
+        elif os.path.isfile(placeholder):
+            placeholders.add(name)
+
     for coll in COLLECTIONS:
         base = os.path.join(VAULT_ROOT, coll)
         if not os.path.isdir(base):
@@ -171,6 +184,8 @@ def list_vault_files():
 
 
 def vault_path_for(relkey):
+    if "/" not in relkey:
+        return os.path.join(VAULT_ROOT, relkey)
     coll, rest = relkey.split("/", 1)
     return os.path.join(VAULT_ROOT, coll, rest)
 

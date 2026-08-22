@@ -1,22 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicHeader from '../components/PublicHeader.astro';
+import { getPageCopy } from '../lib/content';
 import { isMockMode } from '../lib/mode';
+const copy = await getPageCopy('signin');
 const error = Astro.url.searchParams.get('error');
 const next = Astro.url.searchParams.get('next') ?? '/app';
 ---
-<BaseLayout title="Sign in · whaleshark.org">
+<BaseLayout title={copy.seo.title} description={copy.seo.description}>
   <PublicHeader />
   <main class="signin-page"><form action="/api/auth/login" method="post">
     <input type="hidden" name="next" value={next} />
-    <div class="intro"><h1>Sign in</h1><p>Use your Sharkbook account. Your access here is whatever it is there — whaleshark.org never stores your password.</p></div>
-    {isMockMode() && <div class="notice"><strong>Mock mode</strong> · any non-empty username and password will sign in.</div>}
-    {error && <div class="error" role="alert">{error === 'missing' ? 'Enter both your Sharkbook email and password.' : 'Sharkbook did not accept those credentials.'}</div>}
-    <label><span>Sharkbook email</span><input type="text" name="username" autocomplete="username" placeholder="name@example.org" required /></label>
-    <label><span>Password</span><input type="password" name="password" autocomplete="current-password" placeholder="••••••••••" required /></label>
-    <button class="button" type="submit">Sign in</button>
-    <div class="links muted"><a href="https://www.sharkbook.ai/forgotPassword.jsp">Forgot password (on Sharkbook)</a><a href="https://www.sharkbook.ai/contact.jsp">Request an account</a></div>
-    <p class="footnote muted">Signed-in users can look up encounters at their sites, record scars, and confirm community matches. Public uploads don’t need an account.</p>
+    <div class="intro"><h1>{copy.heading}</h1><p>{copy.intro}</p></div>
+    {isMockMode() && <div class="notice"><strong>{copy.mockLabel}</strong> · {copy.mockHelp}</div>}
+    {error && <div class="error" role="alert">{error === 'missing' ? copy.errors.missing : copy.errors.rejected}</div>}
+    <label><span>{copy.emailLabel}</span><input type="text" name="username" autocomplete="username" placeholder={copy.emailPlaceholder} required /></label>
+    <label><span>{copy.passwordLabel}</span><input type="password" name="password" autocomplete="current-password" placeholder={copy.passwordPlaceholder} required /></label>
+    <button class="button" type="submit">{copy.buttonLabel}</button>
+    <div class="links muted">{copy.links.map((link) => <a href={link.href}>{link.label}</a>)}</div>
+    <p class="footnote muted">{copy.footnote}</p>
   </form></main>
 </BaseLayout>
 <style>

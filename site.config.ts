@@ -1,6 +1,4 @@
 const siteConfig = {
-  name: 'whaleshark.org',
-  steward: 'Marine Megafauna Foundation',
   wildbookBaseUrl: import.meta.env.WILDBOOK_BASE_URL ?? 'https://www.sharkbook.ai',
   species: ['whale-shark'],
   // TODO: map these placeholders to the real Wildbook locationId values.
@@ -8,11 +6,11 @@ const siteConfig = {
   // the 3,000 most recent whale shark encounters). Sharkbook's sites are coarser than ours — Mafia Island
   // encounters carry locationId 'Tanzania'.
   sites: [
-    { id: 'tofo', label: 'Tofo, Mozambique', locationIds: ['Tofo', 'Mozambique'] },
-    { id: 'mafia-island', label: 'Mafia Island, Tanzania', locationIds: ['Tanzania'] },
-    { id: 'nosy-be', label: 'Nosy Be, Madagascar', locationIds: ['Madagascar'] },
-    { id: 'oman', label: 'Oman', locationIds: ['Oman', 'Muscat', 'Daymaniyat Islands'] },
-    { id: 'seychelles', label: 'Seychelles', locationIds: ['Seychelles'] },
+    { id: 'tofo', locationIds: ['Tofo', 'Mozambique'] },
+    { id: 'mafia-island', locationIds: ['Tanzania'] },
+    { id: 'nosy-be', locationIds: ['Madagascar'] },
+    { id: 'oman', locationIds: ['Oman', 'Muscat', 'Daymaniyat Islands'] },
+    { id: 'seychelles', locationIds: ['Seychelles'] },
   ],
 } as const;
 

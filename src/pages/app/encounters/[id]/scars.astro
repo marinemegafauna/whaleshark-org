@@ -1,13 +1,17 @@
 ---
 import AppHeader from '../../../../components/AppHeader.astro';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
-import { mockEncounters, type MockEncounter } from '../../../../mock/data';
+import { mockEncounters, mockScarFirstSeenLabels, type MockEncounter } from '../../../../mock/data';
 import { dataStore } from '../../../../lib/runtime';
 import { getSpecies } from '../../../../lib/species';
 import { isMockMode } from '../../../../lib/mode';
 import { getEncounter } from '../../../../lib/wildbook';
+import { fillTemplate, getPageCopy, getSiteCopy } from '../../../../lib/content';
 
+const [pageCopy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
+const copy = pageCopy.scar;
 const requestedSiteId = Astro.url.searchParams.get('site') ?? 'tofo';
+const requestedSiteLabel = siteCopy.researchSites.find((site) => site.id === requestedSiteId)?.label ?? requestedSiteId;
 let encounter: MockEncounter;
 if (isMockMode()) {
   encounter = mockEncounters.find((candidate) => candidate.id === Astro.params.id) ?? mockEncounters[0]!;
@@ -24,6 +28,7 @@ if (isMockMode()) {
     photos: String(hit.photos ?? '1 · L'),
     siteId: requestedSiteId,
     image: String(hit.imageUrl ?? '/mock/whale-shark-1.svg'),
+    imageFilename: String(hit.filename ?? hit.imageFilename ?? hit.id),
   };
 }
 const species = getSpecies('whale-shark');
@@ -33,22 +38,26 @@ const scarRows = scars.map((scar) => ({ ...scar, fields: JSON.parse(scar.fields_
 const optionLabels = new Map(species.fields.flatMap((field) => (field.options ?? []).map((option) => [`${field.id}:${option.id}`, option.label] as const)));
 const defaults: Record<string,string> = { body_region:'flank', type:'abrasion', severity:'minor', freshness:'fresh', likely_cause:'unknown', confidence:'certain' };
 const saved = Astro.url.searchParams.has('saved');
+const individualLabel = encounter.individualId ?? copy.unassigned;
+const firstSeenLabel = (scar: typeof scars[number]) => scar.first_seen_encounter_id === encounter.id
+  ? copy.thisEncounter
+  : mockScarFirstSeenLabels[scar.first_seen_encounter_id ?? ''] ?? scar.first_seen_encounter_id ?? '—';
 ---
-<BaseLayout app title={`Scar record · ${encounter.individualId ?? encounter.id}`}>
+<BaseLayout app title={fillTemplate(pageCopy.seo.scarTitle, { individual: encounter.individualId ?? encounter.id })} description={pageCopy.seo.scarDescription}>
   <AppHeader />
-  <main class="scar-page">
-    <header class="encounter-heading"><div><p class="muted">Tofo · Encounters · <span class="mono">{encounter.id}</span></p><h1>Scar record · {encounter.individualId ?? 'Unassigned'} · {encounter.date}</h1></div><div class="metadata muted"><span>{encounter.sex} · {encounter.size} · {encounter.sightings} sightings since 2019</span><span class="mono">SCHEMA whale-shark-scars v{species.version}</span><a href={`https://www.sharkbook.ai/encounters/encounter.jsp?number=${encounter.id}`}>Open on Sharkbook ↗</a></div></header>
-    {saved && <div class="saved" role="status">Scar saved to this encounter.</div>}
-    <div class="entry-grid"><section class="photo-and-records"><div class="panel photo-panel"><div class="photo-tabs"><span><b>Left flank</b><span class="muted">Right flank</span><span class="muted">Dorsal</span><span class="muted">All {encounter.photos.split(' ')[0]} photos</span></span><span class="muted">Tap the photo to place a scar</span></div><div class="photo" id="scar-photo"><img src={encounter.image} width="960" height="540" alt={`Left flank of ${encounter.individualId ?? 'unassigned whale shark'}`} />{scars.map((scar,index) => <span class:list={['marker',{major:JSON.parse(scar.fields_json).severity==='major'}]} style={`left:${(scar.x??0)*100}%;top:${(scar.y??0)*100}%`}>{index+1}</span>)}<span class="marker draft" id="draft-marker" hidden>{scars.length+1}</span><span class="image-label mono">IMG_4471 · {encounter.date.toUpperCase()} · {encounter.photographer.toUpperCase()}</span></div></div>
-      <div class="panel scar-table"><div class="scar-head"><span>#</span><span>Body region</span><span>Type</span><span>Severity</span><span>Freshness</span><span>Likely cause</span><span>First seen</span></div>{scarRows.map((scar,index) => { const fields=scar.fields; return <div class="scar-row"><b class:list={{warn:fields.severity==='major'}}>{index+1}</b><span>{optionLabels.get(`body_region:${fields.body_region}`)}</span><span>{optionLabels.get(`type:${fields.type}`)}</span><b class:list={{warn:fields.severity==='major'}}>{optionLabels.get(`severity:${fields.severity}`)}</b><span>{optionLabels.get(`freshness:${fields.freshness}`)}</span><span>{optionLabels.get(`likely_cause:${fields.likely_cause}`)}</span><span class="muted">{scar.first_seen_encounter_id===encounter.id?'This encounter':'2 Nov 2023'}</span></div>})}<div class="scar-row draft-row"><b>{scars.length+1}</b><span class="muted draft-copy">New scar — fill in the panel on the right</span></div></div>
-      <section class="scar-cards" aria-label="Recorded scars">{scarRows.map((scar,index) => { const fields=scar.fields; return <article class="panel scar-card"><header><strong class:list={{warn:fields.severity==='major'}}>Scar {index+1}</strong><span>{optionLabels.get(`severity:${fields.severity}`)}</span></header><dl><div><dt>Body region</dt><dd>{optionLabels.get(`body_region:${fields.body_region}`)}</dd></div><div><dt>Type</dt><dd>{optionLabels.get(`type:${fields.type}`)}</dd></div><div><dt>Freshness</dt><dd>{optionLabels.get(`freshness:${fields.freshness}`)}</dd></div><div><dt>Likely cause</dt><dd>{optionLabels.get(`likely_cause:${fields.likely_cause}`)}</dd></div><div><dt>First seen</dt><dd>{scar.first_seen_encounter_id===encounter.id?'This encounter':'2 Nov 2023'}</dd></div></dl></article>})}<article class="panel scar-card draft-card"><header><strong>Scar {scars.length+1}</strong><span>Draft</span></header><p>New scar — fill in the form below.</p></article></section>
-      <div class="record-actions"><p class="muted">Terminology and options come from the whale shark schema file in the repo — change it once, every site’s form changes.</p><div><form action="/api/review" method="post"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="status" value="no_new_scars"/><button class="small-button secondary">No new scars on this encounter</button></form><form action="/api/review" method="post" id="finish-record"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="status" value="recorded"/><button class="small-button finish">Finish record · next encounter →</button></form></div></div></section>
+  <main class="scar-page" data-placement-pending={copy.placementPending} data-placement-done={copy.placementDone}>
+    <header class="encounter-heading"><div><p class="muted">{fillTemplate(copy.breadcrumb, { site: requestedSiteLabel.split(',')[0]!, encounter: encounter.id })}</p><h1>{fillTemplate(copy.heading, { individual: individualLabel, date: encounter.date })}</h1></div><div class="metadata muted"><span>{fillTemplate(copy.metadata, { sex: encounter.sex, size: encounter.size, sightings: encounter.sightings })}</span><span class="mono">{fillTemplate(copy.schemaLabel, { version: species.version })}</span><a href={`https://www.sharkbook.ai/encounters/encounter.jsp?number=${encounter.id}`}>{copy.openSharkbook}</a></div></header>
+    {saved && <div class="saved" role="status">{copy.saved}</div>}
+    <div class="entry-grid"><section class="photo-and-records"><div class="panel photo-panel"><div class="photo-tabs"><span><b>{copy.photoTabs.left}</b><span class="muted">{copy.photoTabs.right}</span><span class="muted">{copy.photoTabs.dorsal}</span><span class="muted">{fillTemplate(copy.photoTabs.allPhotos, { count: encounter.photos.split(' ')[0]! })}</span></span><span class="muted">{copy.photoTabs.help}</span></div><div class="photo" id="scar-photo"><img src={encounter.image} width="960" height="540" alt={fillTemplate(copy.imageAlt, { individual: individualLabel.toLowerCase() })} />{scars.map((scar,index) => <span class:list={['marker',{major:JSON.parse(scar.fields_json).severity==='major'}]} style={`left:${(scar.x??0)*100}%;top:${(scar.y??0)*100}%`}>{index+1}</span>)}<span class="marker draft" id="draft-marker" hidden>{scars.length+1}</span><span class="image-label mono">{encounter.imageFilename} · {encounter.date.toUpperCase()} · {encounter.photographer.toUpperCase()}</span></div></div>
+      <div class="panel scar-table"><div class="scar-head">{copy.tableHeaders.map((header) => <span>{header}</span>)}</div>{scarRows.map((scar,index) => { const fields=scar.fields; return <div class="scar-row"><b class:list={{warn:fields.severity==='major'}}>{index+1}</b><span>{optionLabels.get(`body_region:${fields.body_region}`)}</span><span>{optionLabels.get(`type:${fields.type}`)}</span><b class:list={{warn:fields.severity==='major'}}>{optionLabels.get(`severity:${fields.severity}`)}</b><span>{optionLabels.get(`freshness:${fields.freshness}`)}</span><span>{optionLabels.get(`likely_cause:${fields.likely_cause}`)}</span><span class="muted">{firstSeenLabel(scar)}</span></div>})}<div class="scar-row draft-row"><b>{scars.length+1}</b><span class="muted draft-copy">{copy.newScarHelp}</span></div></div>
+      <section class="scar-cards" aria-label={copy.cardsAriaLabel}>{scarRows.map((scar,index) => { const fields=scar.fields; return <article class="panel scar-card"><header><strong class:list={{warn:fields.severity==='major'}}>{fillTemplate(copy.scarLabel, { number: index + 1 })}</strong><span>{optionLabels.get(`severity:${fields.severity}`)}</span></header><dl><div><dt>{copy.tableHeaders[1]}</dt><dd>{optionLabels.get(`body_region:${fields.body_region}`)}</dd></div><div><dt>{copy.tableHeaders[2]}</dt><dd>{optionLabels.get(`type:${fields.type}`)}</dd></div><div><dt>{copy.tableHeaders[4]}</dt><dd>{optionLabels.get(`freshness:${fields.freshness}`)}</dd></div><div><dt>{copy.tableHeaders[5]}</dt><dd>{optionLabels.get(`likely_cause:${fields.likely_cause}`)}</dd></div><div><dt>{copy.tableHeaders[6]}</dt><dd>{firstSeenLabel(scar)}</dd></div></dl></article>})}<article class="panel scar-card draft-card"><header><strong>{fillTemplate(copy.scarLabel, { number: scars.length + 1 })}</strong><span>{copy.draftLabel}</span></header><p>{copy.draftHelp}</p></article></section>
+      <div class="record-actions"><p class="muted">{copy.recordHelp}</p><div><form action="/api/review" method="post"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="status" value="no_new_scars"/><button class="small-button secondary">{copy.noNewScars}</button></form><form action="/api/review" method="post" id="finish-record"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="status" value="recorded"/><button class="small-button finish">{copy.finishNext}</button></form></div></div></section>
       <form class="panel scar-form" action="/api/scars" method="post" id="scar-form"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="individual_id" value={encounter.individualId ?? ''}/><input type="hidden" name="species_id" value={species.id}/><input type="hidden" name="schema_version" value={species.version}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="photo_asset_id" value={encounter.image}/><input type="hidden" name="x" id="scar-x" value="0.5"/><input type="hidden" name="y" id="scar-y" value="0.7"/>
-        <div class="form-heading"><strong>Scar {scars.length+1}</strong><span class="muted" id="placed-status">Left flank · click photo to place</span></div>
-        {species.fields.map((field) => <fieldset title={field.help}><legend>{field.label}{field.help && <span class="muted"> · {field.help}</span>}</legend>{field.type==='text' ? <textarea name={`field_${field.id}`} placeholder="Optional field notes"></textarea> : <div class="chips">{field.options!.map((option) => <label class:list={['chip',{emphasis:option.emphasis}]} title={option.help}><input type="radio" name={`field_${field.id}`} value={option.id} required={field.required} checked={(field.default ?? defaults[field.id])===option.id}/>{option.swatch && <i style={`background:${option.swatch}`}></i>}<span>{option.label}{option.emphasis && option.help ? ` — ${option.help}` : ''}</span></label>)}</div>}</fieldset>)}
-        <div class="form-actions"><span class="muted">Linked to Sharkbook encounter</span><div><button class="small-button secondary" id="discard" type="reset">Discard</button><button class="small-button save" type="submit">Save scar</button></div></div>
+        <div class="form-heading"><strong>{fillTemplate(copy.scarLabel, { number: scars.length + 1 })}</strong><span class="muted" id="placed-status">{copy.placementPending}</span></div>
+        {species.fields.map((field) => <fieldset title={field.help}><legend>{field.label}{field.help && <span class="muted"> · {field.help}</span>}</legend>{field.type==='text' ? <textarea name={`field_${field.id}`} placeholder={copy.notesPlaceholder}></textarea> : <div class="chips">{field.options!.map((option) => <label class:list={['chip',{emphasis:option.emphasis}]} title={option.help}><input type="radio" name={`field_${field.id}`} value={option.id} required={field.required} checked={(field.default ?? defaults[field.id])===option.id}/>{option.swatch && <i style={`background:${option.swatch}`}></i>}<span>{option.label}{option.emphasis && option.help ? ` — ${option.help}` : ''}</span></label>)}</div>}</fieldset>)}
+        <div class="form-actions"><span class="muted">{copy.linkedLabel}</span><div><button class="small-button secondary" id="discard" type="reset">{copy.discard}</button><button class="small-button save" type="submit">{copy.save}</button></div></div>
       </form></div>
-    <div class="mobile-actions"><button class="small-button save" type="submit" form="scar-form">Save scar</button><button class="small-button finish" type="submit" form="finish-record">Finish record</button></div>
+    <div class="mobile-actions"><button class="small-button save" type="submit" form="scar-form">{copy.save}</button><button class="small-button finish" type="submit" form="finish-record">{copy.finish}</button></div>
   </main>
 </BaseLayout>
 <style>
@@ -58,6 +67,7 @@ const saved = Astro.url.searchParams.has('saved');
   @media (max-width:560px) { .scar-page { padding-inline:14px; }.encounter-heading { align-items:flex-start; flex-direction:column; gap:8px; }.metadata { align-items:flex-start; flex-direction:column; gap:4px; }.photo-tabs > span:first-child span { display:none; }.image-label { bottom:6px; left:8px; right:auto; }.form-heading { align-items:flex-start; flex-direction:column; gap:3px; }.scar-card dl div { align-items:flex-start; flex-direction:column; gap:2px; }.scar-card dd { text-align:left; }.mobile-actions { padding-inline:14px; } }
 </style>
 <script>
+  const page = document.querySelector<HTMLElement>('.scar-page');
   const photo = document.querySelector<HTMLElement>('#scar-photo');
   const marker = document.querySelector<HTMLElement>('#draft-marker');
   const xInput = document.querySelector<HTMLInputElement>('#scar-x');
@@ -68,7 +78,7 @@ const saved = Astro.url.searchParams.has('saved');
     const x = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
     const y = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
     if (marker && xInput && yInput) { marker.hidden=false; marker.style.left=`${x*100}%`; marker.style.top=`${y*100}%`; xInput.value=x.toFixed(5); yInput.value=y.toFixed(5); }
-    if (status) status.textContent='Left flank · placed';
+    if (status) status.textContent=page?.dataset.placementDone ?? '';
   });
-  document.querySelector('#discard')?.addEventListener('click', () => { if(marker) marker.hidden=true; if(status) status.textContent='Left flank · click photo to place'; });
+  document.querySelector('#discard')?.addEventListener('click', () => { if(marker) marker.hidden=true; if(status) status.textContent=page?.dataset.placementPending ?? ''; });
 </script>

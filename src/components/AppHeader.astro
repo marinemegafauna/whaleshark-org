@@ -1,10 +1,14 @@
+---
+import { getPageCopy, getSiteCopy } from '../lib/content';
+const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
+---
 <header class="app-header">
-  <a class="brand" href="/app">whaleshark.org</a>
+  <a class="brand" href="/app">{siteCopy.name}</a>
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="app-menu">
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg>
-    <span>Menu</span>
+    <span>{copy.header.menuLabel}</span>
   </button>
-  <nav id="app-menu" aria-label="Application navigation"><a class="active" href="/app">Encounters</a><span>Individuals</span><span>Scar records</span><span>Matches to confirm</span><span>Exports</span><div class="account"><span class="mono">SHARKBOOK · CONNECTED</span><span>Clare Prebble</span></div></nav>
+  <nav id="app-menu" aria-label={copy.header.navAriaLabel}><a class="active" href="/app">{copy.header.nav[0]}</a>{copy.header.nav.slice(1).map((label) => <span>{label}</span>)}<div class="account"><span class="mono">{copy.header.connectedLabel}</span><span>{copy.header.accountName}</span></div></nav>
 </header>
 <style>
   .app-header { align-items: center; background: var(--ink); color: #fff; display: grid; font-size: 14px; grid-template-columns: auto minmax(0,1fr) auto; min-height: 52px; padding: 0 24px; }

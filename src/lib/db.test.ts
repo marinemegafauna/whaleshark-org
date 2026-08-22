@@ -12,6 +12,7 @@ describe('mock data store', () => {
       schema_version: '1.0',
       encounter_id: 'b3453961',
       individual_id: 'MZ-412',
+      individual_uuid: 'a12bf56a-39eb-43d2-9080-fd38bb531522',
       site_id: 'tofo',
       observer: 'clare',
       recorded_at: '2026-08-22T00:00:00.000Z',
@@ -27,6 +28,27 @@ describe('mock data store', () => {
     const records = await store.listScarRecords({ encounterId: 'b3453961' });
     expect(records).toHaveLength(1);
     expect(records[0]?.notes).toBe('Healing abrasion');
+  });
+
+  test('persists the raw individual UUID separately from its display name in D1', async () => {
+    const run = vi.fn().mockResolvedValue({ success: true });
+    const bind = vi.fn().mockReturnValue({ run });
+    const prepare = vi.fn().mockReturnValue({ bind });
+    const store = createDataStore({ prepare } as unknown as D1Database, false);
+
+    await store.createScarRecord({
+      id: 'scar-live', species_id: 'whale-shark', schema_version: '1.0', encounter_id: 'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846',
+      individual_id: null, individual_uuid: 'e6eaad1d-3c0d-4b49-83e1-83c1ed33729c', site_id: 'tofo', observer: 'simon',
+      recorded_at: '2026-08-22T00:00:00.000Z', photo_asset_id: 'asset-1', x: 0.25, y: 0.5, fields_json: '{}', notes: null,
+      first_seen_encounter_id: 'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846',
+    });
+
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('individual_uuid'));
+    expect(bind).toHaveBeenCalledWith(
+      'scar-live', 'whale-shark', '1.0', 'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846', null,
+      'e6eaad1d-3c0d-4b49-83e1-83c1ed33729c', 'tofo', 'simon', '2026-08-22T00:00:00.000Z', 'asset-1', 0.25, 0.5, '{}', null,
+      'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846',
+    );
   });
 
   test('persists review status and submission confirmation', async () => {

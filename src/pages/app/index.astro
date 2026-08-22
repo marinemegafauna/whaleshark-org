@@ -4,10 +4,10 @@ import SiteRail from '../../components/SiteRail.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProvenanceChip from '../../components/ProvenanceChip.astro';
 import siteConfig from '../../../site.config';
-import { dataStore } from '../../lib/runtime';
-import { isMockMode } from '../../lib/mode';
-import { mockEncounters, type MockEncounter } from '../../mock/data';
-import { searchEncounters } from '../../lib/wildbook';
+import { appDataStore } from '../../lib/runtime';
+import { isMockAppMode } from '../../lib/mode';
+import { mockEncounters } from '../../mock/data';
+import { isWildbookUnauthorized, mapEncounterHit, searchEncounters, type WorkbenchEncounter } from '../../lib/wildbook';
 import { getSpecies } from '../../lib/species';
 import { groupBatchItems } from '../../lib/batch-groups';
 import { fillTemplate, getPageCopy, getSiteCopy } from '../../lib/content';
@@ -18,23 +18,38 @@ const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
 const selectedSite = siteConfig.sites.find((site) => site.id === Astro.url.searchParams.get('site')) ?? siteConfig.sites[0];
 const siteLabelById = new Map(siteCopy.researchSites.map((site) => [site.id, site.label]));
 const selectedSiteLabel = siteLabelById.get(selectedSite.id) ?? selectedSite.id;
-const store = dataStore(Astro.locals);
+const parsedPage = Number.parseInt(Astro.url.searchParams.get('page') ?? '1', 10);
+const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+const pageSize = 25;
+const offset = (page - 1) * pageSize;
+const store = appDataStore(Astro.locals);
 const reviews = await store.listReviewStatuses();
 const reviewMap = new Map(reviews.map((review) => [review.encounter_id, review]));
-let encounters: MockEncounter[];
+let encounters: WorkbenchEncounter[] = [];
 let total = 0;
-if (isMockMode()) {
-  encounters = mockEncounters.filter((encounter) => encounter.siteId === selectedSite.id);
-  total = encounters.length;
+let unavailableNotice: string | null = null;
+if (isMockAppMode()) {
+  const siteEncounters = mockEncounters.filter((encounter) => encounter.siteId === selectedSite.id);
+  total = siteEncounters.length;
+  encounters = siteEncounters.slice(offset, offset + pageSize);
 } else {
-  const species = getSpecies('whale-shark');
-  const result = await searchEncounters(Astro.locals.session!.wildbook_cookie, { locationIds: [...selectedSite.locationIds], taxonomy: species.wildbook_taxonomy, from: 0, size: 50 });
-  total = result.total;
-  encounters = result.hits.map((hit) => ({ id: hit.id, individualId: String(hit.individualId ?? '') || null, sightings: Number(hit.sightings ?? 0), date: String(hit.date ?? hit.encounterDate ?? '—'), photographer: String(hit.photographer ?? '—'), sex: String(hit.sex ?? '—'), size: String(hit.size ?? '—'), photos: String(hit.photos ?? '—'), siteId: selectedSite.id, image: '', imageFilename: String(hit.filename ?? hit.imageFilename ?? '') }));
+  try {
+    const species = getSpecies('whale-shark');
+    const result = await searchEncounters(Astro.locals.session!.wildbook_cookie, { locationIds: [...selectedSite.locationIds], taxonomy: species.wildbook_taxonomy, from: offset, size: pageSize });
+    total = result.total;
+    encounters = result.hits.map((hit) => mapEncounterHit(hit, selectedSite.id));
+  } catch (error) {
+    if (isWildbookUnauthorized(error)) {
+      Astro.cookies.delete('whaleshark_session', { path: '/' });
+      return Astro.redirect('/signin?error=expired', 303);
+    }
+    unavailableNotice = copy.workbench.unavailable;
+  }
 }
 const needsRecord = encounters.filter((encounter) => !reviewMap.has(encounter.id)).length;
-const encounterRows = encounters.slice(0, 6);
+const encounterRows = encounters;
 const individuals = new Set(encounters.map((encounter) => encounter.individualId).filter(Boolean)).size;
+const unnamed = encounters.filter((encounter) => !encounter.individualId).length;
 const scarCount = (await store.listScarRecords()).length;
 const awaitingBatches = await store.listBatches({ status: 'review' });
 const batchRows = await Promise.all(awaitingBatches.map(async (batch) => {
@@ -58,7 +73,7 @@ const pendingPublicBatches = await Promise.all(submittedBatches.map(async (batch
   return { id: batch.id, siteId: batch.site_id, date: batch.observed_at, name: batch.photographer_name, hint: [...new Set(hints)].join(' · ') };
 }));
 const publicHintByEncounter = new Map<string, string>();
-const provenanceByEncounter = new Map<string, NonNullable<MockEncounter['provenance']>>();
+const provenanceByEncounter = new Map<string, NonNullable<WorkbenchEncounter['provenance']>>();
 for (const submission of submissions) {
   if (!submission.wildbook_encounter_id) continue;
   const provenance = parseProvenanceResult(submission.provenance_json);
@@ -68,21 +83,25 @@ for (const submission of submissions) {
   const hint = publicObservationHint(observations);
   if (hint) publicHintByEncounter.set(submission.wildbook_encounter_id, hint);
 }
+const nextHref = offset + encounters.length < total
+  ? `/app?${new URLSearchParams({ page: String(page + 1), site: selectedSite.id })}`
+  : null;
 ---
 <BaseLayout app title={copy.seo.workbenchTitle} description={copy.seo.workbenchDescription}>
   <AppHeader />
   <main class="app-shell">
-    <SiteRail active={selectedSite.id} encounterCount={total} individualCount={individuals} scarCount={scarCount} />
+    <SiteRail active={selectedSite.id} encounterCount={total} individualCount={individuals} needsRecordCount={needsRecord} unnamedCount={unnamed} scarCount={scarCount} />
     <section class="workspace">
       <div class="page-heading">
         <div><h1>{fillTemplate(copy.workbench.heading, { site: selectedSiteLabel.split(',')[0]! })}</h1><p class="muted">{fillTemplate(copy.workbench.helper, { count: needsRecord })}</p></div>
         <div class="tools"><label><span class="sr-only">{copy.workbench.searchLabel}</span><input type="search" placeholder={copy.workbench.searchPlaceholder} /></label><select aria-label={copy.workbench.statusAriaLabel}>{copy.workbench.statusOptions.map((option) => <option>{option}</option>)}</select><button>{copy.workbench.exportButton}</button></div>
       </div>
+      {unavailableNotice && <div class="unavailable" role="alert">{unavailableNotice}</div>}
       <div class="stats">
+        <div class="panel"><span class="eyebrow">{copy.workbench.stats.encounters}</span><strong>{total}</strong></div>
+        <div class="panel"><span class="eyebrow">{copy.workbench.stats.namedIndividuals}</span><strong>{individuals}</strong></div>
         <div class="panel"><span class="eyebrow">{copy.workbench.stats.needsRecord}</span><strong class="accent">{needsRecord}</strong></div>
-        <div class="panel"><span class="eyebrow">{copy.workbench.stats.recordedWeek}</span><strong>{reviews.filter((review) => review.status === 'recorded').length}</strong></div>
-        <div class="panel"><span class="eyebrow">{copy.workbench.stats.freshMajor}</span><strong class="warn">1</strong></div>
-        <div class="panel"><span class="eyebrow">{copy.workbench.stats.matchesAwaiting}</span><strong>1</strong></div>
+        <div class="panel"><span class="eyebrow">{copy.workbench.stats.unnamed}</span><strong>{unnamed}</strong></div>
         <div class="panel"><span class="eyebrow">{copy.workbench.stats.batchesAwaiting}</span><strong class="accent">{awaitingBatches.length}</strong></div>
       </div>
       {batchRows.length > 0 && <section class="panel batch-queue"><div class="queue-heading"><div><span class="eyebrow">{copy.workbench.queue.eyebrow}</span><h2>{copy.workbench.queue.heading}</h2></div><span class="muted">{copy.workbench.queue.help}</span></div><div class="batch-list">{batchRows.map(({batch,photos,animals}) => <a href={`/bulk/${batch.id}/review`}><span><b>{siteLabelById.get(batch.site_id) ?? batch.site_id}</b><small>{batch.photographer_name} · {batch.observed_at}</small></span><span class="batch-counts">{fillTemplate(copy.workbench.queue.counts, { photos, animals })}</span><strong>{copy.workbench.queue.review}</strong></a>)}</div></section>}
@@ -92,18 +111,18 @@ for (const submission of submissions) {
       </div></section>}
       <div class="panel table">
         <div class="table-head">{copy.workbench.tableHeaders.map((header) => <span>{header}</span>)}</div>
-        {encounterRows.map((encounter,index) => { const review=reviewMap.get(encounter.id); const publicHint=publicHintByEncounter.get(encounter.id); const provenance=encounter.provenance ?? provenanceByEncounter.get(encounter.id); const scarHref=`/app/encounters/${encounter.id}/scars?site=${selectedSite.id}`; return <div class:list={['table-row',{highlight:index===0}]}><span class="mono">{encounter.id}</span><span>{encounter.individualId ? <><b>{encounter.individualId}</b> <small class="muted">{fillTemplate(copy.workbench.sightings, { count: encounter.sightings })}{encounter.sightings===1 ? ` ${copy.workbench.newLabel}` : ''}</small></> : <small class="muted">{copy.workbench.unassignedPending}</small>}</span><span>{encounter.date} · {encounter.photographer}</span><span>{encounter.sex} · {encounter.size}{publicHint && <small class="public-notes">{copy.workbench.publicNotesLabel}: {publicHint}</small>}</span><span>{encounter.photos}</span><span><ProvenanceChip result={provenance} compact /></span><span>{review ? <span class="tag done">{review.status === 'no_new_scars' ? copy.workbench.noNewScars : copy.workbench.recorded}</span> : <span class="tag todo">{copy.workbench.needsRecord}</span>}</span><span>{review ? <a class="muted" href={scarHref}>{copy.workbench.view}</a> : <a class="record" href={scarHref}>{copy.workbench.recordScars}</a>}</span></div>})}
-        <div class="table-foot muted"><span>{fillTemplate(copy.workbench.showing, { shown: Math.min(encounters.length,6), total })}</span><span>{copy.workbench.next}</span></div>
+        {encounterRows.map((encounter,index) => { const review=reviewMap.get(encounter.id); const publicHint=publicHintByEncounter.get(encounter.id); const provenance=encounter.provenance ?? provenanceByEncounter.get(encounter.id); const scarHref=`/app/encounters/${encounter.id}/scars?site=${selectedSite.id}`; return <div class:list={['table-row',{highlight:index===0}]}><span class="encounter-cell">{encounter.image && <img src={encounter.image} width="56" height="40" alt="" loading="lazy" />}<span><span class="mono encounter-uuid">{encounter.id}</span><small class="state-chip">{encounter.state}</small></span></span><span>{encounter.individualId ? <><b>{encounter.individualId}</b> <small class="muted">{fillTemplate(copy.workbench.sightings, { count: encounter.sightings })}{encounter.sightings===1 ? ` ${copy.workbench.newLabel}` : ''}</small></> : <small class="muted">{copy.workbench.unassignedPending}</small>}</span><span>{encounter.date} · {encounter.photographer}</span><span>{encounter.sex} · {encounter.size}{publicHint && <small class="public-notes">{copy.workbench.publicNotesLabel}: {publicHint}</small>}</span><span>{encounter.photos}</span><span><ProvenanceChip result={provenance} compact /></span><span>{review ? <span class="tag done">{review.status === 'no_new_scars' ? copy.workbench.noNewScars : copy.workbench.recorded}</span> : <span class="tag todo">{copy.workbench.needsRecord}</span>}</span><span>{review ? <a class="muted" href={scarHref}>{copy.workbench.view}</a> : <a class="record" href={scarHref}>{copy.workbench.recordScars}</a>}</span></div>})}
+        <div class="table-foot muted"><span>{fillTemplate(copy.workbench.showing, { shown: encounters.length, total })}</span>{nextHref ? <a href={nextHref}>{copy.workbench.next}</a> : <span>{copy.workbench.next}</span>}</div>
       </div>
       <section class="encounter-cards" aria-label={copy.workbench.cardsAriaLabel}>
-        {encounterRows.map((encounter) => { const review=reviewMap.get(encounter.id); const publicHint=publicHintByEncounter.get(encounter.id); const provenance=encounter.provenance ?? provenanceByEncounter.get(encounter.id); const scarHref=`/app/encounters/${encounter.id}/scars?site=${selectedSite.id}`; return <article class="panel encounter-card"><header><div><strong>{encounter.individualId ?? copy.workbench.unassigned}</strong><span class="mono muted">{encounter.id}</span></div><div class="card-tags"><ProvenanceChip result={provenance} compact />{review ? <span class="tag done">{review.status === 'no_new_scars' ? copy.workbench.noNewScars : copy.workbench.recorded}</span> : <span class="tag todo">{copy.workbench.needsRecord}</span>}</div></header><dl><div><dt>{copy.workbench.cardLabels.datePhotographer}</dt><dd>{encounter.date} · {encounter.photographer}</dd></div><div><dt>{copy.workbench.cardLabels.sexSize}</dt><dd>{encounter.sex} · {encounter.size}</dd></div>{publicHint && <div><dt>{copy.workbench.publicNotesLabel}</dt><dd>{publicHint}</dd></div>}<div><dt>{copy.workbench.cardLabels.photos}</dt><dd>{encounter.photos}</dd></div></dl><a class="record-action" href={scarHref}>{review ? copy.workbench.viewRecord : copy.workbench.recordScars}</a></article>})}
-        <p class="muted">{fillTemplate(copy.workbench.showing, { shown: Math.min(encounters.length,6), total })}</p>
+        {encounterRows.map((encounter) => { const review=reviewMap.get(encounter.id); const publicHint=publicHintByEncounter.get(encounter.id); const provenance=encounter.provenance ?? provenanceByEncounter.get(encounter.id); const scarHref=`/app/encounters/${encounter.id}/scars?site=${selectedSite.id}`; return <article class="panel encounter-card">{encounter.image && <img class="card-image" src={encounter.image} width="720" height="405" alt="" loading="lazy" />}<header><div><strong>{encounter.individualId ?? copy.workbench.unassigned}</strong><span class="mono muted">{encounter.id}</span><small class="state-chip">{encounter.state}</small></div><div class="card-tags"><ProvenanceChip result={provenance} compact />{review ? <span class="tag done">{review.status === 'no_new_scars' ? copy.workbench.noNewScars : copy.workbench.recorded}</span> : <span class="tag todo">{copy.workbench.needsRecord}</span>}</div></header><dl><div><dt>{copy.workbench.cardLabels.datePhotographer}</dt><dd>{encounter.date} · {encounter.photographer}</dd></div><div><dt>{copy.workbench.cardLabels.sexSize}</dt><dd>{encounter.sex} · {encounter.size}</dd></div>{publicHint && <div><dt>{copy.workbench.publicNotesLabel}</dt><dd>{publicHint}</dd></div>}<div><dt>{copy.workbench.cardLabels.photos}</dt><dd>{encounter.photos}</dd></div></dl><a class="record-action" href={scarHref}>{review ? copy.workbench.viewRecord : copy.workbench.recordScars}</a></article>})}
+        <p class="muted">{fillTemplate(copy.workbench.showing, { shown: encounters.length, total })}{nextHref && <> · <a href={nextHref}>{copy.workbench.next}</a></>}</p>
       </section>
     </section>
   </main>
 </BaseLayout>
 <style>
-  .app-shell { display:grid; grid-template-columns:232px minmax(0,1fr); min-height:calc(100vh - 52px); }.workspace { display:flex; flex-direction:column; gap:16px; min-width:0; padding:20px 24px; }.page-heading { align-items:flex-end; display:flex; gap:20px; justify-content:space-between; }.page-heading h1 { font-size:22px; font-weight:600; letter-spacing:-.02em; margin:0; }.page-heading p { font-size:13px; margin:4px 0 0; }.tools { align-items:center; display:flex; gap:8px; }.tools input,.tools select,.tools button { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:14px; min-height:44px; padding:8px 12px; }.tools input,.tools select { font-size:16px; }.tools button { background:var(--ink); border-color:var(--ink); color:#fff; font-weight:500; }.sr-only { height:1px; margin:-1px; overflow:hidden; position:absolute; width:1px; }.stats { display:grid; gap:12px; grid-template-columns:repeat(5,minmax(0,1fr)); }.stats > div { display:flex; flex-direction:column; gap:2px; padding:14px 16px; }.stats strong { font-size:26px; font-weight:600; letter-spacing:-.02em; }.stats .accent { color:var(--accent); }.stats .warn { color:var(--warn); }.batch-queue { overflow:hidden; }.queue-heading { align-items:flex-end; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; padding:14px 16px; }.queue-heading h2 { font-size:16px; margin:3px 0 0; }.queue-heading > span { font-size:12px; }.batch-list { display:flex; flex-direction:column; }.batch-list > a { align-items:center; border-bottom:1px solid rgba(21,24,28,.06); display:grid; font-size:14px; gap:14px; grid-template-columns:1fr auto auto; min-height:58px; padding:8px 16px; }.batch-list > a:last-child { border-bottom:0; }.batch-list > a > span:first-child { display:flex; flex-direction:column; gap:2px; min-width:0; }.batch-list small { color:var(--muted); font-size:12px; }.batch-counts { color:var(--muted); }.batch-counts b { color:var(--ink); }.batch-list > a > strong { color:var(--accent); }.table { overflow:visible; }.table-head,.table-row { align-items:center; display:grid; gap:12px; grid-template-columns:.65fr 1.15fr 1fr .65fr .45fr .9fr .8fr .65fr; }.table-head { border-bottom:1px solid var(--line); color:rgba(21,24,28,.5); font-size:12px; font-weight:500; letter-spacing:.08em; padding:10px 16px; text-transform:uppercase; }.table-row { border-bottom:1px solid rgba(21,24,28,.06); font-size:14px; min-height:44px; padding:11px 16px; }.table-row.highlight { background:rgba(79,70,229,.03); }.table-row b { font-weight:600; }.table-row small { font-size:12px; }.tag { align-items:center; border-radius:var(--radius-pill); display:inline-flex; font-size:12px; font-weight:500; padding:3px 8px; }.tag.todo { background:rgba(79,70,229,.08); color:var(--accent); }.tag.done { background:rgba(21,24,28,.06); color:rgba(21,24,28,.6); }.record { color:var(--accent); font-weight:600; }.table-foot { display:flex; font-size:12px; justify-content:space-between; padding:10px 16px; }.encounter-cards { display:none; }.card-tags { align-items:flex-end; display:flex; flex-direction:column; }
+  .app-shell { display:grid; grid-template-columns:232px minmax(0,1fr); min-height:calc(100vh - 52px); }.workspace { display:flex; flex-direction:column; gap:16px; min-width:0; padding:20px 24px; }.page-heading { align-items:flex-end; display:flex; gap:20px; justify-content:space-between; }.page-heading h1 { font-size:22px; font-weight:600; letter-spacing:-.02em; margin:0; }.page-heading p { font-size:13px; margin:4px 0 0; }.tools { align-items:center; display:flex; gap:8px; }.tools input,.tools select,.tools button { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:14px; min-height:44px; padding:8px 12px; }.tools input,.tools select { font-size:16px; }.tools button { background:var(--ink); border-color:var(--ink); color:#fff; font-weight:500; }.sr-only { height:1px; margin:-1px; overflow:hidden; position:absolute; width:1px; }.unavailable { background:#fff3cd; border:1px solid #e5bd55; border-radius:8px; color:#7a4b00; font-size:14px; padding:11px 13px; }.stats { display:grid; gap:12px; grid-template-columns:repeat(5,minmax(0,1fr)); }.stats > div { display:flex; flex-direction:column; gap:2px; padding:14px 16px; }.stats strong { font-size:26px; font-weight:600; letter-spacing:-.02em; }.stats .accent { color:var(--accent); }.batch-queue { overflow:hidden; }.queue-heading { align-items:flex-end; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; padding:14px 16px; }.queue-heading h2 { font-size:16px; margin:3px 0 0; }.queue-heading > span { font-size:12px; }.batch-list { display:flex; flex-direction:column; }.batch-list > a { align-items:center; border-bottom:1px solid rgba(21,24,28,.06); display:grid; font-size:14px; gap:14px; grid-template-columns:1fr auto auto; min-height:58px; padding:8px 16px; }.batch-list > a:last-child { border-bottom:0; }.batch-list > a > span:first-child { display:flex; flex-direction:column; gap:2px; min-width:0; }.batch-list small { color:var(--muted); font-size:12px; }.batch-counts { color:var(--muted); }.batch-counts b { color:var(--ink); }.batch-list > a > strong { color:var(--accent); }.table { overflow:visible; }.table-head,.table-row { align-items:center; display:grid; gap:12px; grid-template-columns:.95fr 1.05fr 1fr .65fr .45fr .8fr .8fr .65fr; }.table-head { border-bottom:1px solid var(--line); color:rgba(21,24,28,.5); font-size:12px; font-weight:500; letter-spacing:.08em; padding:10px 16px; text-transform:uppercase; }.table-row { border-bottom:1px solid rgba(21,24,28,.06); font-size:14px; min-height:64px; padding:8px 16px; }.table-row.highlight { background:rgba(79,70,229,.03); }.table-row b { font-weight:600; }.table-row small { font-size:12px; }.encounter-cell { align-items:center; display:flex; gap:9px; min-width:0; }.encounter-cell > img { border-radius:6px; flex:0 0 56px; height:40px; object-fit:cover; }.encounter-cell > span { display:flex; flex-direction:column; gap:3px; min-width:0; }.encounter-uuid { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.state-chip { align-self:flex-start; background:rgba(21,24,28,.06); border-radius:var(--radius-pill); color:var(--muted); font-size:10px!important; padding:2px 6px; text-transform:capitalize; }.tag { align-items:center; border-radius:var(--radius-pill); display:inline-flex; font-size:12px; font-weight:500; padding:3px 8px; }.tag.todo { background:rgba(79,70,229,.08); color:var(--accent); }.tag.done { background:rgba(21,24,28,.06); color:rgba(21,24,28,.6); }.record { color:var(--accent); font-weight:600; }.table-foot { display:flex; font-size:12px; justify-content:space-between; padding:10px 16px; }.table-foot a { color:var(--accent); font-weight:600; }.encounter-cards { display:none; }.card-tags { align-items:flex-end; display:flex; flex-direction:column; }.card-image { border-radius:8px; height:auto; max-height:280px; object-fit:cover; width:100%; }
   .public-notes { color:var(--accent); display:block; font-size:11px; line-height:1.3; margin-top:3px; }
   .public-report-list > a { grid-template-columns:minmax(0,1fr) auto; }
   .queue-action { align-items:center; display:flex; gap:8px; }.queue-action > strong { color:var(--accent); }

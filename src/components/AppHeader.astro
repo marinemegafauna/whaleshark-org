@@ -1,6 +1,8 @@
 ---
 import { getPageCopy, getSiteCopy } from '../lib/content';
+import { isMockAppMode } from '../lib/mode';
 const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
+const accountName = Astro.locals.session?.username ?? copy.header.accountName;
 ---
 <header class="app-header">
   <a class="brand" href="/app">{siteCopy.name}</a>
@@ -8,7 +10,7 @@ const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg>
     <span>{copy.header.menuLabel}</span>
   </button>
-  <nav id="app-menu" aria-label={copy.header.navAriaLabel}><a class="active" href="/app">{copy.header.nav[0]}</a>{copy.header.nav.slice(1).map((label) => <span>{label}</span>)}<div class="account"><span class="mono">{copy.header.connectedLabel}</span><span>{copy.header.accountName}</span></div></nav>
+  <nav id="app-menu" aria-label={copy.header.navAriaLabel}><a class="active" href="/app">{copy.header.nav[0]}</a>{copy.header.nav.slice(1).map((label) => <span>{label}</span>)}<div class="account">{!isMockAppMode() && <span class="mono">{copy.header.connectedLabel}</span>}<span>{accountName}</span></div></nav>
 </header>
 <style>
   .app-header { align-items: center; background: var(--ink); color: #fff; display: grid; font-size: 14px; grid-template-columns: auto minmax(0,1fr) auto; min-height: 52px; padding: 0 24px; }

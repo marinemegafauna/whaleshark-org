@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PublicHeader from '../components/PublicHeader.astro';
 import { getPageCopy } from '../lib/content';
-import { isMockMode } from '../lib/mode';
+import { isMockAppMode } from '../lib/mode';
 const copy = await getPageCopy('signin');
 const error = Astro.url.searchParams.get('error');
 const next = Astro.url.searchParams.get('next') ?? '/app';
@@ -12,7 +12,7 @@ const next = Astro.url.searchParams.get('next') ?? '/app';
   <main class="signin-page"><form action="/api/auth/login" method="post">
     <input type="hidden" name="next" value={next} />
     <div class="intro"><h1>{copy.heading}</h1><p>{copy.intro}</p></div>
-    {isMockMode() && <div class="notice"><strong>{copy.mockLabel}</strong> · {copy.mockHelp}</div>}
+    {isMockAppMode() && <div class="notice"><strong>{copy.mockLabel}</strong> · {copy.mockHelp}</div>}
     {error && <div class="error" role="alert">{error === 'missing' ? copy.errors.missing : copy.errors.rejected}</div>}
     <label><span>{copy.emailLabel}</span><input type="text" name="username" autocomplete="username" placeholder={copy.emailPlaceholder} required /></label>
     <label><span>{copy.passwordLabel}</span><input type="password" name="password" autocomplete="current-password" placeholder={copy.passwordPlaceholder} required /></label>

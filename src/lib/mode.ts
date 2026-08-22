@@ -1,9 +1,9 @@
 import { env } from 'cloudflare:workers';
 
-type WorkerEnv = { MOCK?: string; PUBLIC_WRITE?: string; [key: string]: unknown };
+type WorkerEnv = { MOCK?: string; MOCK_APP?: string; PUBLIC_WRITE?: string; [key: string]: unknown };
 const workerEnv = env as unknown as WorkerEnv;
 
-function setting(name: 'MOCK' | 'PUBLIC_WRITE'): string | undefined {
+function setting(name: 'MOCK' | 'MOCK_APP' | 'PUBLIC_WRITE'): string | undefined {
   const runtime = workerEnv[name];
   if (typeof runtime === 'string') return runtime;
   const bundled = import.meta.env[name];
@@ -13,6 +13,13 @@ function setting(name: 'MOCK' | 'PUBLIC_WRITE'): string | undefined {
 export function isMockMode(): boolean {
   const configured = setting('MOCK');
   return configured === '1' || (configured === undefined && import.meta.env.DEV);
+}
+
+export function isMockAppMode(): boolean {
+  const configured = setting('MOCK_APP');
+  if (configured === '1') return true;
+  if (configured === '0') return false;
+  return isMockMode();
 }
 
 export function publicWriteMode(): 'dry-run' | 'live' {

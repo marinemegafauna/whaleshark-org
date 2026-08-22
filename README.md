@@ -34,7 +34,15 @@ If the dev command exits before printing its ready URL, first check whether this
 
 If installation reports `ENOTFOUND registry.npmjs.org`, the machine cannot currently reach the npm registry; retry from a network-enabled shell. `npm install --offline` works only after these packages have previously been cached and otherwise reports `ENOTCACHED`.
 
-`MOCK=1` is the development default. It makes every screen browsable without network access or credentials:
+The three runtime boundaries are independent:
+
+| Surface | Setting | Safe/default value |
+|---|---|---|
+| Public matching and uploads | `MOCK=1` | Fixtures; no Sharkbook calls |
+| Signed-in workbench and sign-in | `MOCK_APP=1` | Fixtures; unset inherits `MOCK` |
+| Public writes | `PUBLIC_WRITE=dry-run` | Nothing written to Sharkbook |
+
+With the `.env.example` defaults, every screen is browsable without network access or credentials:
 
 - `/` — full public landing page with photo drop, live Sharkbook catalogue counts, and matching explanation
 - `/bulk` — whole-dive photo upload with per-photo matching progress
@@ -64,6 +72,10 @@ npm run build
 
 Researcher passwords are forwarded to Wildbook’s login endpoint once and are never stored. The Worker stores only the resulting `JSESSIONID` in D1 against an HttpOnly site session.
 
+### Signing in
+
+With `MOCK_APP=0`, sign in at `/signin` using your own Sharkbook account. The workbench uses that account only for authenticated reads of encounter and individual data; it stores the resulting session cookie server-side, never stores the password, and writes nothing to Sharkbook. `PUBLIC_WRITE=dry-run` remains unchanged.
+
 ## Template for another species
 
 The application shell, Wildbook client, D1 store, and workbench are species-agnostic. Species vocabulary and field options are validated from YAML at build time. See [docs/TEMPLATE.md](docs/TEMPLATE.md) for the fork-and-configure guide.
@@ -81,7 +93,7 @@ Implemented against real interfaces:
 
 Currently mocked or pending agreement:
 
-- encounter, media, and match fixtures are used when `MOCK=1`
+- public encounter, media, and match fixtures are used when `MOCK=1`; the signed-in workbench follows `MOCK_APP`
 - bulk items advance from queued through detection and matching to a deterministic mix of matched, likely-new, no-shark, and error results when `MOCK=1`
 - uploaded image storage is represented by local SVG fixture keys; production object storage is not selected yet
 - public writes stay in D1 while `PUBLIC_WRITE=dry-run`

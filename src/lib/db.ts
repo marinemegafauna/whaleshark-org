@@ -39,6 +39,7 @@ export interface ScarRecord {
   schema_version: string;
   encounter_id: string;
   individual_id: string | null;
+  individual_uuid: string | null;
   site_id: string;
   observer: string;
   recorded_at: string;
@@ -284,8 +285,8 @@ class D1Store implements DataStore {
   }
 
   async createScarRecord(record: ScarRecord) {
-    await this.db.prepare(`INSERT INTO scar_records (id, species_id, schema_version, encounter_id, individual_id, site_id, observer, recorded_at, photo_asset_id, x, y, fields_json, notes, first_seen_encounter_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(record.id, record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id).run();
+    await this.db.prepare(`INSERT INTO scar_records (id, species_id, schema_version, encounter_id, individual_id, individual_uuid, site_id, observer, recorded_at, photo_asset_id, x, y, fields_json, notes, first_seen_encounter_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(record.id, record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.individual_uuid, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id).run();
     return record;
   }
 
@@ -293,8 +294,8 @@ class D1Store implements DataStore {
     const current = (await this.db.prepare('SELECT * FROM scar_records WHERE id = ?').bind(id).first<ScarRecord>());
     if (!current) throw new Error(`Scar record not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE scar_records SET species_id=?, schema_version=?, encounter_id=?, individual_id=?, site_id=?, observer=?, recorded_at=?, photo_asset_id=?, x=?, y=?, fields_json=?, notes=?, first_seen_encounter_id=? WHERE id=?`)
-      .bind(record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id, id).run();
+    await this.db.prepare(`UPDATE scar_records SET species_id=?, schema_version=?, encounter_id=?, individual_id=?, individual_uuid=?, site_id=?, observer=?, recorded_at=?, photo_asset_id=?, x=?, y=?, fields_json=?, notes=?, first_seen_encounter_id=? WHERE id=?`)
+      .bind(record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.individual_uuid, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id, id).run();
     return record;
   }
 

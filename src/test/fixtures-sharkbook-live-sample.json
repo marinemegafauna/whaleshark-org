@@ -1,0 +1,476 @@
+{
+ "search_total": "3859",
+ "search_hits": [
+  {
+   "date": "2026-08-18T00:00Z",
+   "individualSex": "unknown",
+   "microsatelliteMarkers": [],
+   "country": "Mozambique",
+   "projects": [],
+   "individualLastEncounterDate": "2026-08-18T00:00Z",
+   "dynamicProperties": {},
+   "individualNumberEncounters": 1,
+   "individualSocialUnits": [],
+   "occurrenceLocationGeoPoint": null,
+   "taxonomy": "Rhincodon typus",
+   "photographers": [],
+   "occurrenceComments": "None",
+   "mediaAssetLabeledKeywords": {},
+   "id": "f3ed2cf4-a83a-48e5-8833-d44dbcc2c846",
+   "state": "unapproved",
+   "individualTaxonomy": "Rhincodon typus",
+   "tissueSampleIds": [],
+   "individualDisplayName": "",
+   "biologicalMeasurements": {},
+   "occurrenceGroupBehavior": null,
+   "featuredAssetUuid": "c38440fc-25cc-45e3-9e64-3720720ccf2e",
+   "individualNickName": null,
+   "verbatimEventDate": null,
+   "mediaAssets": [
+    {
+     "mimeTypeMinor": "jpeg",
+     "width": 1920,
+     "annotations": [
+      {
+       "viewpoint": "right",
+       "boundingBox": [
+        372,
+        376,
+        1160,
+        707
+       ],
+       "acmId": "1242f408-e5fd-4d94-9e8f-ef4f32db86b1",
+       "isTrivial": false,
+       "iaClass": "whaleshark",
+       "matchAgainst": true,
+       "id": "1242f408-e5fd-4d94-9e8f-ef4f32db86b1",
+       "encounterId": "f3ed2cf4-a83a-48e5-8833-d44dbcc2c846",
+       "theta": 0.02196872625482709
+      }
+     ],
+     "mimeTypeMajor": "image",
+     "id": 4003098,
+     "uuid": "c38440fc-25cc-45e3-9e64-3720720ccf2e",
+     "url": "https://www.sharkbook.ai/wildbook_data_dir/f/3/f3ed2cf4-a83a-48e5-8833-d44dbcc2c846/3f225fbf-4132-4004-b653-5973bccaeb05-master.jpg",
+     "height": 1080
+    }
+   ],
+   "verbatimLocality": "tofo",
+   "numberMediaAssets": 1,
+   "individualNames": [
+    ""
+   ],
+   "metalTags": [],
+   "version": 1787145654000,
+   "patterningCode": null,
+   "annotationIAClasses": [
+    "whaleshark"
+   ],
+   "occurrenceGroupComposition": null,
+   "livingStatus": "alive",
+   "dateSubmitted": "2026-08-19T12:08:41.015",
+   "mediaAssetKeywords": [],
+   "access": "full",
+   "numberAnnotations": 1,
+   "geneticSex": null,
+   "individualId": "e6eaad1d-3c0d-4b49-83e1-83c1ed33729c",
+   "occurrenceId": "52e86d1d-2ff0-4c83-90af-61f29ca8931a",
+   "submitters": [
+    "All Out Africa",
+    "17fae259-bd2b-44ae-bedb-609ccc9435f3",
+    "marine@alloutafrica.org",
+    "alloutafrica"
+   ],
+   "dateMillis": 1787011200000,
+   "distinguishingScar": "",
+   "locationId": "Tofo",
+   "behavior": null,
+   "measurements": [],
+   "locationName": "Tofo",
+   "haplotype": null,
+   "locationGeoPoint": {
+    "lon": 35.371094942092896,
+    "lat": -24.764567588534117
+   },
+   "individualFirstEncounterDate": "2026-08-18T00:00Z",
+   "sex": "unknown",
+   "individualRelationshipRoles": [],
+   "assignedUsername": "alloutafrica",
+   "informOthers": [],
+   "indexTimestamp": 1787372713090,
+   "otherCatalogNumbers": null,
+   "lifeStage": null,
+   "organizations": [],
+   "occurrenceRemarks": "",
+   "annotationViewpoints": [
+    "right"
+   ]
+  },
+  {
+   "date": "2026-08-18T00:00:00",
+   "microsatelliteMarkers": [],
+   "country": null,
+   "projects": [
+    "336e20f9-960c-4e28-a3cb-17ff2f2b80f8"
+   ],
+   "dynamicProperties": {},
+   "occurrenceLocationGeoPoint": null,
+   "taxonomy": "Rhincodon typus",
+   "photographers": [
+    "Anonymous_c4e7c8b6-cbb9-47b2-a69c-3879f77d6438",
+    "sasha.gilles@marinemegafauna.org",
+    "c4e7c8b6-cbb9-47b2-a69c-3879f77d6438",
+    "Sascha Gilles"
+   ],
+   "occurrenceComments": "None",
+   "mediaAssetLabeledKeywords": {},
+   "id": "a9630f99-396e-4b2e-b255-6615d9816f8f",
+   "state": "unapproved",
+   "tissueSampleIds": [],
+   "biologicalMeasurements": {},
+   "occurrenceGroupBehavior": null,
+   "featuredAssetUuid": "9d176ff6-23c1-4c6e-8748-98439184d990",
+   "verbatimEventDate": null,
+   "mediaAssets": [
+    {
+     "mimeTypeMinor": "png",
+     "width": 1659,
+     "annotations": [
+      {
+       "viewpoint": "left",
+       "boundingBox": [
+        141,
+        37,
+        1518,
+        752
+       ],
+       "acmId": "42f364f4-f2ea-4860-a5b0-22f3c656170b",
+       "isTrivial": false,
+       "iaClass": "whaleshark",
+       "matchAgainst": true,
+       "id": "42f364f4-f2ea-4860-a5b0-22f3c656170b",
+       "encounterId": "21489266-263e-4bd8-aa8e-dd1baead579d",
+       "theta": -0.024462396433744926
+      },
+      {
+       "viewpoint": "left",
+       "boundingBox": [
+        714,
+        231,
+        498,
+        353
+       ],
+       "acmId": "5b1f42c0-6293-44c6-af49-fe6ea7f7837d",
+       "isTrivial": false,
+       "iaClass": "whaleshark",
+       "matchAgainst": true,
+       "id": "5b1f42c0-6293-44c6-af49-fe6ea7f7837d",
+       "encounterId": "a9630f99-396e-4b2e-b255-6615d9816f8f",
+       "theta": 0
+      }
+     ],
+     "mimeTypeMajor": "image",
+     "id": 4002898,
+     "uuid": "9d176ff6-23c1-4c6e-8748-98439184d990",
+     "url": "https://www.sharkbook.ai/wildbook_data_dir/2/1/21489266-263e-4bd8-aa8e-dd1baead579d/a094f1f4-6abc-42a5-bf28-8c301564acaa-master.jpg",
+     "height": 790
+    }
+   ],
+   "verbatimLocality": "Praia do Tofo, Mozambique",
+   "numberMediaAssets": 1,
+   "metalTags": [],
+   "version": 1787059575000,
+   "patterningCode": null,
+   "annotationIAClasses": [
+    "whaleshark"
+   ],
+   "occurrenceGroupComposition": null,
+   "livingStatus": null,
+   "dateSubmitted": "2026-08-18T13:26:15",
+   "mediaAssetKeywords": [],
+   "access": "full",
+   "numberAnnotations": 1,
+   "geneticSex": null,
+   "individualId": null,
+   "occurrenceId": "01cb49c0-09ff-44bd-af88-c5f15c7607a4",
+   "submitters": [
+    "changme2@example.com",
+    "MMF-Moz",
+    "9166c9f0-4e12-4024-9ecd-aa7769258f19",
+    "Simon Pierce",
+    "spierce",
+    "simon@marinemegafauna.org",
+    "Anna Flam",
+    "70b306f5-6dc3-4d17-b7f2-9fdea4ab6148"
+   ],
+   "dateMillis": 1787011200000,
+   "distinguishingScar": "None",
+   "locationId": "Mozambique",
+   "behavior": null,
+   "measurements": [],
+   "locationName": "Mozambique",
+   "haplotype": null,
+   "locationGeoPoint": null,
+   "sex": "unknown",
+   "assignedUsername": "MMF-Moz",
+   "informOthers": [],
+   "indexTimestamp": 1787372712140,
+   "otherCatalogNumbers": null,
+   "lifeStage": null,
+   "organizations": [],
+   "occurrenceRemarks": "",
+   "annotationViewpoints": [
+    "left"
+   ]
+  }
+ ],
+ "encounter_get": {
+  "date": "2026-08-18T00:00Z",
+  "individualSex": "unknown",
+  "microsatelliteMarkers": [],
+  "country": "Mozambique",
+  "projects": [],
+  "individualLastEncounterDate": "2026-08-18T00:00Z",
+  "dynamicProperties": {},
+  "individualNumberEncounters": 1,
+  "individualSocialUnits": [],
+  "occurrenceLocationGeoPoint": null,
+  "taxonomy": "Rhincodon typus",
+  "photographers": [],
+  "submitterUserId": "17fae259-bd2b-44ae-bedb-609ccc9435f3",
+  "occurrenceComments": "None",
+  "mediaAssetLabeledKeywords": {},
+  "id": "f3ed2cf4-a83a-48e5-8833-d44dbcc2c846",
+  "state": "unapproved",
+  "individualTaxonomy": "Rhincodon typus",
+  "tissueSampleIds": [],
+  "individualDisplayName": "",
+  "biologicalMeasurements": {},
+  "occurrenceGroupBehavior": null,
+  "featuredAssetUuid": "c38440fc-25cc-45e3-9e64-3720720ccf2e",
+  "individualNickName": null,
+  "verbatimEventDate": null,
+  "mediaAssets": [
+   {
+    "detectionStatus": "complete",
+    "mimeTypeMinor": "jpeg",
+    "keywords": [],
+    "width": 1920,
+    "annotations": [
+     {
+      "viewpoint": "right",
+      "boundingBox": [
+       372,
+       376,
+       1160,
+       707
+      ],
+      "acmId": "1242f408-e5fd-4d94-9e8f-ef4f32db86b1",
+      "identificationStatus": "complete-mlservice",
+      "iaTaskId": "6b7e9c42-d226-4ace-819c-441ce081f0c1",
+      "encounterId": "f3ed2cf4-a83a-48e5-8833-d44dbcc2c846",
+      "theta": 0.02196872625482709,
+      "isTrivial": false,
+      "iaClass": "whaleshark",
+      "iaTaskParameters": {
+       "ibeis.identification": {
+        "_iaClasses": [
+         "whaleshark"
+        ],
+        "default": true,
+        "method": "miewid",
+        "pipeline_root": "vector",
+        "description": "MiewID v4.1 (vector)",
+        "version": "msv4_v3"
+       },
+       "matchingSetFilter": {
+        "locationIds": [
+         "Tofo"
+        ]
+       },
+       "matchingAlgorithms": [
+        {
+         "_iaClasses": [
+          "whaleshark"
+         ],
+         "default": true,
+         "method": "miewid",
+         "pipeline_root": "vector",
+         "description": "MiewID v4.1 (vector)",
+         "version": "msv4_v3"
+        }
+       ],
+       "userId": "17fae259-bd2b-44ae-bedb-609ccc9435f3",
+       "fastlane": true,
+       "username": "alloutafrica"
+      },
+      "matchAgainst": true,
+      "id": "1242f408-e5fd-4d94-9e8f-ef4f32db86b1",
+      "embeddingCounts": {
+       "miewid-msv4_v3": 1
+      }
+     }
+    ],
+    "mimeTypeMajor": "image",
+    "id": 4003098,
+    "userFilename": "\u622a\u5c4f_20260818_134324.jpg",
+    "uuid": "c38440fc-25cc-45e3-9e64-3720720ccf2e",
+    "url": "https://www.sharkbook.ai/wildbook_data_dir/f/3/f3ed2cf4-a83a-48e5-8833-d44dbcc2c846/3f225fbf-4132-4004-b653-5973bccaeb05-master.jpg",
+    "height": 1080
+   }
+  ],
+  "verbatimLocality": "tofo",
+  "numberMediaAssets": 1,
+  "individualNames": [
+   ""
+  ],
+  "metalTags": [],
+  "version": 1787145654000,
+  "patterningCode": null,
+  "annotationIAClasses": [
+   "whaleshark"
+  ],
+  "occurrenceGroupComposition": null,
+  "success": true,
+  "dateValues": {
+   "month": 8,
+   "hour": 0,
+   "year": 2026,
+   "minutes": 0,
+   "day": 18
+  },
+  "livingStatus": "alive",
+  "dateSubmitted": "2026-08-19T12:08:41.015",
+  "statusCode": 200,
+  "mediaAssetKeywords": [],
+  "access": "write",
+  "numberAnnotations": 1,
+  "geneticSex": null,
+  "individualId": "e6eaad1d-3c0d-4b49-83e1-83c1ed33729c",
+  "occurrenceId": "52e86d1d-2ff0-4c83-90af-61f29ca8931a",
+  "submitters": [
+   {
+    "displayName": "All Out Africa",
+    "imageURL": "/wildbook_data_dir/users/alloutafrica/aoa.jpg",
+    "roles": [
+     "researcher",
+     "Mozambique",
+     "Tofo",
+     "Tanzania",
+     "Kenya",
+     "SouthAfrica",
+     "Seychelles"
+    ],
+    "id": "17fae259-bd2b-44ae-bedb-609ccc9435f3",
+    "email": "marine@alloutafrica.org",
+    "username": "alloutafrica"
+   }
+  ],
+  "dateMillis": 1787011200000,
+  "distinguishingScar": "",
+  "publiclyReadable": false,
+  "locationId": "Tofo",
+  "isPublic": false,
+  "identificationRemarks": "Unmatched first encounter",
+  "submitterInfo": {
+   "displayName": "All Out Africa",
+   "imageURL": "/wildbook_data_dir/users/alloutafrica/aoa.jpg",
+   "roles": [
+    "researcher",
+    "Mozambique",
+    "Tofo",
+    "Tanzania",
+    "Kenya",
+    "SouthAfrica",
+    "Seychelles"
+   ],
+   "id": "17fae259-bd2b-44ae-bedb-609ccc9435f3",
+   "email": "marine@alloutafrica.org",
+   "username": "alloutafrica"
+  },
+  "spotMapping": {
+   "resultsGrothRight": false,
+   "resultsI3SRight": false,
+   "numberRightSpots": 0,
+   "resultsGrothLeft": false,
+   "hasRightSpots": false,
+   "numberLeftSpots": 0,
+   "resultsI3SLeft": false,
+   "hasLeftSpots": false,
+   "hasSpots": false,
+   "enabled": true
+  },
+  "behavior": null,
+  "measurements": [],
+  "locationName": "Tofo",
+  "haplotype": null,
+  "locationGeoPoint": {
+   "lon": 35.371094942092896,
+   "lat": -24.764567588534117
+  },
+  "individualFirstEncounterDate": "2026-08-18T00:00Z",
+  "sex": "unknown",
+  "individualRelationshipRoles": [],
+  "assignedUsername": "alloutafrica",
+  "researcherComments": "<p>Submitted on Wed Aug 19 12:08:41 UTC 2026 from address: 197.218.70.251</p><p>Error encountered processing this date submitted by user: 18-08-2026</p><p class=\"patch\" data-action-id=\"0ce76148-d46a-431b-a2b6-cf4e6eeb858a\" data-op=\"replace\" data-path=\"year\"><i>2026-08-19 12:10</i> modified <b>year</b> with operation <b>replace</b> and value <b>2026</b></p><p class=\"patch\" data-action-id=\"0ce76148-d46a-431b-a2b6-cf4e6eeb858a\" data-op=\"replace\" data-path=\"month\"><i>2026-08-19 12:10</i> modified <b>month</b> with operation <b>replace</b> and value <b>08</b></p><p class=\"patch\" data-action-id=\"0ce76148-d46a-431b-a2b6-cf4e6eeb858a\" data-op=\"replace\" data-path=\"day\"><i>2026-08-19 12:10</i> modified <b>day</b> with operation <b>replace</b> and value <b>18</b></p><p class=\"patch\" data-action-id=\"0ce76148-d46a-431b-a2b6-cf4e6eeb858a\" data-op=\"replace\" data-path=\"hour\"><i>2026-08-19 12:10</i> modified <b>hour</b> with operation <b>replace</b> and value <b>00</b></p><p class=\"patch\" data-action-id=\"0ce76148-d46a-431b-a2b6-cf4e6eeb858a\" data-op=\"replace\" data-path=\"minutes\"><i>2026-08-19 12:10</i> modified <b>minutes</b> with operation <b>replace</b> and value <b>00</b></p><p class=\"patch\" data-action-id=\"1ff97fd3-d7a7-4a14-b122-9103915c1c74\" data-op=\"remove\" data-path=\"annotations\"><i>2026-08-19 12:12</i> modified <b>annotations</b> with operation <b>remove</b> and value <b>4397dfcc-7fd7-4d6d-a98b-1f3c86ac04f3</b></p><p data-annot-id=\"1242f408-e5fd-4d94-9e8f-ef4f32db86b1\"><i>new Annotation</i> manually added by All Out Africa</p><p class=\"patch\" data-action-id=\"4d1bca6b-b02f-429b-99c2-2740fb3d5d18\" data-op=\"replace\" data-path=\"verbatimLocality\"><i>2026-08-19 12:29</i> modified <b>verbatimLocality</b> with operation <b>replace</b> and value <b>tofo</b></p><p class=\"patch\" data-action-id=\"4d1bca6b-b02f-429b-99c2-2740fb3d5d18\" data-op=\"replace\" data-path=\"country\"><i>2026-08-19 12:29</i> modified <b>country</b> with operation <b>replace</b> and value <b>Mozambique</b></p><p class=\"patch\" data-action-id=\"53606084-baa2-42e5-84c3-079af0517f15\" data-op=\"remove\" data-path=\"individualId\"><i>2026-08-19 12:33</i> modified <b>individualId</b> with operation <b>remove</b> and value <b>37e06426-c79d-4ecd-ae6d-f53123e27b4f</b></p><p class=\"patch\" data-action-id=\"ad5c78b7-5726-47ac-b6f0-e01df168f114\" data-op=\"replace\" data-path=\"individualId\"><i>2026-08-19 13:20</i> modified <b>individualId</b> with operation <b>replace</b> and value <b>Tia tete</b></p><p class=\"patch\" data-action-id=\"ad5c78b7-5726-47ac-b6f0-e01df168f114\" data-op=\"replace\" data-path=\"identificationRemarks\"><i>2026-08-19 13:20</i> modified <b>identificationRemarks</b> with operation <b>replace</b> and value <b>Unmatched first encounter</b></p>",
+  "informOthers": [],
+  "indexTimestamp": 1787372898965,
+  "otherCatalogNumbers": null,
+  "lifeStage": null,
+  "organizations": [],
+  "occurrenceRemarks": "",
+  "annotationViewpoints": [
+   "right"
+  ]
+ },
+ "media_resolve": {
+  "request": {
+   "annotationIds": [
+    "1242f408-e5fd-4d94-9e8f-ef4f32db86b1"
+   ]
+  },
+  "response": "{\"error\":\"token auth required\"}"
+ },
+ "individual_get": {
+  "cooccurrenceIndividualIds": [],
+  "displayName": "",
+  "sex": "unknown",
+  "cooccurrenceIndividualMap": {},
+  "numberEncounters": 1,
+  "locationGeoPoints": [
+   {
+    "lon": 35.371094942092896,
+    "lat": -24.764567588534117
+   }
+  ],
+  "numberMediaAssets": 1,
+  "taxonomy": "Rhincodon typus",
+  "version": 1787217311173,
+  "socialUnits": [],
+  "numberOccurrences": 1,
+  "users": [
+   "All Out Africa",
+   "17fae259-bd2b-44ae-bedb-609ccc9435f3"
+  ],
+  "indexTimestamp": 1787372900609,
+  "relationships": [],
+  "viewUsers": [
+   "af28f508-f06c-4895-91c1-6a1606a7b27a",
+   "70b306f5-6dc3-4d17-b7f2-9fdea4ab6148"
+  ],
+  "names": [],
+  "nameMap": {
+   "Alternate ID": []
+  },
+  "publiclyReadable": false,
+  "success": true,
+  "submitterUserIds": [
+   "17fae259-bd2b-44ae-bedb-609ccc9435f3"
+  ],
+  "id": "e6eaad1d-3c0d-4b49-83e1-83c1ed33729c",
+  "encounterIds": [
+   "f3ed2cf4-a83a-48e5-8833-d44dbcc2c846"
+  ],
+  "statusCode": 200
+ }
+}

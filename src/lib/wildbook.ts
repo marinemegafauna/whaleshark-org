@@ -1,10 +1,39 @@
 import siteConfig from '../../site.config';
+import type { ProvenanceResult } from './provenance';
 import type { Species } from './species';
 import { metresFromObservation, publicOptionLabel, type PublicObservations } from './public-observations';
 
 export type Fetcher = typeof fetch;
 export type WildbookUser = { username: string; displayName?: string; [key: string]: unknown };
 export type EncounterHit = { id: string; [key: string]: unknown };
+export interface WorkbenchEncounter {
+  id: string;
+  individualId: string | null;
+  individualUuid: string | null;
+  sightings: number;
+  date: string;
+  photographer: string;
+  sex: 'M' | 'F' | '—';
+  size: string;
+  photos: string;
+  siteId: string;
+  image: string;
+  imageFilename: string;
+  box: [number, number, number, number] | null;
+  state: string;
+  lifeStage: string | null;
+  distinguishingScar: string | null;
+  locationId: string | null;
+  verbatimLocality: string | null;
+  occurrenceId: string | null;
+  provenance?: ProvenanceResult;
+}
+
+export interface WorkbenchIndividual {
+  displayName: string | null;
+  numberEncounters: number;
+  sex: 'M' | 'F' | '—';
+}
 export type MediaResolution =
   | { annotationId: string; status: 'identified' | 'unidentified'; imageUrl: string; [key: string]: unknown }
   | { annotationId: string; status: 'no_image' | 'unavailable' | 'error'; imageUrl?: never; [key: string]: unknown };
@@ -45,6 +74,115 @@ export interface WildbookRowInput {
   locationId: string;
   sightingId: string;
   mediaFilenames: string[];
+}
+
+function nonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function firstNonEmpty(values: unknown): string | null {
+  if (!Array.isArray(values)) return null;
+  for (const value of values) {
+    const text = nonEmptyString(value);
+    if (text) return text;
+  }
+  return null;
+}
+
+function workbenchSex(value: unknown): 'M' | 'F' | '—' {
+  const normalized = nonEmptyString(value)?.toLowerCase();
+  if (normalized === 'male' || normalized === 'm') return 'M';
+  if (normalized === 'female' || normalized === 'f') return 'F';
+  return '—';
+}
+
+function workbenchDate(value: unknown): string | null {
+  const text = nonEmptyString(value);
+  if (!text) return null;
+  const isoDate = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const parsed = isoDate
+    ? new Date(Date.UTC(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3])))
+    : new Date(`${text} UTC`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(parsed);
+}
+
+function workbenchSize(measurements: unknown): string {
+  if (!Array.isArray(measurements)) return '—';
+  const length = measurements.find((entry) => entry && typeof entry === 'object' && nonEmptyString((entry as Record<string, unknown>).type)?.toLowerCase() === 'length') as Record<string, unknown> | undefined;
+  if (!length) return '—';
+  const value = Number(length.value);
+  if (!Number.isFinite(value)) return '—';
+  const units = nonEmptyString(length.units)?.toLowerCase();
+  const metres = units === 'feet' || units === 'foot' || units === 'ft' ? value * 0.3048 : value;
+  return `~${metres.toFixed(1).replace(/\.0$/, '')} m`;
+}
+
+function filenameFromUrl(value: string): string {
+  try {
+    return new URL(value).pathname.split('/').filter(Boolean).at(-1) ?? '';
+  } catch {
+    return value.split('/').filter(Boolean).at(-1) ?? '';
+  }
+}
+
+export function mapEncounterHit(hit: EncounterHit, siteId: string): WorkbenchEncounter {
+  const individualId = nonEmptyString(hit.individualDisplayName) ?? firstNonEmpty(hit.individualNames);
+  const photographers = firstNonEmpty(hit.photographers);
+  const submitters = Array.isArray(hit.submitters) ? hit.submitters : [];
+  const firstSubmitter = submitters[0];
+  const submitterName = nonEmptyString(firstSubmitter)
+    ?? (firstSubmitter && typeof firstSubmitter === 'object' ? nonEmptyString((firstSubmitter as Record<string, unknown>).displayName) : null);
+  const viewpoints = new Set(Array.isArray(hit.annotationViewpoints)
+    ? hit.annotationViewpoints.map((value) => nonEmptyString(value)?.toLowerCase())
+    : []);
+  const sides = `${viewpoints.has('left') ? 'L' : ''}${viewpoints.has('left') && viewpoints.has('right') ? '+' : ''}${viewpoints.has('right') ? 'R' : ''}`;
+  const mediaAssets = Array.isArray(hit.mediaAssets)
+    ? hit.mediaAssets.filter((asset): asset is Record<string, unknown> => Boolean(asset) && typeof asset === 'object')
+    : [];
+  const featuredUuid = nonEmptyString(hit.featuredAssetUuid);
+  const featured = mediaAssets.find((asset) => nonEmptyString(asset.uuid) === featuredUuid) ?? mediaAssets[0];
+  const image = featured ? nonEmptyString(featured.url) ?? '' : '';
+  const annotations = featured && Array.isArray(featured.annotations) ? featured.annotations : [];
+  const firstAnnotation = annotations.find((annotation) => annotation && typeof annotation === 'object') as Record<string, unknown> | undefined;
+  const rawBox = firstAnnotation && Array.isArray(firstAnnotation.boundingBox) ? firstAnnotation.boundingBox.map(Number) : null;
+  const width = Number(featured?.width);
+  const height = Number(featured?.height);
+  const box = rawBox?.length === 4 && rawBox.every(Number.isFinite) && width > 0 && height > 0
+    ? [rawBox[0]! / width, rawBox[1]! / height, rawBox[2]! / width, rawBox[3]! / height] as [number, number, number, number]
+    : null;
+  const mediaCount = Number(hit.numberMediaAssets);
+  const photos = `${Number.isFinite(mediaCount) ? mediaCount : mediaAssets.length}${sides ? ` · ${sides}` : ''}`;
+
+  return {
+    id: hit.id,
+    individualId,
+    individualUuid: nonEmptyString(hit.individualId),
+    sightings: Number.isFinite(Number(hit.individualNumberEncounters)) ? Number(hit.individualNumberEncounters) : 0,
+    date: workbenchDate(hit.date) ?? workbenchDate(hit.verbatimEventDate) ?? '—',
+    photographer: photographers ?? submitterName ?? nonEmptyString(hit.assignedUsername) ?? '—',
+    sex: workbenchSex(hit.sex),
+    size: workbenchSize(hit.measurements),
+    photos,
+    siteId,
+    image,
+    imageFilename: image ? filenameFromUrl(image) : '',
+    box,
+    state: nonEmptyString(hit.state) ?? '—',
+    lifeStage: nonEmptyString(hit.lifeStage),
+    distinguishingScar: nonEmptyString(hit.distinguishingScar),
+    locationId: nonEmptyString(hit.locationId),
+    verbatimLocality: nonEmptyString(hit.verbatimLocality),
+    occurrenceId: nonEmptyString(hit.occurrenceId),
+  };
+}
+
+export function mapIndividual(individual: Record<string, unknown>): WorkbenchIndividual {
+  return {
+    displayName: nonEmptyString(individual.displayName) ?? firstNonEmpty(individual.names),
+    numberEncounters: Number.isFinite(Number(individual.numberEncounters)) ? Number(individual.numberEncounters) : 0,
+    sex: workbenchSex(individual.sex),
+  };
 }
 
 function compactNumber(value: number, decimals = 6): string {
@@ -116,6 +254,17 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
+export class WildbookRequestError extends Error {
+  constructor(public readonly status: number, detail: string) {
+    super(`Wildbook request failed (${status}): ${detail}`);
+    this.name = 'WildbookRequestError';
+  }
+}
+
+export function isWildbookUnauthorized(error: unknown): error is WildbookRequestError {
+  return error instanceof WildbookRequestError && error.status === 401;
+}
+
 function endpoint(path: string, baseUrl = siteConfig.wildbookBaseUrl): string {
   return new URL(path, `${baseUrl.replace(/\/$/, '')}/`).toString();
 }
@@ -123,7 +272,7 @@ function endpoint(path: string, baseUrl = siteConfig.wildbookBaseUrl): string {
 async function checked(response: Response): Promise<Response> {
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Wildbook request failed (${response.status}): ${detail || response.statusText}`);
+    throw new WildbookRequestError(response.status, detail || response.statusText);
   }
   return response;
 }
@@ -182,8 +331,8 @@ export async function getCatalogueStats(cookie: string, year: number, fetcher: F
 
 export async function searchEncounters(cookie: string, search: EncounterSearch, fetcher: Fetcher = fetch) {
   const filter: unknown[] = [];
-  if (search.locationIds?.length) filter.push({ terms: { locationID: search.locationIds } });
-  if (search.taxonomy) filter.push({ term: { taxonomy: search.taxonomy } });
+  if (search.locationIds?.length) filter.push({ terms: { locationId: search.locationIds } });
+  if (search.taxonomy) filter.push({ match: { taxonomy: search.taxonomy } });
   if (search.dateRange) {
     filter.push({
       range: {
@@ -198,11 +347,16 @@ export async function searchEncounters(cookie: string, search: EncounterSearch, 
     await fetcher(endpoint('/api/v3/search/encounter'), {
       method: 'POST',
       headers: sessionHeaders(cookie),
-      body: JSON.stringify({ from: search.from, size: search.size, query: { bool: { filter } } }),
+      body: JSON.stringify({ from: search.from, size: search.size, query: { bool: { filter } }, sort: [{ dateMillis: { order: 'desc' } }] }),
     }),
   );
   const body = (await response.json()) as { hits: EncounterHit[] };
-  return { hits: body.hits, total: Number(response.headers.get('X-Wildbook-Total-Hits') ?? body.hits.length) };
+  const rawTotal = response.headers.get('X-Wildbook-Total-Hits');
+  const total = rawTotal === null ? Number.NaN : Number(rawTotal);
+  if (!Number.isSafeInteger(total) || total < 0) {
+    throw new Error(`Wildbook response requires a valid X-Wildbook-Total-Hits header; received ${rawTotal ?? 'nothing'}`);
+  }
+  return { hits: body.hits, total };
 }
 
 async function getJson<T>(path: string, cookie: string, fetcher: Fetcher): Promise<T> {

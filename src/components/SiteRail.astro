@@ -1,8 +1,8 @@
 ---
 import { fillTemplate, getPageCopy, getSiteCopy } from '../lib/content';
 import { getSpecies } from '../lib/species';
-interface Props { active?: string; encounterCount?: number; individualCount?: number; scarCount?: number; }
-const { active = 'tofo', encounterCount = 8, individualCount = 5, scarCount = 3 } = Astro.props;
+interface Props { active?: string; encounterCount?: number; individualCount?: number; needsRecordCount?: number; unnamedCount?: number; scarCount?: number; }
+const { active = 'tofo', encounterCount = 8, individualCount = 5, needsRecordCount = 0, unnamedCount = 0, scarCount = 3 } = Astro.props;
 const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
 const species = getSpecies('whale-shark');
 ---
@@ -10,7 +10,7 @@ const species = getSpecies('whale-shark');
   <div class="eyebrow rail-title">{copy.rail.sitesHeading}</div>
   <nav class="site-links" aria-label={copy.rail.sitesAriaLabel}>{siteCopy.researchSites.map((site) => <a class:list={['nav', { active: site.id === active }]} href={`/app?site=${site.id}`}>{site.label}</a>)}</nav>
   <div class="eyebrow section-title">{fillTemplate(copy.rail.seasonHeading, { year: new Date().getUTCFullYear() })}</div>
-  <dl><div><dt>{copy.rail.labels.encounters}</dt><dd>{encounterCount}</dd></div><div><dt>{copy.rail.labels.individuals}</dt><dd>{individualCount}</dd></div><div><dt>{copy.rail.labels.newThisSeason}</dt><dd>1</dd></div><div><dt>{copy.rail.labels.scarRecords}</dt><dd>{scarCount}</dd></div><div><dt>{copy.rail.labels.freshMajor}</dt><dd class="warn">1</dd></div></dl>
+  <dl><div><dt>{copy.rail.labels.encounters}</dt><dd>{encounterCount}</dd></div><div><dt>{copy.rail.labels.namedIndividuals}</dt><dd>{individualCount}</dd></div><div><dt>{copy.rail.labels.needsRecord}</dt><dd>{needsRecordCount}</dd></div><div><dt>{copy.rail.labels.unnamed}</dt><dd>{unnamedCount}</dd></div><div><dt>{copy.rail.labels.scarRecords}</dt><dd>{scarCount}</dd></div></dl>
   <div class="eyebrow section-title">{copy.rail.schemaHeading}</div><div class="schema">{copy.rail.schemaName} <span class="mono muted">v{species.version}</span></div>
 </aside>
 <style>
@@ -18,7 +18,7 @@ const species = getSpecies('whale-shark');
   .site-links { display:flex; flex-direction:column; gap:2px; }
   .rail-title { padding: 0 10px 8px; }.section-title { padding: 24px 10px 8px; }
   .nav { align-items:center; border-radius:6px; display:flex; font-size:14px; min-height:44px; padding:0 10px; }.nav.active { background: var(--ink); color: #fff; }
-  dl { margin: 0; } dl div { display: flex; font-size: 13px; justify-content: space-between; padding: 5px 10px; } dt { font-weight: 400; } dd { font-family: var(--font-mono); margin: 0; }.warn { color: var(--warn); }.schema { font-size: 13px; padding: 5px 10px; }
+  dl { margin: 0; } dl div { display: flex; font-size: 13px; justify-content: space-between; padding: 5px 10px; } dt { font-weight: 400; } dd { font-family: var(--font-mono); margin: 0; }.schema { font-size: 13px; padding: 5px 10px; }
   @media (max-width:900px) {
     .site-rail { border-bottom:1px solid var(--line); border-right:0; display:block; padding:10px 14px; width:100%; }
     .site-links { display:flex; flex-direction:row; gap:8px; overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:2px; scroll-snap-type:x proximity; scrollbar-width:thin; }

@@ -17,10 +17,10 @@ rail:
   seasonHeading: Season · {year}
   labels:
     encounters: Encounters
-    individuals: Individuals
-    newThisSeason: New this season
+    namedIndividuals: Named individuals · page
+    needsRecord: Need a scar record · page
+    unnamed: Unnamed · page
     scarRecords: Scar records
-    freshMajor: Fresh major
   schemaHeading: Schema
   schemaName: Whale shark scars
 workbench:
@@ -32,11 +32,12 @@ workbench:
   statusOptions: [Needs scar record, All encounters]
   exportButton: Export CSV
   stats:
+    encounters: Encounters
+    namedIndividuals: Named individuals · page
     needsRecord: Needs scar record
-    recordedWeek: Recorded this week
-    freshMajor: Fresh major injuries · season
-    matchesAwaiting: Matches awaiting confirmation
+    unnamed: Unnamed · new sharks
     batchesAwaiting: Batches awaiting review
+  unavailable: Sharkbook didn't answer — showing nothing, try again
   queue:
     eyebrow: Public bulk uploads
     heading: Batches awaiting review
@@ -83,7 +84,7 @@ scar:
     dorsal: Dorsal
     allPhotos: All {count} photos
     help: Tap the photo to place a scar
-  imageAlt: Left flank of {individual}
+  imageAlt: Flank photo of {individual}
   tableHeaders: ["#", Body region, Type, Severity, Freshness, Likely cause, First seen]
   thisEncounter: This encounter
   newScarHelp: New scar — fill in the panel on the right

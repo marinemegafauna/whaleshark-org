@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { isMockMode } from '../../../lib/mode';
-import { dataStore } from '../../../lib/runtime';
+import { isMockAppMode } from '../../../lib/mode';
+import { appDataStore } from '../../../lib/runtime';
 import { login } from '../../../lib/wildbook';
 
 export const POST: APIRoute = async ({ request, cookies, locals, redirect, url }) => {
@@ -10,7 +10,7 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect, url }
   if (!username || !password) return redirect('/signin?error=missing', 303);
 
   try {
-    const authenticated = isMockMode()
+    const authenticated = isMockAppMode()
       ? { cookie: 'JSESSIONID=mock', user: { username } }
       : await login(username, password);
     const now = new Date();
@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect, url }
       created_at: now.toISOString(),
       expires_at: new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString(),
     };
-    await dataStore(locals).createSession(session);
+    await appDataStore(locals).createSession(session);
     cookies.set('whaleshark_session', session.id, {
       httpOnly: true,
       sameSite: 'lax',

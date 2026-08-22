@@ -1,5 +1,104 @@
 import { describe, expect, test, vi } from 'vitest';
-import { getBulkImportStatus, getCatalogueStats, login, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
+import liveSample from '../test/fixtures-sharkbook-live-sample.json';
+import { getBulkImportStatus, getCatalogueStats, isWildbookUnauthorized, login, mapEncounterHit, mapIndividual, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
+
+describe('Wildbook workbench mapping', () => {
+  test('maps the captured unnamed Tofo hit without treating its individual UUID as a display name', () => {
+    const encounter = mapEncounterHit(liveSample.search_hits[0]!, 'tofo');
+
+    expect(encounter).toMatchObject({
+      id: 'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846',
+      individualId: null,
+      individualUuid: 'e6eaad1d-3c0d-4b49-83e1-83c1ed33729c',
+      sightings: 1,
+      date: '18 Aug 2026',
+      photographer: 'All Out Africa',
+      sex: '—',
+      size: '—',
+      photos: '1 · R',
+      siteId: 'tofo',
+      image: 'https://www.sharkbook.ai/wildbook_data_dir/f/3/f3ed2cf4-a83a-48e5-8833-d44dbcc2c846/3f225fbf-4132-4004-b653-5973bccaeb05-master.jpg',
+      imageFilename: '3f225fbf-4132-4004-b653-5973bccaeb05-master.jpg',
+      state: 'unapproved',
+      locationId: 'Tofo',
+      verbatimLocality: 'tofo',
+      occurrenceId: '52e86d1d-2ff0-4c83-90af-61f29ca8931a',
+    });
+    expect(encounter.box).toEqual([
+      0.19375,
+      0.34814814814814815,
+      0.6041666666666666,
+      0.6546296296296297,
+    ]);
+  });
+
+  test('maps a named hit and puts the featured asset first', () => {
+    const encounter = mapEncounterHit({
+      id: 'encounter-named',
+      individualId: 'individual-uuid',
+      individualDisplayName: 'MZ-284',
+      individualNames: ['Alternate name'],
+      individualNumberEncounters: 14,
+      verbatimEventDate: '2 August 2026',
+      photographers: ['C. Prebble'],
+      sex: 'female',
+      numberMediaAssets: 6,
+      annotationViewpoints: ['right', 'left', 'right', 'dorsal'],
+      featuredAssetUuid: 'featured',
+      mediaAssets: [
+        { uuid: 'other', url: 'https://example.org/other.jpg', width: 100, height: 100, annotations: [] },
+        { uuid: 'featured', url: 'https://example.org/featured.jpg', width: 200, height: 100, annotations: [{ boundingBox: [20, 10, 100, 50] }] },
+      ],
+      state: 'approved',
+    }, 'tofo');
+
+    expect(encounter).toMatchObject({
+      individualId: 'MZ-284',
+      individualUuid: 'individual-uuid',
+      sightings: 14,
+      date: '2 Aug 2026',
+      photographer: 'C. Prebble',
+      sex: 'F',
+      photos: '6 · L+R',
+      image: 'https://example.org/featured.jpg',
+      imageFilename: 'featured.jpg',
+      box: [0.1, 0.1, 0.5, 0.5],
+      state: 'approved',
+    });
+  });
+
+  test('converts the first length measurement from feet to metres', () => {
+    const encounter = mapEncounterHit({
+      id: 'encounter-feet',
+      measurements: [
+        { type: 'temperature', value: 24, units: 'celsius' },
+        { type: 'length', value: 14.8, units: 'feet' },
+        { type: 'length', value: 9, units: 'metres' },
+      ],
+    }, 'oman');
+
+    expect(encounter.size).toBe('~4.5 m');
+  });
+
+  test('falls back to a parseable verbatim date when the primary date is malformed', () => {
+    const encounter = mapEncounterHit({ id: 'encounter-date-fallback', date: 'not a date', verbatimEventDate: '3 August 2026' }, 'seychelles');
+
+    expect(encounter.date).toBe('3 Aug 2026');
+  });
+
+  test('maps captured and named individual records', () => {
+    expect(mapIndividual(liveSample.individual_get)).toEqual({
+      displayName: null,
+      numberEncounters: 1,
+      sex: '—',
+    });
+    expect(mapIndividual({ displayName: '', names: ['MZ-412'], numberEncounters: 3, sex: 'male' })).toEqual({
+      displayName: 'MZ-412',
+      numberEncounters: 3,
+      sex: 'M',
+    });
+  });
+});
 
 describe('Wildbook client', () => {
   test('parses flat encounter hits and total from the response header', async () => {
@@ -18,7 +117,30 @@ describe('Wildbook client', () => {
     expect(result).toEqual({ hits: [{ id: '2fca3548' }], total: 63 });
     const init = fetcher.mock.calls[0]?.[1];
     expect(init?.method).toBe('POST');
-    expect(JSON.parse(String(init?.body))).toMatchObject({ from: 0, size: 20 });
+    expect(JSON.parse(String(init?.body))).toEqual({
+      from: 0,
+      size: 20,
+      query: { bool: { filter: [{ terms: { locationId: ['Tofo'] } }, { match: { taxonomy: 'Rhincodon typus' } }] } },
+      sort: [{ dateMillis: { order: 'desc' } }],
+    });
+  });
+
+  test('preserves an upstream 401 so the app can expire its local session', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('expired', { status: 401 }));
+
+    try {
+      await searchEncounters('JSESSIONID=expired', { from: 0, size: 25 }, fetcher);
+      expect.unreachable('search should reject');
+    } catch (error) {
+      expect(isWildbookUnauthorized(error)).toBe(true);
+      expect(error).toMatchObject({ status: 401 });
+    }
+  });
+
+  test('rejects encounter search results without a valid total header', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ hits: [{ id: 'encounter-1' }] }));
+
+    await expect(searchEncounters('JSESSIONID=session', { from: 0, size: 25 }, fetcher)).rejects.toThrow(/X-Wildbook-Total-Hits/i);
   });
 
   test('keeps media status branches intact and only identified items need images', async () => {

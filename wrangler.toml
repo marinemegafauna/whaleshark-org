@@ -3,10 +3,10 @@ main = "@astrojs/cloudflare/entrypoints/server"
 compatibility_date = "2026-08-22"
 compatibility_flags = ["nodejs_compat"]
 
-# Runtime settings. MOCK="1" runs the whole site on fixtures with no Wildbook credentials —
-# the dev deployment uses this. Set MOCK="0" and add the WILDBOOK_* secrets for a live instance.
+# Runtime settings. Public matching stays on fixtures while the signed-in workbench reads Sharkbook.
 [vars]
 MOCK = "1"
+MOCK_APP = "0"
 PUBLIC_WRITE = "dry-run"
 
 [[d1_databases]]

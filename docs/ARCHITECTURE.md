@@ -44,8 +44,13 @@ Public observation values are normalized by `src/lib/public-observations.ts`. `s
 
 ## Modes
 
-- `MOCK=1` — no network; fixtures in `src/mock/` stand in for Wildbook and D1. Default for `npm run dev` until credentials are configured.
-- `PUBLIC_WRITE=dry-run|live` — whether the existing real-mode whole-dive matching client may stage media and start its matching import. Single-photo and final reviewed-observation publishing remain gated.
+| Surface | Setting | Effect |
+|---|---|---|
+| Public matching and uploads | `MOCK=1` | Fixtures stand in for Wildbook and public D1 flows |
+| Signed-in workbench and sign-in | `MOCK_APP=1|0` | Fixtures when `1`, live Sharkbook reads when `0`; unset inherits `MOCK` |
+| Public writes | `PUBLIC_WRITE=dry-run|live` | `dry-run` keeps reports local; final reviewed publication remains gated |
+
+This split allows the deployed public site to remain deterministic and write-safe while signed-in researchers use real encounter UUIDs and media. The app-side D1 boundary follows `MOCK_APP`, so live sessions, review statuses, and scar records remain persistent even when public routes use fixtures.
 
 ## Not in v1
 

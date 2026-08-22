@@ -6,7 +6,7 @@ A running list, kept as we build. Each item says what we hit, what we do today i
 
 - **v3 search with flat hits + `X-Wildbook-Total-Hits`** on `encounter`, `individual`, `annotation` — the workbench and the live stats band run on this. *works*
 - **v3 create** (`POST /api/v3/encounters|individuals|occurrences|annotations` via `submissionId` + `ResumableUpload`), **bulk import** (`POST /api/v3/bulk-import`, task polling), **`PATCH /api/v3/encounters/{id}`** (JSON Patch incl. `measurements`, `locationId`, `individualId`). *works*
-- **`POST /api/v3/media/resolve`** for image URLs + boxes by annotation id. *works*
+- **`POST /api/v3/media/resolve`** for image URLs + boxes by annotation id under bearer-token auth. *works*
 - **Read-only bearer tokens** (`POST /api/v3/auth/token`, Account → API Access) with the MiewID embeddings inline in annotation search. *works*
 - **`GET /api/v3/site-settings`** exposing `labeledKeyword` + `labeledKeywordAllowedValues`. *works, unused for scars*
 - **OpenAPI** at `GET /api/v3/docs/openapi.yaml`. *works*
@@ -22,6 +22,8 @@ A running list, kept as we build. Each item says what we hit, what we do today i
 4. **CORS on `/api/v3/*`** (allow-list per instance). *Today:* a Cloudflare Worker proxies every call; a static site or a phone web app cannot talk to Sharkbook directly. *Ask:* `Access-Control-Allow-Origin` for configured origins — a small config change, large unlock.
 
 5. **Aggregations under session auth.** The agent-skill docs describe a bounded `terms` aggregation on search; with a session cookie the response carries no `aggregations` object (we count client-side over 3,000 hits). *Ask:* honour `aggs` for session callers, or a counts endpoint (`encounters?locationId=…&count=1`).
+
+   `POST /api/v3/media/resolve` likewise returns 401 for a session-cookie caller (it works with the bearer token), so signed-in workbench thumbnails come directly from `mediaAssets[].url` on encounter search hits.
 
 6. **Unauthenticated read for public data.** Every read needs a login, so the public catalogue (shark pages, recent sightings, photographer credits) must be served through our service account. *Ask:* a public read surface for individuals/encounters flagged publicly readable (`publiclyReadable` already exists on the encounter document).
 

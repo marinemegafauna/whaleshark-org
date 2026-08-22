@@ -11,6 +11,7 @@ declare global {
 
   interface ImportMetaEnv {
     readonly MOCK?: string;
+    readonly MOCK_APP?: string;
     readonly PUBLIC_WRITE?: 'dry-run' | 'live';
     readonly WILDBOOK_BASE_URL?: string;
     readonly WILDBOOK_SERVICE_USER?: string;

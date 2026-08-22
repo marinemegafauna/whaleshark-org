@@ -1,0 +1,22 @@
+---
+interface Props { active?: 'match' }
+const { active } = Astro.props;
+---
+<header class="public-header">
+  <a class="brand" href="/" aria-label="whaleshark.org home">
+    <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="7.25"></circle><circle cx="6.5" cy="7.5" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="6" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="11.5" cy="10.5" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="7.5" cy="11.5" r="0.9" fill="currentColor" stroke="none"></circle></svg>
+    whaleshark.org
+  </a>
+  <nav aria-label="Public navigation">
+    <a href="#catalogue">Catalogue</a><a class:list={{ active: active === 'match' }} href="/match/submission-demo">Match</a><a href="#sites">Sites</a><a href="#photographers">Photographers</a><a href="#about">About</a><a class="signin" href="/signin">Sign in</a>
+  </nav>
+</header>
+<style>
+  .public-header { align-items: center; display: flex; font-size: 14px; justify-content: space-between; padding: 22px 64px; }
+  .brand { align-items: center; display: flex; font-size: 16px; font-weight: 600; gap: 10px; }
+  nav { align-items: center; display: flex; gap: 28px; color: var(--muted); }
+  nav a.active { color: var(--ink); font-weight: 500; }
+  .signin { background: var(--ink); border-radius: var(--radius-pill); color: #fff; font-weight: 500; padding: 8px 16px; }
+  .signin:hover { background: var(--accent); color: #fff; }
+  @media (max-width: 760px) { .public-header { padding: 18px 20px; } nav a:not(.signin) { display: none; } }
+</style>

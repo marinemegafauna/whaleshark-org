@@ -1,0 +1,12 @@
+<header class="app-header">
+  <div class="left"><a class="brand" href="/app">whaleshark.org</a><nav aria-label="Application navigation"><a class="active" href="/app">Encounters</a><span>Individuals</span><span>Scar records</span><span>Matches to confirm</span><span>Exports</span></nav></div>
+  <div class="account"><span class="mono">SHARKBOOK · CONNECTED</span><span>Clare Prebble</span></div>
+</header>
+<style>
+  .app-header { align-items: center; background: var(--ink); color: #fff; display: flex; font-size: 13px; height: 52px; justify-content: space-between; padding: 0 24px; }
+  .left, nav, .account { align-items: center; display: flex; }
+  .left { gap: 22px; }.brand { font-size: 14px; font-weight: 600; }.brand:hover { color: #fff; }
+  nav { color: rgba(255,255,255,.7); gap: 18px; }.active { color: #fff; }.account { color: rgba(255,255,255,.7); gap: 14px; }.mono { font-size: 11px; }
+  @media (max-width: 900px) { nav span { display: none; } .account .mono { display: none; } }
+  @media (max-width: 560px) { .account { display: none; } }
+</style>

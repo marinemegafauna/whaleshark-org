@@ -1,0 +1,19 @@
+---
+import siteConfig from '../../site.config';
+interface Props { active?: string; encounterCount?: number; individualCount?: number; scarCount?: number; }
+const { active = 'tofo', encounterCount = 8, individualCount = 5, scarCount = 3 } = Astro.props;
+---
+<aside class="site-rail">
+  <div class="eyebrow rail-title">Sites</div>
+  {siteConfig.sites.map((site) => <a class:list={['nav', { active: site.id === active }]} href={`/app?site=${site.id}`}>{site.label}</a>)}
+  <div class="eyebrow section-title">Season · 2026</div>
+  <dl><div><dt>Encounters</dt><dd>{encounterCount}</dd></div><div><dt>Individuals</dt><dd>{individualCount}</dd></div><div><dt>New this season</dt><dd>1</dd></div><div><dt>Scar records</dt><dd>{scarCount}</dd></div><div><dt>Fresh major</dt><dd class="warn">1</dd></div></dl>
+  <div class="eyebrow section-title">Schema</div><div class="schema">Whale shark scars <span class="mono muted">v1.0</span></div>
+</aside>
+<style>
+  .site-rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; padding: 20px 14px; width: 232px; }
+  .rail-title { padding: 0 10px 8px; }.section-title { padding: 24px 10px 8px; }
+  .nav { border-radius: 6px; font-size: 13px; padding: 8px 10px; }.nav.active { background: var(--ink); color: #fff; }
+  dl { margin: 0; } dl div { display: flex; font-size: 13px; justify-content: space-between; padding: 5px 10px; } dt { font-weight: 400; } dd { font-family: var(--font-mono); margin: 0; }.warn { color: var(--warn); }.schema { font-size: 13px; padding: 5px 10px; }
+  @media (max-width: 760px) { .site-rail { border-bottom: 1px solid var(--line); border-right: 0; display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; } .rail-title, .section-title, dl, .schema { display: none; } }
+</style>

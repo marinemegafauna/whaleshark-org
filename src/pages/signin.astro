@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicHeader from '../components/PublicHeader.astro';
+import { isMockMode } from '../lib/mode';
+const error = Astro.url.searchParams.get('error');
+const next = Astro.url.searchParams.get('next') ?? '/app';
+---
+<BaseLayout title="Sign in · whaleshark.org">
+  <PublicHeader />
+  <main class="signin-page"><form action="/api/auth/login" method="post">
+    <input type="hidden" name="next" value={next} />
+    <div class="intro"><h1>Sign in</h1><p>Use your Sharkbook account. Your access here is whatever it is there — whaleshark.org never stores your password.</p></div>
+    {isMockMode() && <div class="notice"><strong>Mock mode</strong> · any non-empty username and password will sign in.</div>}
+    {error && <div class="error" role="alert">{error === 'missing' ? 'Enter both your Sharkbook email and password.' : 'Sharkbook did not accept those credentials.'}</div>}
+    <label><span>Sharkbook email</span><input type="text" name="username" autocomplete="username" placeholder="name@example.org" required /></label>
+    <label><span>Password</span><input type="password" name="password" autocomplete="current-password" placeholder="••••••••••" required /></label>
+    <button class="button" type="submit">Sign in</button>
+    <div class="links muted"><a href="https://www.sharkbook.ai/forgotPassword.jsp">Forgot password (on Sharkbook)</a><a href="https://www.sharkbook.ai/contact.jsp">Request an account</a></div>
+    <p class="footnote muted">Signed-in users can look up encounters at their sites, record scars, and confirm community matches. Public uploads don’t need an account.</p>
+  </form></main>
+</BaseLayout>
+<style>
+  .signin-page { display: flex; justify-content: center; padding: 120px 20px 60px; }form { display: flex; flex-direction: column; gap: 22px; width: min(420px,100%); }.intro { display: flex; flex-direction: column; gap: 6px; }.intro h1 { font-size: 32px; font-weight: 600; letter-spacing: -.03em; margin: 0; }.intro p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }label { display: flex; flex-direction: column; gap: 6px; }label span { font-size: 13px; font-weight: 500; }input { background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); font-size: 14px; min-height: 44px; padding: 12px 14px; }.button { width: 100%; }.links { display: flex; font-size: 13px; justify-content: space-between; }.links a { text-decoration: underline; text-underline-offset: 3px; }.footnote { border-top: 1px solid var(--line); font-size: 12px; line-height: 1.5; margin: 0; padding-top: 16px; }.notice,.error { border-radius: 8px; font-size: 13px; padding: 10px 12px; }.notice { background: var(--accent-soft); color: var(--accent); }.error { background: rgba(194,64,12,.08); color: var(--warn); }
+  @media (max-width:600px) { .signin-page { padding-top: 64px; }.links { align-items: flex-start; flex-direction: column; gap: 10px; } }
+</style>

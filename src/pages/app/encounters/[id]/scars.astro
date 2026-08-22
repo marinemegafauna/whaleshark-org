@@ -1,0 +1,73 @@
+---
+import AppHeader from '../../../../components/AppHeader.astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { mockEncounters, type MockEncounter } from '../../../../mock/data';
+import { dataStore } from '../../../../lib/runtime';
+import { getSpecies } from '../../../../lib/species';
+import { isMockMode } from '../../../../lib/mode';
+import { getEncounter } from '../../../../lib/wildbook';
+
+const requestedSiteId = Astro.url.searchParams.get('site') ?? 'tofo';
+let encounter: MockEncounter;
+if (isMockMode()) {
+  encounter = mockEncounters.find((candidate) => candidate.id === Astro.params.id) ?? mockEncounters[0]!;
+} else {
+  const hit = await getEncounter(Astro.locals.session!.wildbook_cookie, Astro.params.id!);
+  encounter = {
+    id: hit.id,
+    individualId: String(hit.individualId ?? '') || null,
+    sightings: Number(hit.sightings ?? 0),
+    date: String(hit.date ?? hit.encounterDate ?? '—'),
+    photographer: String(hit.photographer ?? '—'),
+    sex: String(hit.sex ?? '—'),
+    size: String(hit.size ?? '—'),
+    photos: String(hit.photos ?? '1 · L'),
+    siteId: requestedSiteId,
+    image: String(hit.imageUrl ?? '/mock/whale-shark-1.svg'),
+  };
+}
+const species = getSpecies('whale-shark');
+const store = dataStore(Astro.locals);
+const scars = await store.listScarRecords({ encounterId: encounter.id });
+const scarRows = scars.map((scar) => ({ ...scar, fields: JSON.parse(scar.fields_json) as Record<string, string> }));
+const optionLabels = new Map(species.fields.flatMap((field) => (field.options ?? []).map((option) => [`${field.id}:${option.id}`, option.label] as const)));
+const defaults: Record<string,string> = { body_region:'flank', type:'abrasion', severity:'minor', freshness:'fresh', likely_cause:'unknown', confidence:'certain' };
+const saved = Astro.url.searchParams.has('saved');
+---
+<BaseLayout app title={`Scar record · ${encounter.individualId ?? encounter.id}`}>
+  <AppHeader />
+  <main class="scar-page">
+    <header class="encounter-heading"><div><p class="muted">Tofo · Encounters · <span class="mono">{encounter.id}</span></p><h1>Scar record · {encounter.individualId ?? 'Unassigned'} · {encounter.date}</h1></div><div class="metadata muted"><span>{encounter.sex} · {encounter.size} · {encounter.sightings} sightings since 2019</span><span class="mono">SCHEMA whale-shark-scars v{species.version}</span><a href={`https://www.sharkbook.ai/encounters/encounter.jsp?number=${encounter.id}`}>Open on Sharkbook ↗</a></div></header>
+    {saved && <div class="saved" role="status">Scar saved to this encounter.</div>}
+    <div class="entry-grid"><section class="photo-and-records"><div class="panel photo-panel"><div class="photo-tabs"><span><b>Left flank</b><span class="muted">Right flank</span><span class="muted">Dorsal</span><span class="muted">All {encounter.photos.split(' ')[0]} photos</span></span><span class="muted">Click the photo to place a scar · scroll to zoom</span></div><div class="photo" id="scar-photo"><img src={encounter.image} alt={`Left flank of ${encounter.individualId ?? 'unassigned whale shark'}`} />{scars.map((scar,index) => <span class:list={['marker',{major:JSON.parse(scar.fields_json).severity==='major'}]} style={`left:${(scar.x??0)*100}%;top:${(scar.y??0)*100}%`}>{index+1}</span>)}<span class="marker draft" id="draft-marker" hidden>{scars.length+1}</span><span class="image-label mono">IMG_4471 · {encounter.date.toUpperCase()} · {encounter.photographer.toUpperCase()}</span></div></div>
+      <div class="panel scar-table"><div class="scar-head"><span>#</span><span>Body region</span><span>Type</span><span>Severity</span><span>Freshness</span><span>Likely cause</span><span>First seen</span></div>{scarRows.map((scar,index) => { const fields=scar.fields; return <div class="scar-row"><b class:list={{warn:fields.severity==='major'}}>{index+1}</b><span>{optionLabels.get(`body_region:${fields.body_region}`)}</span><span>{optionLabels.get(`type:${fields.type}`)}</span><b class:list={{warn:fields.severity==='major'}}>{optionLabels.get(`severity:${fields.severity}`)}</b><span>{optionLabels.get(`freshness:${fields.freshness}`)}</span><span>{optionLabels.get(`likely_cause:${fields.likely_cause}`)}</span><span class="muted">{scar.first_seen_encounter_id===encounter.id?'This encounter':'2 Nov 2023'}</span></div>})}<div class="scar-row draft-row"><b>{scars.length+1}</b><span class="muted draft-copy">New scar — fill in the panel on the right</span></div></div>
+      <div class="record-actions"><p class="muted">Terminology and options come from the whale shark schema file in the repo — change it once, every site’s form changes.</p><div><form action="/api/review" method="post"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="status" value="no_new_scars"/><button class="small-button secondary">No new scars on this encounter</button></form><form action="/api/review" method="post"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="status" value="recorded"/><button class="small-button finish">Finish record · next encounter →</button></form></div></div></section>
+      <form class="panel scar-form" action="/api/scars" method="post" id="scar-form"><input type="hidden" name="encounter_id" value={encounter.id}/><input type="hidden" name="individual_id" value={encounter.individualId ?? ''}/><input type="hidden" name="species_id" value={species.id}/><input type="hidden" name="schema_version" value={species.version}/><input type="hidden" name="site_id" value={encounter.siteId}/><input type="hidden" name="photo_asset_id" value={encounter.image}/><input type="hidden" name="x" id="scar-x" value="0.5"/><input type="hidden" name="y" id="scar-y" value="0.7"/>
+        <div class="form-heading"><strong>Scar {scars.length+1}</strong><span class="muted" id="placed-status">Left flank · click photo to place</span></div>
+        {species.fields.map((field) => <fieldset title={field.help}><legend>{field.label}{field.help && <span class="muted"> · {field.help}</span>}</legend>{field.type==='text' ? <textarea name={`field_${field.id}`} placeholder="Optional field notes"></textarea> : <div class="chips">{field.options!.map((option) => <label class:list={['chip',{emphasis:option.emphasis}]} title={option.help}><input type="radio" name={`field_${field.id}`} value={option.id} required={field.required} checked={(field.default ?? defaults[field.id])===option.id}/>{option.swatch && <i style={`background:${option.swatch}`}></i>}<span>{option.label}{option.emphasis && option.help ? ` — ${option.help}` : ''}</span></label>)}</div>}</fieldset>)}
+        <label class="notes"><span>Notes <small class="muted">· optional</small></span><textarea name="notes" placeholder="Approx. 20 cm, parallel abrasions, likely rope."></textarea></label>
+        <div class="form-actions"><span class="muted">Linked to Sharkbook encounter</span><div><button class="small-button secondary" id="discard" type="reset">Discard</button><button class="small-button save" type="submit">Save scar</button></div></div>
+      </form></div>
+  </main>
+</BaseLayout>
+<style>
+  .scar-page { display:flex; flex-direction:column; gap:12px; padding:14px 24px 24px; }.encounter-heading { align-items:flex-end; display:flex; justify-content:space-between; }.encounter-heading p { font-size:12px; margin:0 0 2px; }.encounter-heading h1 { font-size:22px; font-weight:600; letter-spacing:-.02em; margin:0; }.metadata { align-items:center; display:flex; font-size:12px; gap:14px; }.metadata a { text-decoration:underline; text-underline-offset:3px; }.saved { background:var(--accent-soft); border-radius:8px; color:var(--accent); font-size:13px; padding:9px 12px; }.entry-grid { align-items:start; display:grid; gap:12px; grid-template-columns:minmax(0,1fr) 420px; }.photo-and-records { display:flex; flex-direction:column; gap:12px; min-width:0; }.photo-panel { overflow:hidden; }.photo-tabs { border-bottom:1px solid rgba(21,24,28,.08); display:flex; font-size:12px; justify-content:space-between; padding:9px 14px; }.photo-tabs > span:first-child { display:flex; gap:14px; }.photo { height:372px; overflow:hidden; position:relative; }.photo > img { height:100%; object-fit:cover; width:100%; }.marker { align-items:center; background:rgba(21,24,28,.15); border:2px solid var(--ink); border-radius:50%; display:flex; font-size:11px; font-weight:600; height:24px; justify-content:center; position:absolute; transform:translate(-50%,-50%); width:24px; }.marker.major { background:rgba(194,64,12,.25); border-color:var(--warn); color:var(--warn); }.marker.draft { background:rgba(79,70,229,.15); border:2px dashed var(--accent); color:var(--accent); }.image-label { bottom:10px; color:rgba(21,24,28,.5); font-size:11px; position:absolute; right:12px; }.scar-table { overflow:auto; }.scar-head,.scar-row { align-items:center; display:grid; gap:10px; grid-template-columns:.3fr 1.4fr 1fr .7fr 1fr .9fr .9fr; min-width:800px; }.scar-head { border-bottom:1px solid var(--line); color:rgba(21,24,28,.5); font-size:11px; font-weight:500; letter-spacing:.08em; padding:9px 14px; text-transform:uppercase; }.scar-row { border-bottom:1px solid rgba(21,24,28,.06); font-size:13px; min-height:39px; padding:9px 14px; }.scar-row b { font-weight:600; }.scar-row .warn { color:var(--warn); }.draft-row { background:rgba(79,70,229,.04); color:var(--accent); }.draft-copy { grid-column:span 6; }.record-actions { align-items:center; display:flex; justify-content:space-between; }.record-actions p { font-size:12px; margin:0; }.record-actions > div,.form-actions > div { display:flex; gap:8px; }.record-actions form { margin:0; }.small-button { border:0; border-radius:8px; cursor:pointer; font-size:13px; min-height:34px; padding:8px 12px; }.small-button.secondary { background:#fff; border:1px solid var(--line-strong); }.small-button.finish { background:var(--accent); color:#fff; font-weight:500; }.scar-form { display:flex; flex-direction:column; gap:11px; padding:14px; }.form-heading { align-items:baseline; display:flex; justify-content:space-between; }.form-heading strong { font-size:15px; }.form-heading span { font-size:12px; }fieldset { border:0; display:flex; flex-direction:column; gap:5px; margin:0; padding:0; }legend,.notes > span { font-size:12px; font-weight:500; margin-bottom:5px; padding:0; }legend span { font-weight:400; }.chips { display:flex; flex-wrap:wrap; gap:6px; }.chip { align-items:center; border:1px solid var(--line-strong); border-radius:var(--radius-pill); cursor:pointer; display:inline-flex; font-size:12px; min-height:28px; padding:5px 10px; }.chip input { height:1px; opacity:0; position:absolute; width:1px; }.chip:has(input:checked) { background:var(--ink); border-color:var(--ink); color:#fff; }.chip.emphasis:not(:has(input:checked)) { border-color:var(--warn); color:var(--warn); }.chip i { border-radius:50%; height:12px; margin-right:6px; width:12px; }.chip span { display:inline; }.notes { display:flex; flex-direction:column; gap:5px; }.notes textarea,fieldset textarea { border:1px solid var(--line-strong); border-radius:8px; font-size:13px; min-height:44px; padding:8px 12px; resize:vertical; }.form-actions { align-items:center; border-top:1px solid var(--line); display:flex; justify-content:space-between; padding-top:4px; }.form-actions > span { font-size:12px; }.small-button.save { background:var(--ink); color:#fff; font-weight:500; }
+  @media (max-width:1100px) { .entry-grid { grid-template-columns:1fr; }.scar-form { max-width:none; }.encounter-heading { align-items:flex-start; flex-direction:column; gap:8px; }.metadata { flex-wrap:wrap; }.record-actions { align-items:flex-start; flex-direction:column; gap:10px; } }
+  @media (max-width:800px) { .scar-page { padding:14px; }.entry-grid { grid-template-columns:1fr; }.photo-tabs > span:last-child { display:none; }.photo { height:300px; }.metadata .mono { display:none; } }
+  @media (max-width:560px) { .record-actions > div { align-items:stretch; flex-direction:column; width:100%; }.record-actions form,.record-actions button { width:100%; }.form-actions { align-items:stretch; flex-direction:column; gap:10px; }.form-actions > div,.form-actions button { flex:1; }.metadata { align-items:flex-start; flex-direction:column; gap:4px; } }
+</style>
+<script>
+  const photo = document.querySelector<HTMLElement>('#scar-photo');
+  const marker = document.querySelector<HTMLElement>('#draft-marker');
+  const xInput = document.querySelector<HTMLInputElement>('#scar-x');
+  const yInput = document.querySelector<HTMLInputElement>('#scar-y');
+  const status = document.querySelector<HTMLElement>('#placed-status');
+  photo?.addEventListener('click', (event) => {
+    const bounds = photo.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+    const y = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
+    if (marker && xInput && yInput) { marker.hidden=false; marker.style.left=`${x*100}%`; marker.style.top=`${y*100}%`; xInput.value=x.toFixed(5); yInput.value=y.toFixed(5); }
+    if (status) status.textContent='Left flank · placed';
+  });
+  document.querySelector('#discard')?.addEventListener('click', () => { if(marker) marker.hidden=true; if(status) status.textContent='Left flank · click photo to place'; });
+</script>

@@ -1,0 +1,44 @@
+---
+import AppHeader from '../../components/AppHeader.astro';
+import SiteRail from '../../components/SiteRail.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import siteConfig from '../../../site.config';
+import { dataStore } from '../../lib/runtime';
+import { isMockMode } from '../../lib/mode';
+import { mockEncounters, type MockEncounter } from '../../mock/data';
+import { searchEncounters } from '../../lib/wildbook';
+import { getSpecies } from '../../lib/species';
+
+const selectedSite = siteConfig.sites.find((site) => site.id === Astro.url.searchParams.get('site')) ?? siteConfig.sites[0];
+const store = dataStore(Astro.locals);
+const reviews = await store.listReviewStatuses();
+const reviewMap = new Map(reviews.map((review) => [review.encounter_id, review]));
+let encounters: MockEncounter[];
+let total = 0;
+if (isMockMode()) {
+  encounters = mockEncounters.filter((encounter) => encounter.siteId === selectedSite.id);
+  total = encounters.length;
+} else {
+  const species = getSpecies('whale-shark');
+  const result = await searchEncounters(Astro.locals.session!.wildbook_cookie, { locationIds: [...selectedSite.locationIds], taxonomy: species.wildbook_taxonomy, from: 0, size: 50 });
+  total = result.total;
+  encounters = result.hits.map((hit) => ({ id: hit.id, individualId: String(hit.individualId ?? '') || null, sightings: Number(hit.sightings ?? 0), date: String(hit.date ?? hit.encounterDate ?? '—'), photographer: String(hit.photographer ?? '—'), sex: String(hit.sex ?? '—'), size: String(hit.size ?? '—'), photos: String(hit.photos ?? '—'), siteId: selectedSite.id, image: '' }));
+}
+const needsRecord = encounters.filter((encounter) => !reviewMap.has(encounter.id)).length;
+const individuals = new Set(encounters.map((encounter) => encounter.individualId).filter(Boolean)).size;
+const scarCount = (await store.listScarRecords()).length;
+---
+<BaseLayout app title="Encounters · whaleshark.org">
+  <AppHeader />
+  <main class="app-shell"><SiteRail active={selectedSite.id} encounterCount={total} individualCount={individuals} scarCount={scarCount} /><section class="workspace">
+    <div class="page-heading"><div><h1>Encounters · {selectedSite.label.split(',')[0]}</h1><p class="muted">Pulled from Sharkbook 4 min ago · showing this season · {needsRecord} still need a scar record</p></div><div class="tools"><label><span class="sr-only">Search</span><input type="search" placeholder="Search encounter or shark ID" /></label><select aria-label="Scar record status"><option>Needs scar record</option><option>All encounters</option></select><button>Export CSV</button></div></div>
+    <div class="stats"><div class="panel"><span class="eyebrow">Needs scar record</span><strong class="accent">{needsRecord}</strong></div><div class="panel"><span class="eyebrow">Recorded this week</span><strong>{reviews.filter((review) => review.status === 'recorded').length}</strong></div><div class="panel"><span class="eyebrow">Fresh major injuries · season</span><strong class="warn">1</strong></div><div class="panel"><span class="eyebrow">Matches awaiting confirmation</span><strong>1</strong></div></div>
+    <div class="panel table"><div class="table-head"><span>Encounter</span><span>Individual</span><span>Date · photographer</span><span>Sex · size</span><span>Photos</span><span>Scar record</span><span></span></div>{encounters.slice(0,6).map((encounter,index) => { const review=reviewMap.get(encounter.id); const scarHref=`/app/encounters/${encounter.id}/scars?site=${selectedSite.id}`; return <div class:list={['table-row',{highlight:index===0}]}><span class="mono">{encounter.id}</span><span>{encounter.individualId ? <><b>{encounter.individualId}</b> <small class="muted">· {encounter.sightings} sightings{encounter.sightings===1?' · new':''}</small></> : <small class="muted">Unassigned · match pending</small>}</span><span>{encounter.date} · {encounter.photographer}</span><span>{encounter.sex} · {encounter.size}</span><span>{encounter.photos}</span><span>{review ? <span class="tag done">{review.status === 'no_new_scars' ? 'No new scars' : 'Recorded'}</span> : <span class="tag todo">Needs record</span>}</span><span>{review ? <a class="muted" href={scarHref}>View</a> : <a class="record" href={scarHref}>Record scars →</a>}</span></div>})}<div class="table-foot muted"><span>Showing {Math.min(encounters.length,6)} of {total} encounters this season</span><span>Next →</span></div></div>
+  </section></main>
+</BaseLayout>
+<style>
+  .app-shell { display:grid; grid-template-columns:232px minmax(0,1fr); min-height:calc(100vh - 52px); }.workspace { display:flex; flex-direction:column; gap:16px; min-width:0; padding:20px 24px; }.page-heading { align-items:flex-end; display:flex; justify-content:space-between; }.page-heading h1 { font-size:22px; font-weight:600; letter-spacing:-.02em; margin:0; }.page-heading p { font-size:13px; margin:4px 0 0; }.tools { align-items:center; display:flex; gap:8px; }.tools input,.tools select,.tools button { background:#fff; border:1px solid var(--line-strong); border-radius:8px; font-size:13px; min-height:34px; padding:8px 12px; }.tools button { background:var(--ink); border-color:var(--ink); color:#fff; font-weight:500; }.sr-only { height:1px; margin:-1px; overflow:hidden; position:absolute; width:1px; }.stats { display:grid; gap:12px; grid-template-columns:repeat(4,minmax(0,1fr)); }.stats > div { display:flex; flex-direction:column; gap:2px; padding:14px 16px; }.stats strong { font-size:26px; font-weight:600; letter-spacing:-.02em; }.stats .accent { color:var(--accent); }.stats .warn { color:var(--warn); }.table { overflow:hidden; }.table-head,.table-row { align-items:center; display:grid; gap:12px; grid-template-columns:.7fr 1.3fr 1.1fr .7fr .6fr .9fr .7fr; }.table-head { border-bottom:1px solid var(--line); color:rgba(21,24,28,.5); font-size:11px; font-weight:500; letter-spacing:.08em; padding:10px 16px; text-transform:uppercase; }.table-row { border-bottom:1px solid rgba(21,24,28,.06); font-size:13px; min-height:43px; padding:11px 16px; }.table-row.highlight { background:rgba(79,70,229,.03); }.table-row b { font-weight:600; }.table-row small { font-size:13px; }.tag { border-radius:var(--radius-pill); display:inline-flex; font-size:12px; font-weight:500; padding:3px 8px; }.tag.todo { background:rgba(79,70,229,.08); color:var(--accent); }.tag.done { background:rgba(21,24,28,.06); color:rgba(21,24,28,.6); }.record { color:var(--accent); font-weight:600; }.table-foot { display:flex; font-size:12px; justify-content:space-between; padding:10px 16px; }
+  @media (max-width:1100px) { .page-heading { align-items:flex-start; flex-direction:column; gap:14px; }.table { overflow-x:auto; }.table-head,.table-row { min-width:980px; }.stats { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:760px) { .app-shell { grid-template-columns:1fr; }.workspace { padding:18px 14px; }.tools { align-items:stretch; flex-direction:column; width:100%; }.tools input,.tools select,.tools button { width:100%; } }
+  @media (max-width:500px) { .stats { grid-template-columns:1fr 1fr; }.stats .eyebrow { font-size:9px; } }
+</style>

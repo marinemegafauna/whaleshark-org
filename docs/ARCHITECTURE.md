@@ -16,6 +16,10 @@ Browser ──▶ Astro (Cloudflare Workers) ──▶ Wildbook v3 API (sharkboo
 - **Species schema** (`species/<slug>.yaml`) drives the scar-entry form: body regions, injury types, severity, freshness, likely cause, confidence, plus labels and help text. Editing the YAML changes the form for every site. Whale shark v1.0 follows Speed et al. 2008 (severity + seven injury categories) with a healing-colour freshness axis (Womersley et al. 2021) and a dichotomous-key style of help text (Anderson et al. 2025).
 - **Site config** (`site.config.ts`): name, domain, species list, Wildbook base URL, sites/locations shown in the workbench, steward organisation, design tokens.
 
+### Cloudflare runtime binding contract
+
+Server routes and middleware obtain the D1 binding from the Cloudflare adapter's Astro-local runtime context at `locals.runtime.env.DB`; `src/lib/runtime.ts` is the single adapter boundary. Re-check that path against the installed `@astrojs/cloudflare` release whenever the adapter's major version changes. Mock mode intentionally falls back to the in-memory store without a binding.
+
 ## Auth
 
 - **Researchers** sign in with their Wildbook account. The Worker forwards credentials to `POST /api/v3/login` once, keeps the `JSESSIONID` server-side in D1 against a random session id, and sets an HttpOnly cookie. The site never stores a password. Access equals the user's Wildbook access.

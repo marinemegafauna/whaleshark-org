@@ -1,0 +1,11 @@
+name = "whaleshark-org"
+main = "@astrojs/cloudflare/entrypoints/server"
+compatibility_date = "2026-08-22"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "whaleshark-org"
+# Run `npm run db:create`, then replace this placeholder with the returned id.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

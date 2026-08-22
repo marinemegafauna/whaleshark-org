@@ -1,0 +1,51 @@
+export interface MockEncounter {
+  id: string;
+  individualId: string | null;
+  sightings: number;
+  date: string;
+  photographer: string;
+  sex: string;
+  size: string;
+  photos: string;
+  siteId: string;
+  image: string;
+}
+
+export const mockEncounters: MockEncounter[] = [
+  { id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg' },
+  { id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg' },
+  { id: '4935bac7', individualId: null, sightings: 0, date: '13 Aug 2026', photographer: '[guide]', sex: '—', size: '~6 m', photos: '2 · L', siteId: 'tofo', image: '/mock/whale-shark-3.svg' },
+  { id: 'c5983598', individualId: 'MZ-091', sightings: 31, date: '12 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~8 m', photos: '9 · L+R', siteId: 'tofo', image: '/mock/whale-shark-4.svg' },
+  { id: 'a17e02d9', individualId: 'MZ-284', sightings: 14, date: '9 Aug 2026', photographer: '[guide]', sex: 'M', size: '~7 m', photos: '3 · L', siteId: 'tofo', image: '/mock/whale-shark-5.svg' },
+  { id: 'd8f1c2a0', individualId: 'MZ-377', sightings: 1, date: '8 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~4.5 m', photos: '5 · L+R', siteId: 'tofo', image: '/mock/whale-shark-6.svg' },
+  { id: 'e92bc110', individualId: 'TZ-117', sightings: 6, date: '5 Aug 2026', photographer: 'M. Hassan', sex: 'F', size: '~6 m', photos: '4 · L+R', siteId: 'mafia-island', image: '/mock/whale-shark-2.svg' },
+  { id: 'f04ad281', individualId: 'MZ-284', sightings: 14, date: '2 Aug 2026', photographer: 'A. Said', sex: 'M', size: '~7 m', photos: '2 · L', siteId: 'mafia-island', image: '/mock/whale-shark-1.svg' },
+];
+
+export const mockScarRecords = [
+  {
+    id: 'scar-1', species_id: 'whale-shark', schema_version: '1.0', encounter_id: '2fca3548', individual_id: 'MZ-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:00:00.000Z', photo_asset_id: 'mock-1', x: 0.42, y: 0.32,
+    fields_json: JSON.stringify({ body_region: 'dorsal_fin_1', type: 'laceration', severity: 'major', freshness: 'healing', likely_cause: 'propeller', confidence: 'probable' }), notes: 'Leading-edge laceration.', first_seen_encounter_id: '2fca3548',
+  },
+  {
+    id: 'scar-2', species_id: 'whale-shark', schema_version: '1.0', encounter_id: '2fca3548', individual_id: 'MZ-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:05:00.000Z', photo_asset_id: 'mock-1', x: 0.75, y: 0.58,
+    fields_json: JSON.stringify({ body_region: 'caudal_fin', type: 'nick', severity: 'minor', freshness: 'healed', likely_cause: 'unknown', confidence: 'certain' }), notes: null, first_seen_encounter_id: 'old-2023',
+  },
+];
+
+export const mockReviewStatuses = [
+  { encounter_id: 'c5983598', species_id: 'whale-shark', status: 'recorded' as const, reviewed_by: 'clare', reviewed_at: '2026-08-12T12:00:00.000Z' },
+  { encounter_id: 'a17e02d9', species_id: 'whale-shark', status: 'no_new_scars' as const, reviewed_by: 'clare', reviewed_at: '2026-08-09T12:00:00.000Z' },
+  { encounter_id: 'd8f1c2a0', species_id: 'whale-shark', status: 'recorded' as const, reviewed_by: 'clare', reviewed_at: '2026-08-08T12:00:00.000Z' },
+];
+
+export const mockSubmissions = [
+  {
+    id: 'submission-demo', created_at: '2026-08-21T08:30:00.000Z', photographer_name: 'Your name', photographer_email: 'photographer@example.org', site_id: 'tofo', observed_at: '2026-08-14', image_key: '/mock/whale-shark-1.svg', wildbook_encounter_id: null, status: 'matched',
+    match_json: JSON.stringify([
+      { individualId: 'MZ-284', score: 0.68, site: 'Tofo', detail: 'last seen 14 Aug 2026 · male · ~7 m', image: '/mock/whale-shark-1.svg' },
+      { individualId: 'TZ-117', score: 0.31, site: 'Mafia Island', detail: '2024', image: '/mock/whale-shark-2.svg' },
+      { individualId: 'MD-393', score: 0.24, site: 'Nosy Be', detail: '2023', image: '/mock/whale-shark-3.svg' },
+    ]),
+  },
+];

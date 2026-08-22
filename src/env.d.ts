@@ -1,0 +1,22 @@
+/// <reference types="astro/client" />
+
+import type { SessionRecord } from './lib/db';
+
+declare global {
+  namespace App {
+    interface Locals {
+      session?: SessionRecord;
+    }
+  }
+
+  interface ImportMetaEnv {
+    readonly MOCK?: string;
+    readonly PUBLIC_WRITE?: 'dry-run' | 'live';
+    readonly WILDBOOK_BASE_URL?: string;
+    readonly WILDBOOK_SERVICE_USER?: string;
+    readonly WILDBOOK_SERVICE_PASSWORD?: string;
+    readonly SESSION_SECRET?: string;
+  }
+}
+
+export {};

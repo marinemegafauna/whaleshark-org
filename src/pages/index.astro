@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PublicHeader from '../components/PublicHeader.astro';
+---
+<BaseLayout title="whaleshark.org · Drop a photo. Meet the shark.">
+  <main>
+    <PublicHeader />
+    <section class="hero">
+      <h1>Drop a photo. Meet the shark.</h1>
+      <p>Every whale shark has a unique spot pattern. Upload yours and we compare it with known individuals on Sharkbook, then tell you who you met and where else they’ve been seen.</p>
+    </section>
+    <section class="match-demo" id="catalogue">
+      <form class="card drop-zone" action="/api/submit" method="post" enctype="multipart/form-data">
+        <input id="photo" name="image" type="file" accept="image/jpeg,image/heic,image/png,image/tiff,.raw" required />
+        <input type="hidden" name="photographer_name" value="Community photographer" /><input type="hidden" name="photographer_email" value="pending@example.org" /><input type="hidden" name="site_id" value="tofo" /><input type="hidden" name="observed_at" value="2026-08-14" />
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>
+        <strong>Drop a left-flank photo here</strong>
+        <span class="muted">or <span class="choose">choose a file</span> · JPEG, HEIC or RAW</span>
+        <span class="privacy muted">Your name stays on your photo. Nothing is published without you.</span>
+        <button class="button upload" type="submit">Compare my photo</button>
+      </form>
+      <div class="card result-preview">
+        <div class="preview-label muted"><span>What you’ll get back</span><span class="mono">MiewID msv4.1</span></div>
+        <a class="candidate best" href="/match/submission-demo"><img src="/mock/whale-shark-1.svg" alt="Whale shark left flank placeholder" /><span class="candidate-copy"><strong>MZ-284 · “Triton”</strong><small>First seen Tofo, Mozambique 2019 · 14 sightings · last seen 14 Aug 2026</small></span><span class="score best-score"><b class="mono">0.68</b><i><i style="width:68%"></i></i></span></a>
+        <div class="candidate"><img src="/mock/whale-shark-2.svg" alt="Whale shark pattern placeholder" /><span class="candidate-copy"><strong>TZ-117</strong><small>Mafia Island, Tanzania · 2024</small></span><b class="mono">0.31</b></div>
+        <div class="candidate"><img src="/mock/whale-shark-3.svg" alt="Whale shark pattern placeholder" /><span class="candidate-copy"><strong>MD-393</strong><small>Nosy Be, Madagascar · 2023</small></span><b class="mono">0.24</b></div>
+        <div class="preview-footer"><span class="muted">A clear gap to the next animal means a confident re-sight.</span><a href="/match/submission-demo">See an example →</a></div>
+      </div>
+    </section>
+    <section class="stats" id="sites"><div><strong>1,428</strong><span>Known individuals</span></div><div><strong>386</strong><span>Sightings in 2026</span></div><div><strong>18</strong><span>Sites worldwide</span></div><div id="photographers"><strong>2,104</strong><span>Photographers</span></div></section>
+    <footer id="about" class="mono muted"><span>A community resource stewarded by the Marine Megafauna Foundation</span><span>Matching by Sharkbook.ai / Wild Me</span><a href="https://github.com/marinemegafauna/whaleshark-org">Open source</a></footer>
+  </main>
+</BaseLayout>
+<style>
+  main { min-height: 100vh; }.hero { align-items: center; display: flex; flex-direction: column; gap: 16px; padding: 72px 64px 0; text-align: center; }.hero h1 { font-size: clamp(42px, 5vw, 60px); font-weight: 600; letter-spacing: -.035em; line-height: 1.04; margin: 0; max-width: 760px; text-wrap: balance; }.hero p { color: var(--muted); font-size: 18px; line-height: 1.5; margin: 0; max-width: 600px; text-wrap: pretty; }
+  .match-demo { align-items: stretch; display: grid; gap: 24px; grid-template-columns: 480px minmax(0, 640px); justify-content: center; padding: 44px 64px 0; }.drop-zone { align-items: center; border: 1.5px dashed rgba(21,24,28,.25); display: flex; flex-direction: column; gap: 12px; justify-content: center; min-height: 264px; overflow: hidden; padding: 36px; position: relative; }.drop-zone input[type=file] { cursor: pointer; inset: 0; opacity: 0; position: absolute; z-index: 1; }.drop-zone strong { font-size: 16px; font-weight: 500; }.drop-zone > .muted { font-size: 13px; }.choose { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }.privacy { font-size: 12px!important; margin-top: 8px; }.upload { opacity: 0; pointer-events: none; position: relative; z-index: 2; }.drop-zone:focus-within .upload, .drop-zone.has-file .upload { opacity: 1; pointer-events: auto; }.result-preview { display: flex; flex-direction: column; gap: 10px; padding: 16px; }.preview-label { display: flex; font-size: 12px; justify-content: space-between; }.candidate { align-items: center; border-radius: 10px; display: flex; gap: 14px; padding: 10px; }.candidate.best { background: var(--accent-soft); border: 1px solid rgba(79,70,229,.25); }.candidate img { border-radius: 6px; height: 52px; object-fit: cover; width: 72px; }.candidate-copy { display: flex; flex: 1; flex-direction: column; gap: 2px; }.candidate-copy strong { font-size: 15px; font-weight: 500; }.best .candidate-copy strong { font-weight: 600; }.candidate-copy small { color: var(--muted); font-size: 13px; }.candidate > b { font-size: 14px; font-weight: 400; }.score { align-items: flex-end; display: flex; flex-direction: column; gap: 4px; }.score b { color: var(--accent); font-size: 14px; }.score > i { background: rgba(21,24,28,.08); border-radius: 2px; display: block; height: 4px; overflow: hidden; width: 80px; }.score > i > i { background: var(--accent); display: block; height: 100%; }.preview-footer { align-items: center; border-top: 1px solid rgba(21,24,28,.08); display: flex; font-size: 13px; justify-content: space-between; padding-top: 10px; }.preview-footer a { color: var(--accent); font-weight: 600; }
+  .stats { display: grid; gap: 24px; grid-template-columns: repeat(4, 1fr); padding: 72px max(64px, calc((100vw - 1120px)/2)) 0; }.stats div { border-top: 1px solid rgba(21,24,28,.12); display: flex; flex-direction: column; gap: 4px; padding-top: 14px; }.stats strong { font-size: 30px; font-weight: 600; letter-spacing: -.03em; }.stats span { color: var(--muted); font-size: 13px; }footer { display: flex; font-size: 12px; gap: 28px; justify-content: center; padding: 56px 64px 40px; text-align: center; }
+  @media (max-width: 980px) { .match-demo { grid-template-columns: minmax(0,640px); }.stats { grid-template-columns: repeat(2,1fr); padding-inline: 40px; } }
+  @media (max-width: 600px) { .hero { padding: 52px 20px 0; }.hero p { font-size: 16px; }.match-demo { padding: 32px 20px 0; }.drop-zone { min-height: 240px; padding: 24px; }.candidate-copy small { display: none; }.stats { gap: 20px; padding: 48px 20px 0; }footer { align-items: center; flex-direction: column; gap: 10px; padding: 44px 20px 28px; } }
+</style>
+<script>
+  const input = document.querySelector<HTMLInputElement>('#photo');
+  const zone = document.querySelector<HTMLFormElement>('.drop-zone');
+  input?.addEventListener('change', () => zone?.classList.toggle('has-file', Boolean(input.files?.length)));
+</script>

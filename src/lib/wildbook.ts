@@ -23,6 +23,10 @@ export interface WorkbenchEncounter {
   state: string;
   lifeStage: string | null;
   distinguishingScar: string | null;
+  occurrenceRemarks: string | null;
+  researcherComments: string | null;
+  measurements: { lengthM: number } | null;
+  behavior: string | null;
   locationId: string | null;
   verbatimLocality: string | null;
   occurrenceId: string | null;
@@ -107,15 +111,20 @@ function workbenchDate(value: unknown): string | null {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(parsed);
 }
 
-function workbenchSize(measurements: unknown): string {
-  if (!Array.isArray(measurements)) return '—';
+function workbenchLengthM(measurements: unknown): number | null {
+  if (!Array.isArray(measurements)) return null;
   const length = measurements.find((entry) => entry && typeof entry === 'object' && nonEmptyString((entry as Record<string, unknown>).type)?.toLowerCase() === 'length') as Record<string, unknown> | undefined;
-  if (!length) return '—';
+  if (!length) return null;
   const value = Number(length.value);
-  if (!Number.isFinite(value)) return '—';
+  if (!Number.isFinite(value)) return null;
   const units = nonEmptyString(length.units)?.toLowerCase();
   const metres = units === 'feet' || units === 'foot' || units === 'ft' ? value * 0.3048 : value;
-  return `~${metres.toFixed(1).replace(/\.0$/, '')} m`;
+  return metres;
+}
+
+function workbenchSize(measurements: unknown): string {
+  const metres = workbenchLengthM(measurements);
+  return metres === null ? '—' : `~${metres.toFixed(1).replace(/\.0$/, '')} m`;
 }
 
 function filenameFromUrl(value: string): string {
@@ -127,6 +136,7 @@ function filenameFromUrl(value: string): string {
 }
 
 export function mapEncounterHit(hit: EncounterHit, siteId: string): WorkbenchEncounter {
+  const lengthM = workbenchLengthM(hit.measurements);
   const individualId = nonEmptyString(hit.individualDisplayName) ?? firstNonEmpty(hit.individualNames);
   const photographers = firstNonEmpty(hit.photographers);
   const submitters = Array.isArray(hit.submitters) ? hit.submitters : [];
@@ -171,6 +181,10 @@ export function mapEncounterHit(hit: EncounterHit, siteId: string): WorkbenchEnc
     state: nonEmptyString(hit.state) ?? '—',
     lifeStage: nonEmptyString(hit.lifeStage),
     distinguishingScar: nonEmptyString(hit.distinguishingScar),
+    occurrenceRemarks: nonEmptyString(hit.occurrenceRemarks),
+    researcherComments: nonEmptyString(hit.researcherComments),
+    measurements: lengthM === null ? null : { lengthM },
+    behavior: nonEmptyString(hit.behavior) ?? firstNonEmpty(hit.behavior),
     locationId: nonEmptyString(hit.locationId),
     verbatimLocality: nonEmptyString(hit.verbatimLocality),
     occurrenceId: nonEmptyString(hit.occurrenceId),
@@ -404,6 +418,23 @@ export async function createEncounter(cookie: string, payload: unknown, fetcher:
       method: 'POST',
       headers: sessionHeaders(cookie),
       body: JSON.stringify(payload),
+    }),
+  );
+  return (await response.json()) as EncounterHit;
+}
+
+export interface EncounterPatchOperation {
+  op: 'add' | 'replace' | 'remove';
+  path: string;
+  value?: unknown;
+}
+
+export async function patchEncounter(cookie: string, id: string, ops: EncounterPatchOperation[], fetcher: Fetcher = fetch) {
+  const response = await checked(
+    await fetcher(endpoint(`/api/v3/encounters/${encodeURIComponent(id)}`), {
+      method: 'PATCH',
+      headers: sessionHeaders(cookie),
+      body: JSON.stringify(ops),
     }),
   );
   return (await response.json()) as EncounterHit;

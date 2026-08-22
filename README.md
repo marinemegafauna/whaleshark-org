@@ -30,36 +30,6 @@ cp .env.example .env
 npm run dev
 ```
 
-If the dev command exits before printing its ready URL, first check whether this repo already has a server listening on port 4321 (`lsof -nP -iTCP:4321 -sTCP:LISTEN`). Reuse that server or stop it explicitly before starting another; a second managed-shell launch can otherwise look like an Astro startup failure.
-
-If installation reports `ENOTFOUND registry.npmjs.org`, the machine cannot currently reach the npm registry; retry from a network-enabled shell. `npm install --offline` works only after these packages have previously been cached and otherwise reports `ENOTCACHED`.
-
-The three runtime boundaries are independent:
-
-| Surface | Setting | Safe/default value |
-|---|---|---|
-| Public matching and uploads | `MOCK=1` | Fixtures; no Sharkbook calls |
-| Signed-in workbench and sign-in | `MOCK_APP=1` | Fixtures; unset inherits `MOCK` |
-| Public writes | `PUBLIC_WRITE=dry-run` | Nothing written to Sharkbook |
-
-With the `.env.example` defaults, every screen is browsable without network access or credentials:
-
-- `/` — full public landing page with photo drop, live Sharkbook catalogue counts, and matching explanation
-- `/bulk` — whole-dive photo upload with per-photo matching progress
-- `/bulk/batch-demo/review` — grouped known/new-animal review before submission
-- `/match/submission-demo` — ranked example match
-- `/how-it-works` — the Wildbook, matching, review, and template explainer
-- `/signin` — accepts any non-empty username and password in mock mode
-- `/app` — researcher encounter workbench
-- `/app/encounters/2fca3548/scars` — schema-driven scar entry
-
-Before a change is merged, run:
-
-```bash
-npm test
-npm run build
-```
-
 ## Configure a real Wildbook
 
 1. Copy `.env.example` to `.env` locally and set `WILDBOOK_BASE_URL` to a Wildbook ≥ 10.12 instance.
@@ -68,13 +38,14 @@ npm run build
 4. Set a long random `SESSION_SECRET` and configure the same values as Cloudflare Worker secrets for deployment. Never commit credentials.
 5. Replace the placeholder `locationIds` in `site.config.ts` with the instance’s real Wildbook `locationId` values.
 6. Keep `PUBLIC_WRITE=dry-run`. `live` currently exposes only the real-mode whole-dive matching client for target-instance validation; single-photo media staging and final reviewed observation publication remain deliberately gated until consent-safe object storage and idempotency are implemented.
-7. Deploy with `npm run deploy`.
+7. Keep `SCAR_WRITEBACK=off`. Switch it to `append` for one site only after a supervised test with a researcher account confirms the merged `distinguishingScar` text in Sharkbook. Write-back uses that researcher's stored session cookie, replaces only whaleshark.org's previous `[scars v…]` line, and never overwrites human text.
+8. Deploy with `npm run deploy`.
 
 Researcher passwords are forwarded to Wildbook’s login endpoint once and are never stored. The Worker stores only the resulting `JSESSIONID` in D1 against an HttpOnly site session.
 
 ### Signing in
 
-With `MOCK_APP=0`, sign in at `/signin` using your own Sharkbook account. The workbench uses that account only for authenticated reads of encounter and individual data; it stores the resulting session cookie server-side, never stores the password, and writes nothing to Sharkbook. `PUBLIC_WRITE=dry-run` remains unchanged.
+With `MOCK_APP=0`, sign in at `/signin` using your own Sharkbook account. The workbench uses that account for authenticated encounter and individual reads; it stores the resulting session cookie server-side and never stores the password. Scar write-back remains disabled unless `SCAR_WRITEBACK=append` is explicitly enabled after a supervised test. `PUBLIC_WRITE=dry-run` remains unchanged.
 
 ## Template for another species
 

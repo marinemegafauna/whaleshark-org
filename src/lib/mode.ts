@@ -1,9 +1,9 @@
 import { env } from 'cloudflare:workers';
 
-type WorkerEnv = { MOCK?: string; MOCK_APP?: string; PUBLIC_WRITE?: string; [key: string]: unknown };
+type WorkerEnv = { MOCK?: string; MOCK_APP?: string; PUBLIC_WRITE?: string; SCAR_WRITEBACK?: string; [key: string]: unknown };
 const workerEnv = env as unknown as WorkerEnv;
 
-function setting(name: 'MOCK' | 'MOCK_APP' | 'PUBLIC_WRITE'): string | undefined {
+function setting(name: 'MOCK' | 'MOCK_APP' | 'PUBLIC_WRITE' | 'SCAR_WRITEBACK'): string | undefined {
   const runtime = workerEnv[name];
   if (typeof runtime === 'string') return runtime;
   const bundled = import.meta.env[name];
@@ -24,4 +24,8 @@ export function isMockAppMode(): boolean {
 
 export function publicWriteMode(): 'dry-run' | 'live' {
   return setting('PUBLIC_WRITE') === 'live' ? 'live' : 'dry-run';
+}
+
+export function scarWritebackMode(): 'off' | 'append' {
+  return setting('SCAR_WRITEBACK') === 'append' ? 'append' : 'off';
 }

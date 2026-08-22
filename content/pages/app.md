@@ -29,14 +29,16 @@ workbench:
   searchLabel: Search
   searchPlaceholder: Search encounter or shark ID
   statusAriaLabel: Scar record status
-  statusOptions: [Needs scar record, All encounters]
+  statusOptions: [Needs scar record, "Has Sharkbook scar text, no structured record", All encounters]
   exportButton: Export CSV
   stats:
     encounters: Encounters
     namedIndividuals: Named individuals · page
-    needsRecord: Needs scar record
+    scarText: Scar text to categorise
+    noStructuredRecord: No structured record
     unnamed: Unnamed · new sharks
     batchesAwaiting: Batches awaiting review
+    pageCaption: on this page
   unavailable: Sharkbook didn't answer — showing nothing, try again
   queue:
     eyebrow: Public bulk uploads
@@ -58,6 +60,7 @@ workbench:
   noNewScars: No new scars
   recorded: Recorded
   needsRecord: Needs record
+  textChip: text
   view: View
   recordScars: Record scars →
   showing: Showing {shown} of {total} encounters this season
@@ -102,4 +105,25 @@ scar:
   discard: Discard
   save: Save scar
   finish: Finish record
+  pull:
+    heading: What Sharkbook already says
+    empty: No scar text, life stage, length or behaviour is recorded on Sharkbook.
+    distinguishingScar: Distinguishing scar
+    relatedText: Scar-related note
+    recorded: "Recorded on whaleshark.org:"
+    categorise: Categorise this
+    lifeStage: Life stage
+    length: Length
+    behavior: Behaviour
+  sync:
+    label: Sharkbook
+    upToDate: "Sharkbook: up to date"
+    pending: "Sharkbook: {count} pending"
+    disabled: Write-back to Sharkbook is off for this site; records are kept here.
+    statuses:
+      pending: Pending
+      synced: Synced
+      failed: Not yet on Sharkbook
+      disabled: Local only
+    retry: Retry
 ---

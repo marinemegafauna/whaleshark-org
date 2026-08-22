@@ -7,13 +7,17 @@ const mockMetadata = { hasExif: false, hasXmp: false, hasIptc: false, hasC2pa: f
 const mockProvenance = (score: 0 | 1 | 2 | 3, signals: ProvenanceResult['signals']): ProvenanceResult => ({ score, signals, metadata: mockMetadata, version: 1 });
 
 const mockEncounter = (
-  encounter: Omit<WorkbenchEncounter, 'individualUuid' | 'box' | 'state' | 'lifeStage' | 'distinguishingScar' | 'locationId' | 'verbatimLocality' | 'occurrenceId'>,
+  encounter: Omit<WorkbenchEncounter, 'individualUuid' | 'box' | 'state' | 'lifeStage' | 'distinguishingScar' | 'occurrenceRemarks' | 'researcherComments' | 'measurements' | 'behavior' | 'locationId' | 'verbatimLocality' | 'occurrenceId'> & Partial<Pick<WorkbenchEncounter, 'lifeStage' | 'distinguishingScar' | 'occurrenceRemarks' | 'researcherComments' | 'measurements' | 'behavior'>>,
 ): WorkbenchEncounter => ({
   individualUuid: `mock-individual-${encounter.id}`,
   box: null,
   state: 'approved',
   lifeStage: null,
   distinguishingScar: null,
+  occurrenceRemarks: null,
+  researcherComments: null,
+  measurements: null,
+  behavior: null,
   locationId: encounter.siteId,
   verbatimLocality: null,
   occurrenceId: `mock-occurrence-${encounter.id}`,
@@ -21,9 +25,9 @@ const mockEncounter = (
 });
 
 export const mockEncounters: MockEncounter[] = [
-  mockEncounter({ id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg', imageFilename: 'IMG_4471.JPG', provenance: mockProvenance(3, [{ code: 'ai_software', weight: 2, label: 'ai_software' }, { code: 'no_camera', weight: 1, label: 'no_camera' }]) }),
-  mockEncounter({ id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg', imageFilename: 'IMG_4472.JPG', provenance: mockProvenance(1, [{ code: 'no_exif', weight: 1, label: 'no_exif' }]) }),
-  mockEncounter({ id: '4935bac7', individualId: null, sightings: 0, date: '13 Aug 2026', photographer: '[guide]', sex: '—', size: '~6 m', photos: '2 · L', siteId: 'tofo', image: '/mock/whale-shark-3.svg', imageFilename: 'IMG_4473.JPG' }),
+  mockEncounter({ id: '2fca3548', individualId: 'MZ-284', sightings: 14, date: '14 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~7 m', photos: '6 · L+R', siteId: 'tofo', image: '/mock/whale-shark-1.svg', imageFilename: 'IMG_4471.JPG', lifeStage: 'adult', measurements: { lengthM: 7 }, behavior: 'feeding at surface', distinguishingScar: 'Three fresh propeller cuts behind the first dorsal fin.', occurrenceRemarks: 'The shark was feeding normally. A deep wound was visible on the dorsal fin.', provenance: mockProvenance(3, [{ code: 'ai_software', weight: 2, label: 'ai_software' }, { code: 'no_camera', weight: 1, label: 'no_camera' }]) }),
+  mockEncounter({ id: 'b3453961', individualId: 'MZ-412', sightings: 3, date: '14 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~5.5 m', photos: '4 · L', siteId: 'tofo', image: '/mock/whale-shark-2.svg', imageFilename: 'IMG_4472.JPG', distinguishingScar: 'Old rope wound on the flank.\n\n[scars v1.0] flank: abrasion · minor · healed · unknown (whaleshark.org, 2026-08-18, clare)', provenance: mockProvenance(1, [{ code: 'no_exif', weight: 1, label: 'no_exif' }]) }),
+  mockEncounter({ id: '4935bac7', individualId: null, sightings: 0, date: '13 Aug 2026', photographer: '[guide]', sex: '—', size: '~6 m', photos: '2 · L', siteId: 'tofo', image: '/mock/whale-shark-3.svg', imageFilename: 'IMG_4473.JPG', distinguishingScar: 'None' }),
   mockEncounter({ id: 'c5983598', individualId: 'MZ-091', sightings: 31, date: '12 Aug 2026', photographer: 'C. Prebble', sex: 'M', size: '~8 m', photos: '9 · L+R', siteId: 'tofo', image: '/mock/whale-shark-4.svg', imageFilename: 'IMG_4474.JPG' }),
   mockEncounter({ id: 'a17e02d9', individualId: 'MZ-284', sightings: 14, date: '9 Aug 2026', photographer: '[guide]', sex: 'M', size: '~7 m', photos: '3 · L', siteId: 'tofo', image: '/mock/whale-shark-5.svg', imageFilename: 'IMG_4475.JPG' }),
   mockEncounter({ id: 'd8f1c2a0', individualId: 'MZ-377', sightings: 1, date: '8 Aug 2026', photographer: 'O. Patterson', sex: 'F', size: '~4.5 m', photos: '5 · L+R', siteId: 'tofo', image: '/mock/whale-shark-6.svg', imageFilename: 'IMG_4476.JPG' }),
@@ -36,11 +40,11 @@ export const mockScarFirstSeenLabels: Record<string, string> = { 'old-2023': '2 
 export const mockScarRecords = [
   {
     id: 'scar-1', species_id: 'whale-shark', schema_version: '1.0', encounter_id: '2fca3548', individual_id: 'MZ-284', individual_uuid: 'mock-individual-mz-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:00:00.000Z', photo_asset_id: 'mock-1', x: 0.42, y: 0.32,
-    fields_json: JSON.stringify({ body_region: 'dorsal_fin_1', type: 'laceration', severity: 'major', freshness: 'healing', likely_cause: 'propeller', confidence: 'probable' }), notes: 'Leading-edge laceration.', first_seen_encounter_id: '2fca3548',
+    fields_json: JSON.stringify({ body_region: 'dorsal_fin_1', type: 'laceration', severity: 'major', freshness: 'healing', likely_cause: 'propeller', confidence: 'probable' }), notes: 'Leading-edge laceration.', first_seen_encounter_id: '2fca3548', synced_at: null, sync_status: 'disabled' as const, sync_error: null,
   },
   {
     id: 'scar-2', species_id: 'whale-shark', schema_version: '1.0', encounter_id: '2fca3548', individual_id: 'MZ-284', individual_uuid: 'mock-individual-mz-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:05:00.000Z', photo_asset_id: 'mock-1', x: 0.75, y: 0.58,
-    fields_json: JSON.stringify({ body_region: 'caudal_fin', type: 'nick', severity: 'minor', freshness: 'healed', likely_cause: 'unknown', confidence: 'certain' }), notes: null, first_seen_encounter_id: 'old-2023',
+    fields_json: JSON.stringify({ body_region: 'caudal_fin', type: 'nick', severity: 'minor', freshness: 'healed', likely_cause: 'unknown', confidence: 'certain' }), notes: null, first_seen_encounter_id: 'old-2023', synced_at: null, sync_status: 'disabled' as const, sync_error: null,
   },
 ];
 

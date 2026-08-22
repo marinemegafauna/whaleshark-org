@@ -1,12 +1,23 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { env } from 'cloudflare:workers';
-import { isMockAppMode } from './mode';
+import { isMockAppMode, scarWritebackMode } from './mode';
 
 const workerEnv = env as Record<string, unknown>;
 
 afterEach(() => {
   delete workerEnv.MOCK;
   delete workerEnv.MOCK_APP;
+  delete workerEnv.SCAR_WRITEBACK;
+});
+
+describe('scar write-back mode', () => {
+  test('is off unless append is explicitly configured', () => {
+    expect(scarWritebackMode()).toBe('off');
+    workerEnv.SCAR_WRITEBACK = 'append';
+    expect(scarWritebackMode()).toBe('append');
+    workerEnv.SCAR_WRITEBACK = 'anything-else';
+    expect(scarWritebackMode()).toBe('off');
+  });
 });
 
 describe('signed-in app mode', () => {

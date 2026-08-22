@@ -42,6 +42,22 @@ Photo provenance is an attention flag for reviewers, never an acceptance rule. L
 
 Public observation values are normalized by `src/lib/public-observations.ts`. `src/lib/wildbook.ts` is the only Wildbook column-mapping boundary: it converts feet to metres and Fahrenheit to Celsius, builds the generated `distinguishingScar` summary, and emits the recognized `Encounter.*` / `Sighting.*` bulk-import keys. Structured injury choices and the consent timestamp remain in D1 because Wildbook 10.12 has no corresponding v3 cells.
 
+## Scar records: two-way
+
+The researcher scar workflow keeps D1 as the structured source while making Sharkbook's existing free text useful in both directions:
+
+- **Pull:** the encounter read supplies `distinguishingScar`, `occurrenceRemarks`, `researcherComments`, life stage, length, and behaviour. The scar page shows the original distinguishing-scar text verbatim, extracts only scar-related sentences from the two longer note fields, and applies species-YAML `text_hints` when a researcher chooses **Categorise this**. Hints only preselect valid schema option ids; the researcher confirms and saves every field.
+- **Queue:** `/app` classifies only the current 25-hit search page. It can show encounters with human Sharkbook scar text but no D1 scar record, while retaining the existing needs-record and all-encounters views. It does not crawl or paginate the full catalogue on page load.
+- **Push:** `SCAR_WRITEBACK=off` is the default. With `append`, a successful D1 save fetches the current encounter under the researcher's own session cookie, merges one generated summary line into `distinguishingScar`, and sends a JSON Patch `replace`. Upstream failures never remove or roll back the D1 record; sync state is stored per scar and can be retried for the encounter.
+
+The interim line contract is:
+
+```text
+[scars v<schema>] <body region>: <type> · <severity> · <freshness> · [probable|possible ]<likely cause>[ | <next scar>...] (whaleshark.org, YYYY-MM-DD, <observer>)
+```
+
+If human text already exists, the line follows it after one blank line. A later sync replaces only the previous line beginning `[scars v…]` and ending with the whaleshark.org source tuple; human text is unchanged. When Wildbook exposes the encounter observation/custom-field API requested in item 2 of `docs/WILDBOOK-ASKS.md`, the structured records move upstream and this summary becomes a display compatibility layer rather than the interchange format.
+
 ## Modes
 
 | Surface | Setting | Effect |
@@ -49,6 +65,7 @@ Public observation values are normalized by `src/lib/public-observations.ts`. `s
 | Public matching and uploads | `MOCK=1` | Fixtures stand in for Wildbook and public D1 flows |
 | Signed-in workbench and sign-in | `MOCK_APP=1|0` | Fixtures when `1`, live Sharkbook reads when `0`; unset inherits `MOCK` |
 | Public writes | `PUBLIC_WRITE=dry-run|live` | `dry-run` keeps reports local; final reviewed publication remains gated |
+| Research scar write-back | `SCAR_WRITEBACK=off|append` | `off` keeps D1 authoritative; `append` merges the interim summary into `distinguishingScar` under the researcher session |
 
 This split allows the deployed public site to remain deterministic and write-safe while signed-in researchers use real encounter UUIDs and media. The app-side D1 boundary follows `MOCK_APP`, so live sessions, review statuses, and scar records remain persistent even when public routes use fixtures.
 

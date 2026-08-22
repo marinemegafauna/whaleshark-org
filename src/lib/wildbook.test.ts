@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import liveSample from '../test/fixtures-sharkbook-live-sample.json';
-import { getBulkImportStatus, getCatalogueStats, isWildbookUnauthorized, login, mapEncounterHit, mapIndividual, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
+import { getBulkImportStatus, getCatalogueStats, isWildbookUnauthorized, login, mapEncounterHit, mapIndividual, patchEncounter, resolveMedia, searchEncounters, startBulkImport, uploadResumableFile } from './wildbook';
 
 describe('Wildbook workbench mapping', () => {
   test('maps the captured unnamed Tofo hit without treating its individual UUID as a display name', () => {
@@ -78,6 +78,27 @@ describe('Wildbook workbench mapping', () => {
     }, 'oman');
 
     expect(encounter.size).toBe('~4.5 m');
+    expect(encounter.measurements).toEqual({ lengthM: 4.51104 });
+  });
+
+  test('maps Sharkbook scar-source fields from a constructed search hit', () => {
+    const encounter = mapEncounterHit({
+      id: 'encounter-with-scar-text',
+      distinguishingScar: 'Three fresh propeller cuts behind the first dorsal fin.',
+      occurrenceRemarks: 'Wound photographed from the left side.',
+      researcherComments: '<p>Likely vessel strike.</p>',
+      behavior: 'feeding at surface',
+      lifeStage: 'adult',
+      measurements: [{ type: 'length', value: 7.2, units: 'metres' }],
+    }, 'tofo');
+
+    expect(encounter).toMatchObject({
+      distinguishingScar: 'Three fresh propeller cuts behind the first dorsal fin.',
+      occurrenceRemarks: 'Wound photographed from the left side.',
+      researcherComments: '<p>Likely vessel strike.</p>',
+      measurements: { lengthM: 7.2 },
+      behavior: 'feeding at surface',
+    });
   });
 
   test('falls back to a parseable verbatim date when the primary date is malformed', () => {
@@ -101,6 +122,18 @@ describe('Wildbook workbench mapping', () => {
 });
 
 describe('Wildbook client', () => {
+  test('patches an encounter with the exact JSON Patch request shape', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ id: 'enc-1', distinguishingScar: 'updated' }));
+    const ops = [{ op: 'replace' as const, path: 'distinguishingScar', value: 'updated' }];
+
+    await expect(patchEncounter('JSESSIONID=session', 'enc-1', ops, fetcher)).resolves.toMatchObject({ id: 'enc-1' });
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(new URL(String(url)).pathname).toBe('/api/v3/encounters/enc-1');
+    expect(init?.method).toBe('PATCH');
+    expect(new Headers(init?.headers).get('Cookie')).toBe('JSESSIONID=session');
+    expect(JSON.parse(String(init?.body))).toEqual(ops);
+  });
+
   test('parses flat encounter hits and total from the response header', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ hits: [{ id: '2fca3548' }] }), {

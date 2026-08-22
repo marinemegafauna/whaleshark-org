@@ -260,7 +260,7 @@ const appSchema = z.object({
     statusAriaLabel: text,
     statusOptions: z.array(text),
     exportButton: text,
-    stats: z.object({ encounters: text, namedIndividuals: text, needsRecord: text, unnamed: text, batchesAwaiting: text }).strict(),
+    stats: z.object({ encounters: text, namedIndividuals: text, scarText: text, noStructuredRecord: text, unnamed: text, batchesAwaiting: text, pageCaption: text }).strict(),
     unavailable: text,
     queue: z.object({ eyebrow: text, heading: text, help: text, counts: template, review: text }).strict(),
     publicQueue: z.object({ eyebrow: text, heading: text, help: text, singleLabel: text, batchLabel: text, open: text }).strict(),
@@ -271,6 +271,7 @@ const appSchema = z.object({
     noNewScars: text,
     recorded: text,
     needsRecord: text,
+    textChip: text,
     view: text,
     recordScars: text,
     showing: template,
@@ -308,6 +309,25 @@ const appSchema = z.object({
     discard: text,
     save: text,
     finish: text,
+    pull: z.object({
+      heading: text,
+      empty: text,
+      distinguishingScar: text,
+      relatedText: text,
+      recorded: text,
+      categorise: text,
+      lifeStage: text,
+      length: text,
+      behavior: text,
+    }).strict(),
+    sync: z.object({
+      label: text,
+      upToDate: text,
+      pending: template,
+      disabled: text,
+      statuses: z.object({ pending: text, synced: text, failed: text, disabled: text }).strict(),
+      retry: text,
+    }).strict(),
   }).strict(),
 }).strict();
 
@@ -379,6 +399,11 @@ const speciesFieldSchema = z.object({
   }
 });
 
+const scarTextHintSchema = z.object({
+  pattern: text,
+  values: z.record(text, text),
+}).strict();
+
 const publicReportOptionSchema = z.object({
   id: text,
   label: text,
@@ -436,6 +461,7 @@ export const speciesSchema = z.object({
   common_name: text,
   scientific_name: text,
   wildbook_taxonomy: text,
+  text_hints: z.array(scarTextHintSchema).default([]),
   fields: z.array(speciesFieldSchema).min(1),
   public_report: publicReportSchema,
 }).strict().superRefine((species, context) => {
@@ -443,6 +469,20 @@ export const speciesSchema = z.object({
   for (const field of species.fields) {
     if (seen.has(field.id)) context.addIssue({ code: 'custom', message: `Duplicate field id "${field.id}"` });
     seen.add(field.id);
+  }
+  const fieldById = new Map(species.fields.map((field) => [field.id, field]));
+  for (const hint of species.text_hints) {
+    try {
+      new RegExp(hint.pattern, 'i');
+    } catch {
+      context.addIssue({ code: 'custom', path: ['text_hints'], message: `Text hint pattern "${hint.pattern}" is not a valid regular expression` });
+    }
+    for (const [fieldId, optionId] of Object.entries(hint.values)) {
+      const field = fieldById.get(fieldId);
+      if (!field?.options?.some((option) => option.id === optionId)) {
+        context.addIssue({ code: 'custom', path: ['text_hints'], message: `Text hint for "${fieldId}" points to unknown option "${optionId}"` });
+      }
+    }
   }
   const publicIds = new Set<string>();
   for (const group of species.public_report.groups) {

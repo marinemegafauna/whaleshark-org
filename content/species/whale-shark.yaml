@@ -8,6 +8,25 @@ version: "1.0"
 common_name: Whale shark
 scientific_name: Rhincodon typus
 wildbook_taxonomy: "Rhincodon typus"
+text_hints:
+  - { pattern: "prop", values: { likely_cause: propeller } }
+  - { pattern: "vessel|boat strike", values: { likely_cause: boat_strike } }
+  - { pattern: '\b(?:net|rope|fishing[ -]?line)', values: { likely_cause: net_line } }
+  - { pattern: "head|snout", values: { body_region: head } }
+  - { pattern: "gill", values: { body_region: gills } }
+  - { pattern: "pectoral", values: { body_region: pectoral_fin } }
+  - { pattern: "dorsal", values: { body_region: dorsal_fin_1 } }
+  - { pattern: "flank|side", values: { body_region: flank } }
+  - { pattern: "pelvic", values: { body_region: pelvic_fin } }
+  - { pattern: "caudal peduncle", values: { body_region: caudal_peduncle } }
+  - { pattern: "caudal|tail", values: { body_region: caudal_fin } }
+  - { pattern: "lacer|cut|wound", values: { type: laceration } }
+  - { pattern: "abras|scrap", values: { type: abrasion } }
+  - { pattern: "bite|tooth", values: { type: bite } }
+  - { pattern: "amput|missing", values: { type: amputation } }
+  - { pattern: "fresh|bleed|red|pink", values: { freshness: fresh } }
+  - { pattern: "healing|white", values: { freshness: healing } }
+  - { pattern: "healed|black scar", values: { freshness: healed } }
 public_report:
   version: "1.0"
   submit_label: Save sighting details

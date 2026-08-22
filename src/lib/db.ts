@@ -3,6 +3,7 @@ import { mockBatchItems, mockBatches, mockReviewStatuses, mockScarRecords, mockS
 export type ReviewStatus = 'needs_record' | 'recorded' | 'no_new_scars';
 export type BatchStatus = 'draft' | 'processing' | 'review' | 'submitted' | 'error';
 export type BatchItemStatus = 'queued' | 'uploading' | 'detecting' | 'matching' | 'matched' | 'likely_new' | 'no_shark' | 'error';
+export type ScarSyncStatus = 'pending' | 'synced' | 'failed' | 'disabled';
 
 export interface Batch {
   id: string;
@@ -49,6 +50,9 @@ export interface ScarRecord {
   fields_json: string;
   notes: string | null;
   first_seen_encounter_id: string | null;
+  synced_at: string | null;
+  sync_status: ScarSyncStatus;
+  sync_error: string | null;
 }
 
 export interface EncounterReview {
@@ -285,8 +289,8 @@ class D1Store implements DataStore {
   }
 
   async createScarRecord(record: ScarRecord) {
-    await this.db.prepare(`INSERT INTO scar_records (id, species_id, schema_version, encounter_id, individual_id, individual_uuid, site_id, observer, recorded_at, photo_asset_id, x, y, fields_json, notes, first_seen_encounter_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(record.id, record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.individual_uuid, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id).run();
+    await this.db.prepare(`INSERT INTO scar_records (id, species_id, schema_version, encounter_id, individual_id, individual_uuid, site_id, observer, recorded_at, photo_asset_id, x, y, fields_json, notes, first_seen_encounter_id, synced_at, sync_status, sync_error) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(record.id, record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.individual_uuid, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id, record.synced_at, record.sync_status, record.sync_error).run();
     return record;
   }
 
@@ -294,8 +298,8 @@ class D1Store implements DataStore {
     const current = (await this.db.prepare('SELECT * FROM scar_records WHERE id = ?').bind(id).first<ScarRecord>());
     if (!current) throw new Error(`Scar record not found: ${id}`);
     const record = { ...current, ...patch, id };
-    await this.db.prepare(`UPDATE scar_records SET species_id=?, schema_version=?, encounter_id=?, individual_id=?, individual_uuid=?, site_id=?, observer=?, recorded_at=?, photo_asset_id=?, x=?, y=?, fields_json=?, notes=?, first_seen_encounter_id=? WHERE id=?`)
-      .bind(record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.individual_uuid, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id, id).run();
+    await this.db.prepare(`UPDATE scar_records SET species_id=?, schema_version=?, encounter_id=?, individual_id=?, individual_uuid=?, site_id=?, observer=?, recorded_at=?, photo_asset_id=?, x=?, y=?, fields_json=?, notes=?, first_seen_encounter_id=?, synced_at=?, sync_status=?, sync_error=? WHERE id=?`)
+      .bind(record.species_id, record.schema_version, record.encounter_id, record.individual_id, record.individual_uuid, record.site_id, record.observer, record.recorded_at, record.photo_asset_id, record.x, record.y, record.fields_json, record.notes, record.first_seen_encounter_id, record.synced_at, record.sync_status, record.sync_error, id).run();
     return record;
   }
 

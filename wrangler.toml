@@ -8,6 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 MOCK = "1"
 MOCK_APP = "0"
 PUBLIC_WRITE = "dry-run"
+SCAR_WRITEBACK = "off"
 
 [[d1_databases]]
 binding = "DB"

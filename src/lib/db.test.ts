@@ -22,6 +22,9 @@ describe('mock data store', () => {
       fields_json: '{"severity":"minor"}',
       notes: null,
       first_seen_encounter_id: 'b3453961',
+      synced_at: null,
+      sync_status: 'pending',
+      sync_error: null,
     });
     await store.updateScarRecord(created.id, { notes: 'Healing abrasion' });
 
@@ -41,13 +44,14 @@ describe('mock data store', () => {
       individual_id: null, individual_uuid: 'e6eaad1d-3c0d-4b49-83e1-83c1ed33729c', site_id: 'tofo', observer: 'simon',
       recorded_at: '2026-08-22T00:00:00.000Z', photo_asset_id: 'asset-1', x: 0.25, y: 0.5, fields_json: '{}', notes: null,
       first_seen_encounter_id: 'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846',
+      synced_at: null, sync_status: 'pending', sync_error: null,
     });
 
-    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('individual_uuid'));
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining('sync_status'));
     expect(bind).toHaveBeenCalledWith(
       'scar-live', 'whale-shark', '1.0', 'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846', null,
       'e6eaad1d-3c0d-4b49-83e1-83c1ed33729c', 'tofo', 'simon', '2026-08-22T00:00:00.000Z', 'asset-1', 0.25, 0.5, '{}', null,
-      'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846',
+      'f3ed2cf4-a83a-48e5-8833-d44dbcc2c846', null, 'pending', null,
     );
   });
 

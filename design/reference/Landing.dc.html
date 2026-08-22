@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; background: #fafafa; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .mono { font-family: 'JetBrains Mono', monospace; }
+          .muted { color: rgba(21,24,28,0.55); }
+          .btn { background: #15181c; color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 500; font-size: 14px; }
+          .btn-ghost { border: 1px solid rgba(21,24,28,0.18); padding: 12px 20px; border-radius: 999px; font-weight: 500; font-size: 14px; }
+          .card { background: #fff; border: 1px solid rgba(21,24,28,0.1); border-radius: 14px; box-shadow: 0 1px 3px rgba(21,24,28,0.05); }
+          .img { background: repeating-linear-gradient(135deg, #e6e9ed 0 8px, #eef0f3 8px 16px); }
+        </style>
+      </helmet>
+<div data-screen-label="Landing" style="width: 1440px; min-height: 900px; background: #fafafa; display: flex; flex-direction: column;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 64px; font-size: 14px;">
+    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px;">
+      <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="#15181c" stroke-width="1.5"><circle cx="9" cy="9" r="7.25"></circle><circle cx="6.5" cy="7.5" r="0.9" fill="#15181c" stroke="none"></circle><circle cx="10.5" cy="6" r="0.9" fill="#15181c" stroke="none"></circle><circle cx="11.5" cy="10.5" r="0.9" fill="#15181c" stroke="none"></circle><circle cx="7.5" cy="11.5" r="0.9" fill="#15181c" stroke="none"></circle></svg>
+      whaleshark.org
+    </div>
+    <div style="display: flex; gap: 28px; align-items: center;" class="muted"><div>Catalogue</div><div>Match</div><div>Sites</div><div>Photographers</div><div>About</div><div style="background: #15181c; color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 500;">Sign in</div></div>
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 72px 64px 0 64px; text-align: center;">
+    <div style="font-size: 60px; line-height: 1.04; font-weight: 600; letter-spacing: -0.035em; max-width: 760px; text-wrap: balance;">Drop a photo. Meet the shark.</div>
+    <div style="font-size: 18px; line-height: 1.5; max-width: 560px; text-wrap: pretty;" class="muted">Every whale shark has a unique spot pattern. Upload yours and we compare it with [N] known individuals on Sharkbook, then tell you who you met and where else they've been seen.</div>
+  </div>
+  <div style="display: grid; grid-template-columns: 480px 640px; gap: 24px; justify-content: center; padding: 44px 64px 0 64px; align-items: stretch;">
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; border: 1.5px dashed rgba(21,24,28,0.25); padding: 40px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#15181c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>
+      <div style="font-size: 16px; font-weight: 500;">Drop a left-flank photo here</div>
+      <div style="font-size: 13px;" class="muted">or <span style="text-decoration: underline; text-underline-offset: 3px; color: #15181c;">choose a file</span> · JPEG, HEIC or RAW</div>
+      <div style="font-size: 12px; margin-top: 8px;" class="muted">Your name stays on your photo. Nothing is published without you.</div>
+    </div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 10px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px;" class="muted"><div>What you'll get back</div><div class="mono">MiewID msv4.1</div></div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 10px; background: rgba(79,70,229,0.06); border: 1px solid rgba(79,70,229,0.25);">
+        <div class="img" style="width: 72px; height: 52px; border-radius: 6px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 15px; font-weight: 600;">MZ-284 · “[Nickname]”</div><div style="font-size: 13px;" class="muted">First seen Tofo, Mozambique 2019 · 14 sightings · last seen 14 Aug 2026</div></div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><div class="mono" style="font-size: 14px; font-weight: 500; color: #4f46e5;">0.68</div><div style="width: 80px; height: 4px; border-radius: 2px; background: rgba(21,24,28,0.08);"><div style="width: 68%; height: 4px; border-radius: 2px; background: #4f46e5;"></div></div></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px;">
+        <div class="img" style="width: 72px; height: 52px; border-radius: 6px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 15px; font-weight: 500;">TZ-117</div><div style="font-size: 13px;" class="muted">Mafia Island, Tanzania · 2024</div></div>
+        <div class="mono" style="font-size: 14px;">0.31</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px;">
+        <div class="img" style="width: 72px; height: 52px; border-radius: 6px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 15px; font-weight: 500;">MD-393</div><div style="font-size: 13px;" class="muted">Nosy Be, Madagascar · 2023</div></div>
+        <div class="mono" style="font-size: 14px;">0.24</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(21,24,28,0.08); font-size: 13px;">
+        <div class="muted">A clear gap to the next animal means a confident re-sight.</div>
+        <div style="font-weight: 600; color: #4f46e5;">See an example →</div>
+      </div>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding: 72px 160px 0 160px;">
+    <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(21,24,28,0.12); padding-top: 14px;"><div style="font-size: 30px; font-weight: 600; letter-spacing: -0.03em;">[N]</div><div style="font-size: 13px;" class="muted">Known individuals</div></div>
+    <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(21,24,28,0.12); padding-top: 14px;"><div style="font-size: 30px; font-weight: 600; letter-spacing: -0.03em;">[N]</div><div style="font-size: 13px;" class="muted">Sightings in 2026</div></div>
+    <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(21,24,28,0.12); padding-top: 14px;"><div style="font-size: 30px; font-weight: 600; letter-spacing: -0.03em;">[N]</div><div style="font-size: 13px;" class="muted">Sites worldwide</div></div>
+    <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(21,24,28,0.12); padding-top: 14px;"><div style="font-size: 30px; font-weight: 600; letter-spacing: -0.03em;">[N]</div><div style="font-size: 13px;" class="muted">Photographers</div></div>
+  </div>
+  <div style="display: flex; justify-content: center; gap: 28px; padding: 56px 64px 40px 64px; font-size: 12px;" class="muted mono">
+    <div>A community resource stewarded by the Marine Megafauna Foundation</div><div>Matching by Sharkbook.ai / Wild Me</div><div>Open source</div>
+  </div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

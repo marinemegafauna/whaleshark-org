@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; background: #fafafa; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .mono { font-family: 'JetBrains Mono', monospace; }
+          .muted { color: rgba(21,24,28,0.55); }
+          .card { background: #fff; border: 1px solid rgba(21,24,28,0.1); border-radius: 14px; box-shadow: 0 1px 3px rgba(21,24,28,0.05); }
+          .img { background: repeating-linear-gradient(135deg, #e6e9ed 0 8px, #eef0f3 8px 16px); }
+          .row { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 10px; }
+        </style>
+      </helmet>
+<div data-screen-label="Match results" style="width: 1440px; min-height: 900px; background: #fafafa; display: flex; flex-direction: column;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 64px; font-size: 14px;">
+    <div style="font-weight: 600; font-size: 16px;">whaleshark.org</div>
+    <div style="display: flex; gap: 28px; align-items: center;" class="muted"><div>Catalogue</div><div style="color: #15181c; font-weight: 500;">Match</div><div>Sites</div><div>Photographers</div><div>About</div><div style="background: #15181c; color: #fff; padding: 8px 16px; border-radius: 999px; font-weight: 500;">Sign in</div></div>
+  </div>
+  <div style="display: grid; grid-template-columns: 560px 1fr; gap: 32px; padding: 24px 64px 0 64px; align-items: start;">
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div class="card" style="overflow: hidden;">
+        <div class="img" style="height: 380px; position: relative;">
+          <div style="position: absolute; left: 96px; top: 70px; width: 360px; height: 240px; border: 2px solid #4f46e5; border-radius: 4px;"></div>
+          <div class="mono" style="position: absolute; left: 96px; top: 44px; font-size: 11px; color: #4f46e5;">LEFT FLANK · DETECTED</div>
+          <div class="mono" style="position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: rgba(21,24,28,0.5);">YOUR PHOTO · IMG_4471.JPG</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; font-size: 13px;">
+          <div class="muted">Photographed by <span style="color: #15181c;">[your name]</span> · [date] · [site]</div>
+          <div style="text-decoration: underline; text-underline-offset: 3px;">Edit details</div>
+        </div>
+      </div>
+      <div style="font-size: 13px; line-height: 1.5;" class="muted">We compared the spot pattern inside the box with every left-flank record on Sharkbook. Scores are cosine similarity between MiewID fingerprints; what matters is the gap between the first and second animal, not the absolute number.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 500; color: #4f46e5;">Likely re-sight</div>
+        <div style="font-size: 40px; line-height: 1.05; font-weight: 600; letter-spacing: -0.03em;">You met MZ-284.</div>
+        <div style="font-size: 16px;" class="muted">First identified at Tofo, Mozambique in 2019. Seen 14 times since, including once at Mafia Island, 1,800 km north.</div>
+      </div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 4px; padding: 10px;">
+        <div class="row" style="background: rgba(79,70,229,0.06); border: 1px solid rgba(79,70,229,0.25);">
+          <div class="img" style="width: 96px; height: 68px; border-radius: 6px;"></div>
+          <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 16px; font-weight: 600;">MZ-284</div><div style="font-size: 13px;" class="muted">Tofo · last seen 14 Aug 2026 · male · ~7 m</div></div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><div class="mono" style="font-size: 15px; font-weight: 500; color: #4f46e5;">0.68</div><div style="width: 96px; height: 4px; border-radius: 2px; background: rgba(21,24,28,0.08);"><div style="width: 68%; height: 4px; border-radius: 2px; background: #4f46e5;"></div></div></div>
+        </div>
+        <div class="row">
+          <div class="img" style="width: 96px; height: 68px; border-radius: 6px;"></div>
+          <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 16px; font-weight: 500;">TZ-117</div><div style="font-size: 13px;" class="muted">Mafia Island · 2024</div></div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><div class="mono" style="font-size: 15px;">0.31</div><div style="width: 96px; height: 4px; border-radius: 2px; background: rgba(21,24,28,0.08);"><div style="width: 31%; height: 4px; border-radius: 2px; background: rgba(21,24,28,0.35);"></div></div></div>
+        </div>
+        <div class="row">
+          <div class="img" style="width: 96px; height: 68px; border-radius: 6px;"></div>
+          <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;"><div style="font-size: 16px; font-weight: 500;">MD-393</div><div style="font-size: 13px;" class="muted">Nosy Be · 2023</div></div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><div class="mono" style="font-size: 15px;">0.24</div><div style="width: 96px; height: 4px; border-radius: 2px; background: rgba(21,24,28,0.08);"><div style="width: 24%; height: 4px; border-radius: 2px; background: rgba(21,24,28,0.35);"></div></div></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 10px 12px 4px 12px; font-size: 13px; border-top: 1px solid rgba(21,24,28,0.08);"><div class="muted">Gap to next animal <span class="mono" style="color: #15181c;">0.37</span></div><div style="text-decoration: underline; text-underline-offset: 3px;">Show 10 more</div></div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div style="background: #15181c; color: #fff; padding: 13px 22px; border-radius: 999px; font-weight: 500; font-size: 14px;">Yes, it's MZ-284 — add my sighting</div>
+        <div style="border: 1px solid rgba(21,24,28,0.18); padding: 13px 22px; border-radius: 999px; font-weight: 500; font-size: 14px;">Not sure</div>
+        <div style="font-size: 13px; text-decoration: underline; text-underline-offset: 3px;" class="muted">None of these</div>
+      </div>
+      <div style="font-size: 13px;" class="muted">Researchers at Tofo will confirm the match. You'll get an email when your sighting is added to MZ-284's history.</div>
+    </div>
+  </div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

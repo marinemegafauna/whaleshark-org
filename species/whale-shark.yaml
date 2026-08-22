@@ -1,0 +1,72 @@
+# Whale shark (Rhincodon typus) scar schema — v1.0
+# Anchored on Speed et al. 2008 (J Fish Biol 72:1488–1503) severity + injury categories,
+# healing-colour freshness after Womersley et al. 2021 (Conserv Physiol 9:coaa120),
+# dichotomous-key help text in the style of Anderson et al. 2025 (Front Mar Sci).
+# DRAFT — owner: Clare Prebble. Change terminology here; every site's form follows.
+id: whale-shark
+version: "1.0"
+common_name: Whale shark
+scientific_name: Rhincodon typus
+wildbook_taxonomy: "Rhincodon typus"
+fields:
+  - id: body_region
+    label: Body region
+    required: true
+    options:
+      - { id: head, label: Head }
+      - { id: gills, label: Gills }
+      - { id: pectoral_fin, label: Pectoral fin }
+      - { id: dorsal_fin_1, label: "Dorsal fin, 1st" }
+      - { id: dorsal_fin_2, label: "Dorsal fin, 2nd" }
+      - { id: flank, label: Flank }
+      - { id: pelvic_fin, label: Pelvic fin }
+      - { id: caudal_peduncle, label: Caudal peduncle }
+      - { id: caudal_fin, label: Caudal fin }
+  - id: type
+    label: Type
+    help: Speed et al. 2008 injury categories.
+    required: true
+    options:
+      - { id: laceration, label: Laceration, help: "Open cut or tear in the skin." }
+      - { id: nick, label: Nick, help: "Small notch on a fin edge." }
+      - { id: amputation, label: Amputation, help: "Complete or near-complete loss of a fin or fin section." }
+      - { id: abrasion, label: Abrasion, help: "Scraped, roughened skin; no penetrating cut." }
+      - { id: blunt_trauma, label: Blunt trauma, help: "Bruising or deformation without a cut." }
+      - { id: bite, label: Bite, help: "Crescentic wound or tooth marks." }
+      - { id: other, label: Other }
+  - id: severity
+    label: Severity
+    required: true
+    options:
+      - { id: major, label: Major, help: "Penetrates the sub-dermal layer on head, flank or dorsal surface, or any complete/near-complete fin amputation.", emphasis: true }
+      - { id: minor, label: Minor, help: "Superficial: abrasions, small nicks to pectoral, caudal or dorsal fins." }
+  - id: freshness
+    label: Freshness
+    help: Healing colour progression.
+    required: true
+    options:
+      - { id: fresh, label: "Red/pink · fresh", swatch: "#e06c75" }
+      - { id: healing, label: "White · healing", swatch: "#e8e2d8" }
+      - { id: healed, label: "Black · healed", swatch: "#2b2b2b" }
+  - id: likely_cause
+    label: Likely cause
+    required: false
+    options:
+      - { id: propeller, label: Propeller }
+      - { id: boat_strike, label: Boat strike }
+      - { id: net_line, label: Net / line }
+      - { id: predator, label: Predator }
+      - { id: natural, label: Natural }
+      - { id: unknown, label: Unknown }
+  - id: confidence
+    label: Confidence
+    required: true
+    default: certain
+    options:
+      - { id: certain, label: Certain }
+      - { id: probable, label: Probable }
+      - { id: possible, label: Possible }
+  - id: notes
+    label: Notes
+    type: text
+    required: false

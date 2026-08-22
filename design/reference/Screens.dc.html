@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <meta name="design_doc_mode" content="canvas">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .lbl { display: flex; flex-direction: column; gap: 2px; cursor: grab; }
+          .t { font-size: 15px; font-weight: 600; }
+          .d { font-size: 12px; color: rgba(21,24,28,0.6); }
+          .frame { width: 1440px; height: 900px; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,0.12); background: #fff; }
+        </style>
+      </helmet>
+<div style="position: absolute; left: 0px; top: 0px; display: flex; flex-direction: column; gap: 10px;" data-screen-label="1 Landing">
+  <div class="lbl" data-drags-parent="1"><div class="t">1 · Landing</div><div class="d">Public. Drop a photo, see what comes back.</div></div>
+  <div class="frame"><dc-import name="Landing" hint-size="1440px,900px"></dc-import></div>
+</div>
+<div style="position: absolute; left: 1540px; top: 0px; display: flex; flex-direction: column; gap: 10px;" data-screen-label="2 Match">
+  <div class="lbl" data-drags-parent="1"><div class="t">2 · Match results</div><div class="d">Public. Ranked matches, gap to next animal, confirm and add the sighting.</div></div>
+  <div class="frame"><dc-import name="Match" hint-size="1440px,900px"></dc-import></div>
+</div>
+<div style="position: absolute; left: 3080px; top: 0px; display: flex; flex-direction: column; gap: 10px;" data-screen-label="3 Sign in">
+  <div class="lbl" data-drags-parent="1"><div class="t">3 · Sign in</div><div class="d">Sharkbook credentials, proxied — the site never stores a password.</div></div>
+  <div class="frame"><dc-import name="SignIn" hint-size="1440px,900px"></dc-import></div>
+</div>
+<div style="position: absolute; left: 0px; top: 1080px; display: flex; flex-direction: column; gap: 10px;" data-screen-label="4 Workbench">
+  <div class="lbl" data-drags-parent="1"><div class="t">4 · Workbench (signed in)</div><div class="d">Instrument density. Site rail, season counts, encounters needing a scar record.</div></div>
+  <div class="frame"><dc-import name="Workbench" hint-size="1440px,900px"></dc-import></div>
+</div>
+<div style="position: absolute; left: 1540px; top: 1080px; display: flex; flex-direction: column; gap: 10px;" data-screen-label="5 Scar entry">
+  <div class="lbl" data-drags-parent="1"><div class="t">5 · Scar entry (signed in)</div><div class="d">Place scars on the photo; chips come from the per-species schema file.</div></div>
+  <div class="frame"><dc-import name="ScarEntry" hint-size="1440px,900px"></dc-import></div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; background: #f3f4f6; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .mono { font-family: 'JetBrains Mono', monospace; }
+          .muted { color: rgba(21,24,28,0.55); }
+          .eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(21,24,28,0.5); font-weight: 500; }
+          .nav { padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+          .nav-on { background: #15181c; color: #fff; }
+          .panel { background: #fff; border: 1px solid rgba(21,24,28,0.1); border-radius: 10px; }
+          .th { display: grid; grid-template-columns: 0.7fr 1.3fr 1.1fr 0.7fr 0.6fr 0.9fr 0.7fr; gap: 12px; padding: 10px 16px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(21,24,28,0.5); font-weight: 500; border-bottom: 1px solid rgba(21,24,28,0.1); }
+          .tr { display: grid; grid-template-columns: 0.7fr 1.3fr 1.1fr 0.7fr 0.6fr 0.9fr 0.7fr; gap: 12px; padding: 11px 16px; font-size: 13px; border-bottom: 1px solid rgba(21,24,28,0.06); align-items: center; }
+          .tag { display: inline-flex; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+          .tag-todo { background: rgba(79,70,229,0.08); color: #4f46e5; }
+          .tag-done { background: rgba(21,24,28,0.06); color: rgba(21,24,28,0.6); }
+          .stat { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; }
+        </style>
+      </helmet>
+<div data-screen-label="Workbench (signed in)" style="width: 1440px; min-height: 900px; background: #f3f4f6; display: flex; flex-direction: column;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; background: #15181c; color: #fff; font-size: 13px;">
+    <div style="display: flex; align-items: center; gap: 22px;">
+      <div style="font-weight: 600; font-size: 14px;">whaleshark.org</div>
+      <div style="display: flex; gap: 18px; color: rgba(255,255,255,0.7);"><div style="color: #fff;">Encounters</div><div>Individuals</div><div>Scar records</div><div>Matches to confirm</div><div>Exports</div></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.7);"><div class="mono" style="font-size: 11px;">SHARKBOOK · CONNECTED</div><div>Clare Prebble</div></div>
+  </div>
+  <div style="display: grid; grid-template-columns: 232px 1fr; flex-grow: 1;">
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 20px 14px; border-right: 1px solid rgba(21,24,28,0.1);">
+      <div class="eyebrow" style="padding: 0 10px 8px 10px;">Sites</div>
+      <div class="nav nav-on">Tofo, Mozambique</div>
+      <div class="nav">Mafia Island, Tanzania</div>
+      <div class="nav">Nosy Be, Madagascar</div>
+      <div class="nav">Oman</div>
+      <div class="nav">Seychelles</div>
+      <div class="nav muted">+ [N] more</div>
+      <div class="eyebrow" style="padding: 24px 10px 8px 10px;">Season · 2026</div>
+      <div style="display: flex; justify-content: space-between; padding: 5px 10px; font-size: 13px;"><div>Encounters</div><div class="mono">[N]</div></div>
+      <div style="display: flex; justify-content: space-between; padding: 5px 10px; font-size: 13px;"><div>Individuals</div><div class="mono">[N]</div></div>
+      <div style="display: flex; justify-content: space-between; padding: 5px 10px; font-size: 13px;"><div>New this season</div><div class="mono">[N]</div></div>
+      <div style="display: flex; justify-content: space-between; padding: 5px 10px; font-size: 13px;"><div>Scar records</div><div class="mono">[N]</div></div>
+      <div style="display: flex; justify-content: space-between; padding: 5px 10px; font-size: 13px;"><div>Fresh major</div><div class="mono" style="color: #c2410c;">[N]</div></div>
+      <div class="eyebrow" style="padding: 24px 10px 8px 10px;">Schema</div>
+      <div style="padding: 5px 10px; font-size: 13px;">Whale shark scars <span class="mono muted">v1.0</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px; padding: 20px 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <div style="display: flex; flex-direction: column; gap: 4px;"><div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em;">Encounters · Tofo</div><div style="font-size: 13px;" class="muted">Pulled from Sharkbook 4 min ago · showing this season · 18 still need a scar record</div></div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="border: 1px solid rgba(21,24,28,0.18); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: #fff;" class="muted">Search encounter or shark ID</div>
+          <div style="border: 1px solid rgba(21,24,28,0.18); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: #fff;">Needs scar record ▾</div>
+          <div style="background: #15181c; color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500;">Export CSV</div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
+        <div class="panel stat"><div class="eyebrow">Needs scar record</div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #4f46e5;">18</div></div>
+        <div class="panel stat"><div class="eyebrow">Recorded this week</div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em;">[N]</div></div>
+        <div class="panel stat"><div class="eyebrow">Fresh major injuries · season</div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #c2410c;">[N]</div></div>
+        <div class="panel stat"><div class="eyebrow">Matches awaiting confirmation</div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em;">[N]</div></div>
+      </div>
+      <div class="panel" style="overflow: hidden;">
+        <div class="th"><div>Encounter</div><div>Individual</div><div>Date · photographer</div><div>Sex · size</div><div>Photos</div><div>Scar record</div><div></div></div>
+        <div class="tr" style="background: rgba(79,70,229,0.03);"><div class="mono">2fca3548</div><div><span style="font-weight: 600;">MZ-284</span> <span class="muted">· 14 sightings</span></div><div>14 Aug 2026 · C. Prebble</div><div>M · ~7 m</div><div>6 · L+R</div><div><span class="tag tag-todo">Needs record</span></div><div style="font-weight: 600; color: #4f46e5;">Record scars →</div></div>
+        <div class="tr"><div class="mono">b3453961</div><div><span style="font-weight: 600;">MZ-412</span> <span class="muted">· 3 sightings</span></div><div>14 Aug 2026 · O. Patterson</div><div>F · ~5.5 m</div><div>4 · L</div><div><span class="tag tag-todo">Needs record</span></div><div style="font-weight: 600; color: #4f46e5;">Record scars →</div></div>
+        <div class="tr"><div class="mono">4935bac7</div><div><span class="muted">Unassigned · match pending</span></div><div>13 Aug 2026 · [guide]</div><div>— · ~6 m</div><div>2 · L</div><div><span class="tag tag-todo">Needs record</span></div><div style="font-weight: 600; color: #4f46e5;">Record scars →</div></div>
+        <div class="tr"><div class="mono">c5983598</div><div><span style="font-weight: 600;">MZ-091</span> <span class="muted">· 31 sightings</span></div><div>12 Aug 2026 · C. Prebble</div><div>M · ~8 m</div><div>9 · L+R</div><div><span class="tag tag-done">2 scars · 12 Aug</span></div><div class="muted">View</div></div>
+        <div class="tr"><div class="mono">a17e02d9</div><div><span style="font-weight: 600;">MZ-284</span> <span class="muted">· 14 sightings</span></div><div>9 Aug 2026 · [guide]</div><div>M · ~7 m</div><div>3 · L</div><div><span class="tag tag-done">No new scars</span></div><div class="muted">View</div></div>
+        <div class="tr"><div class="mono">d8f1c2a0</div><div><span style="font-weight: 600;">MZ-377</span> <span class="muted">· 1 sighting · new</span></div><div>8 Aug 2026 · O. Patterson</div><div>F · ~4.5 m</div><div>5 · L+R</div><div><span class="tag tag-done">1 scar · 8 Aug</span></div><div class="muted">View</div></div>
+        <div style="display: flex; justify-content: space-between; padding: 10px 16px; font-size: 12px;" class="muted"><div>Showing 6 of 63 encounters this season</div><div>Next →</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

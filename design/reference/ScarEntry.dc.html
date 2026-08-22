@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+        <style>
+          body { margin: 0; font-family: 'Figtree', system-ui, sans-serif; color: #15181c; background: #f3f4f6; }
+          a { color: #15181c; } a:hover { color: #4f46e5; }
+          .mono { font-family: 'JetBrains Mono', monospace; }
+          .muted { color: rgba(21,24,28,0.55); }
+          .panel { background: #fff; border: 1px solid rgba(21,24,28,0.1); border-radius: 10px; }
+          .img { background: repeating-linear-gradient(135deg, #e6e9ed 0 8px, #eef0f3 8px 16px); }
+          .field { display: flex; flex-direction: column; gap: 5px; }
+          .label { font-size: 12px; font-weight: 500; }
+          .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+          .chip { border: 1px solid rgba(21,24,28,0.18); border-radius: 999px; padding: 5px 10px; font-size: 12px; min-height: 28px; box-sizing: border-box; display: inline-flex; align-items: center; }
+          .chip-on { background: #15181c; color: #fff; border-color: #15181c; }
+          .sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+          .th { display: grid; grid-template-columns: 0.3fr 1.4fr 1fr 0.7fr 1fr 0.9fr 0.9fr; gap: 10px; padding: 9px 14px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(21,24,28,0.5); font-weight: 500; border-bottom: 1px solid rgba(21,24,28,0.1); }
+          .tr { display: grid; grid-template-columns: 0.3fr 1.4fr 1fr 0.7fr 1fr 0.9fr 0.9fr; gap: 10px; padding: 9px 14px; font-size: 13px; border-bottom: 1px solid rgba(21,24,28,0.06); align-items: center; }
+        </style>
+      </helmet>
+<div data-screen-label="Scar entry (signed in)" style="width: 1440px; min-height: 900px; background: #f3f4f6; display: flex; flex-direction: column;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; background: #15181c; color: #fff; font-size: 13px;">
+    <div style="display: flex; align-items: center; gap: 22px;">
+      <div style="font-weight: 600; font-size: 14px;">whaleshark.org</div>
+      <div style="display: flex; gap: 18px; color: rgba(255,255,255,0.7);"><div style="color: #fff;">Encounters</div><div>Individuals</div><div>Scar records</div><div>Matches to confirm</div><div>Exports</div></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.7);"><div class="mono" style="font-size: 11px;">SHARKBOOK · CONNECTED</div><div>Clare Prebble</div></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div style="font-size: 12px;" class="muted">Tofo · Encounters · <span class="mono">2fca3548</span></div>
+        <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em;">Scar record · MZ-284 · 14 Aug 2026</div>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: center; font-size: 12px;" class="muted"><div>Male · ~7 m · 14 sightings since 2019</div><div class="mono">SCHEMA whale-shark-scars v1.0</div><div style="text-decoration: underline; text-underline-offset: 3px;">Open on Sharkbook ↗</div></div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 420px; gap: 12px; align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="panel" style="overflow: hidden;">
+          <div style="display: flex; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid rgba(21,24,28,0.08); font-size: 12px;"><div style="display: flex; gap: 14px;"><div style="font-weight: 600;">Left flank</div><div class="muted">Right flank</div><div class="muted">Dorsal</div><div class="muted">All 6 photos</div></div><div class="muted">Click the photo to place a scar · scroll to zoom</div></div>
+          <div class="img" style="height: 372px; position: relative;">
+            <div style="position: absolute; left: 420px; top: 120px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c2410c; background: rgba(194,64,12,0.25); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #c2410c;">1</div>
+            <div style="position: absolute; left: 760px; top: 220px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #15181c; background: rgba(21,24,28,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600;">2</div>
+            <div style="position: absolute; left: 520px; top: 280px; width: 22px; height: 22px; border-radius: 50%; border: 2px dashed #4f46e5; background: rgba(79,70,229,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #4f46e5;">3</div>
+            <div class="mono" style="position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: rgba(21,24,28,0.5);">IMG_4471 · 14 AUG 2026 · C. PREBBLE</div>
+          </div>
+        </div>
+        <div class="panel" style="overflow: hidden;">
+          <div class="th"><div>#</div><div>Body region</div><div>Type</div><div>Severity</div><div>Freshness</div><div>Likely cause</div><div>First seen</div></div>
+          <div class="tr"><div style="color: #c2410c; font-weight: 600;">1</div><div>Dorsal fin, 1st · leading edge</div><div>Laceration</div><div style="color: #c2410c; font-weight: 600;">Major</div><div><span class="sw" style="background: #e8e2d8;"></span>White · healing</div><div>Propeller</div><div>This encounter</div></div>
+          <div class="tr"><div style="font-weight: 600;">2</div><div>Caudal fin, upper lobe</div><div>Nick</div><div>Minor</div><div><span class="sw" style="background: #2b2b2b;"></span>Black · healed</div><div>Unknown</div><div class="muted">2 Nov 2023</div></div>
+          <div class="tr" style="background: rgba(79,70,229,0.04);"><div style="color: #4f46e5; font-weight: 600;">3</div><div class="muted" style="grid-column: span 6;">New scar — fill in the panel on the right</div></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 12px;" class="muted">Terminology and options come from the whale shark schema file in the repo — change it once, every site's form changes.</div>
+          <div style="display: flex; gap: 8px;"><div style="border: 1px solid rgba(21,24,28,0.18); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: #fff;">No new scars on this encounter</div><div style="background: #4f46e5; color: #fff; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 500;">Finish record · next encounter →</div></div>
+        </div>
+      </div>
+      <div class="panel" style="display: flex; flex-direction: column; gap: 11px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;"><div style="font-size: 15px; font-weight: 600;">Scar 3</div><div style="font-size: 12px;" class="muted">Left flank · placed</div></div>
+        <div class="field"><div class="label">Body region</div><div class="chips"><div class="chip">Head</div><div class="chip">Gills</div><div class="chip">Pectoral fin</div><div class="chip">Dorsal fin, 1st</div><div class="chip">Dorsal fin, 2nd</div><div class="chip chip-on">Flank</div><div class="chip">Pelvic fin</div><div class="chip">Caudal peduncle</div><div class="chip">Caudal fin</div></div></div>
+        <div class="field"><div class="label">Type <span class="muted" style="font-weight: 400;">· Speed et al. 2008</span></div><div class="chips"><div class="chip">Laceration</div><div class="chip">Nick</div><div class="chip">Amputation</div><div class="chip chip-on">Abrasion</div><div class="chip">Blunt trauma</div><div class="chip">Bite</div><div class="chip">Other</div></div></div>
+        <div class="field"><div class="label">Severity</div><div class="chips"><div class="chip" style="border-color: #c2410c; color: #c2410c;">Major — penetrates sub-dermal layer, or fin loss</div><div class="chip chip-on">Minor — superficial</div></div></div>
+        <div class="field"><div class="label">Freshness <span class="muted" style="font-weight: 400;">· healing colour</span></div><div class="chips"><div class="chip chip-on"><span class="sw" style="background: #e06c75;"></span>Red/pink · fresh</div><div class="chip"><span class="sw" style="background: #e8e2d8;"></span>White · healing</div><div class="chip"><span class="sw" style="background: #2b2b2b;"></span>Black · healed</div></div></div>
+        <div class="field"><div class="label">Likely cause</div><div class="chips"><div class="chip">Propeller</div><div class="chip">Boat strike</div><div class="chip">Net / line</div><div class="chip">Predator</div><div class="chip">Natural</div><div class="chip chip-on">Unknown</div></div></div>
+        <div class="field"><div class="label">Confidence</div><div class="chips"><div class="chip chip-on">Certain</div><div class="chip">Probable</div><div class="chip">Possible</div></div></div>
+        <div class="field"><div class="label">Notes <span class="muted" style="font-weight: 400;">· optional</span></div><div style="border: 1px solid rgba(21,24,28,0.18); border-radius: 8px; padding: 8px 12px; font-size: 13px; min-height: 40px;" class="muted">Approx. 20 cm, parallel abrasions, likely rope.</div></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px solid rgba(21,24,28,0.1);">
+          <div style="font-size: 12px;" class="muted">Linked to Sharkbook encounter</div>
+          <div style="display: flex; gap: 8px;"><div style="border: 1px solid rgba(21,24,28,0.18); border-radius: 8px; padding: 8px 12px; font-size: 13px;">Discard</div><div style="background: #15181c; color: #fff; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 500;">Save scar</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 900}}'>
+      class Component extends DCLogic { renderVals() { return {}; } }
+    </script>
+  </body>
+</html>

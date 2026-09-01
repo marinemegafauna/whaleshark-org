@@ -34,7 +34,10 @@ text_hints:
   - { pattern: "pectoral", values: { body_region: pectoral_fin } }
   - { pattern: "dorsal", values: { body_region: dorsal_fin_1 } }
   - { pattern: "ventral|belly|underside", values: { body_region: ventral_surface } }
-  - { pattern: "flank|side", values: { body_region: flank_posterior } }
+  - { pattern: "anterior flank|front flank|forward flank", values: { body_region: flank_anterior } }
+  - { pattern: "posterior flank|rear flank|back flank|hind flank", values: { body_region: flank_posterior } }
+  # bare "flank"/"side" deliberately NOT pre-filled: the anterior/posterior split is the
+  # point of the change, and a silent default would bias legacy text towards one half
   - { pattern: "pelvic", values: { body_region: pelvic_fin } }
   - { pattern: "caudal peduncle", values: { body_region: caudal_peduncle } }
   - { pattern: "caudal|tail", values: { body_region: caudal_fin } }

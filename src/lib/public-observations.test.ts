@@ -39,7 +39,7 @@ function fullObservationForm() {
   form.append('behavior', 'feeding_surface');
   form.append('behavior', 'other_sharks');
   form.append('injury_regions', 'dorsal_fin_1');
-  form.append('injury_regions', 'flank');
+  form.append('injury_regions', 'flank_posterior');
   form.append('injury_types', 'fresh_wound');
   form.append('injury_types', 'rope_net');
   return form;
@@ -58,7 +58,7 @@ describe('public sighting observations', () => {
       behavior: ['feeding_surface', 'other_sharks'],
       injuries: {
         severity: 'major',
-        regions: ['dorsal_fin_1', 'flank'],
+        regions: ['dorsal_fin_1', 'flank_posterior'],
         types: ['fresh_wound', 'rope_net'],
         description: 'trailing rope on right side',
       },
@@ -83,7 +83,7 @@ describe('public sighting observations', () => {
 
   test('merges batch-level details with one animal group and produces a compact researcher hint', () => {
     const shared = parsePublicObservationForm(fullObservationForm(), species, new Date('2026-08-22T02:30:00.000Z'));
-    const animal = { sex: 'female', life_stage: 'juvenile', injuries: { severity: 'minor', regions: ['flank'], types: ['healed_scar'], description: '' } };
+    const animal = { sex: 'female', life_stage: 'juvenile', injuries: { severity: 'minor', regions: ['flank_posterior'], types: ['healed_scar'], description: '' } };
     const merged = mergePublicObservations(shared, animal);
 
     expect(merged.sex).toBe('female');
@@ -149,7 +149,7 @@ describe('public sighting observations', () => {
       'Encounter.lifeStage': 'adult',
       'Encounter.livingStatus': 'alive',
       'Encounter.behavior': 'Feeding at surface; With other sharks',
-      'Encounter.distinguishingScar': 'Major: Fresh wound; Rope or net marks on Dorsal fin, 1st; Flank — reporter: trailing rope on right side',
+      'Encounter.distinguishingScar': 'Major: Fresh wound; Rope or net marks on Dorsal fin, 1st; Flank, posterior — reporter: trailing rope on right side',
       'Encounter.measurement.length': '7.62',
       'Encounter.measurement.length.samplingProtocol': 'samplingProtocol0',
       'Encounter.measurement.temperature': '26.7',
@@ -215,7 +215,7 @@ describe('public sighting observations', () => {
 
     expect(publicObservationFieldValue(observations, 'length')).toBe(25);
     expect(publicObservationFieldValue(observations, 'consent')).toBe('agreed');
-    expect(publicObservationFieldValue(observations, 'injury_regions')).toEqual(['dorsal_fin_1', 'flank']);
+    expect(publicObservationFieldValue(observations, 'injury_regions')).toEqual(['dorsal_fin_1', 'flank_posterior']);
     expect(publicReportFieldOptions(species, fields.find((field) => field.id === 'site_id')!, [{ id: 'tofo', label: 'Tofo, Mozambique' }])).toEqual([
       { id: 'tofo', label: 'Tofo, Mozambique' },
       { id: 'other', label: 'Other / not listed' },

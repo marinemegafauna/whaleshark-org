@@ -1,22 +1,40 @@
-# Whale shark (Rhincodon typus) scar schema — v1.0
+# Whale shark (Rhincodon typus) scar schema — v1.1-proposal
 # Anchored on Speed et al. 2008 (J Fish Biol 72:1488–1503) severity + injury categories,
 # healing-colour freshness after Womersley et al. 2021 (Conserv Physiol 9:coaa120),
 # dichotomous-key help text in the style of Anderson et al. 2025 (Front Mar Sci).
 # DRAFT — owner: Clare Prebble. Change terminology here; every site's form follows.
+#
+# v1.1-proposal (2 Sep 2026, for the Clare–Simon working session): reconciled with
+# the Mafia scarring paper's coding scheme (classification.docx in
+# ClarePrebble/mafia-scarring; mapping table in that repo's
+# ANNOTATION_WORKFLOW_PROPOSAL.md). Changes, with Mafia-dataset row counts that
+# motivated them:
+#   - flank split into anterior/posterior (the paper's anatomical result depends
+#     on it: vessel scars concentrate posteriorly) + ventral_surface added
+#   - causes added: anthropogenic_unknown (92 Mafia records), scientific (91 —
+#     keeps tag/biopsy marks out of boat_strike), knife (6 confirmed)
+#   - predator relabelled to cover interspecies damage (cookiecutter, remora)
+#   - confidence: default flipped certain -> possible (defaulting to "certain"
+#     inverts the epistemics; most first-pass Mafia attributions needed
+#     downgrading on review) + help text pinned to CAUSE attribution
 id: whale-shark
-version: "1.0"
+version: "1.1-proposal"
 common_name: Whale shark
 scientific_name: Rhincodon typus
 wildbook_taxonomy: "Rhincodon typus"
 text_hints:
   - { pattern: "prop", values: { likely_cause: propeller } }
   - { pattern: "vessel|boat strike", values: { likely_cause: boat_strike } }
-  - { pattern: '\b(?:net|rope|fishing[ -]?line)', values: { likely_cause: net_line } }
+  - { pattern: '\b(?:net|rope|fishing[ -]?line|entangl)', values: { likely_cause: net_line } }
+  - { pattern: "knife|gaff", values: { likely_cause: knife } }
+  - { pattern: '\b(?:tag|biops)', values: { likely_cause: scientific } }
+  - { pattern: "cookie|remora|orca|predat", values: { likely_cause: predator } }
   - { pattern: "head|snout", values: { body_region: head } }
   - { pattern: "gill", values: { body_region: gills } }
   - { pattern: "pectoral", values: { body_region: pectoral_fin } }
   - { pattern: "dorsal", values: { body_region: dorsal_fin_1 } }
-  - { pattern: "flank|side", values: { body_region: flank } }
+  - { pattern: "ventral|belly|underside", values: { body_region: ventral_surface } }
+  - { pattern: "flank|side", values: { body_region: flank_posterior } }
   - { pattern: "pelvic", values: { body_region: pelvic_fin } }
   - { pattern: "caudal peduncle", values: { body_region: caudal_peduncle } }
   - { pattern: "caudal|tail", values: { body_region: caudal_fin } }
@@ -256,7 +274,9 @@ fields:
       - { id: pectoral_fin, label: Pectoral fin }
       - { id: dorsal_fin_1, label: "Dorsal fin, 1st" }
       - { id: dorsal_fin_2, label: "Dorsal fin, 2nd" }
-      - { id: flank, label: Flank }
+      - { id: flank_anterior, label: "Flank, anterior", help: "Side of the body ahead of the 1st dorsal fin." }
+      - { id: flank_posterior, label: "Flank, posterior", help: "Side of the body from the 1st dorsal fin back." }
+      - { id: ventral_surface, label: Ventral surface, help: "Underside of the body." }
       - { id: pelvic_fin, label: Pelvic fin }
       - { id: caudal_peduncle, label: Caudal peduncle }
       - { id: caudal_fin, label: Caudal fin }
@@ -290,16 +310,20 @@ fields:
     label: Likely cause
     required: false
     options:
-      - { id: propeller, label: Propeller }
-      - { id: boat_strike, label: Boat strike }
-      - { id: net_line, label: Net / line }
-      - { id: predator, label: Predator }
+      - { id: propeller, label: Propeller, help: "Regular parallel or crescentic slices." }
+      - { id: boat_strike, label: Boat strike, help: "Blunt or slicing impact from a hull or keel." }
+      - { id: net_line, label: Net / line, help: "Entanglement: rope, net or line abrasion, often around fins or the caudal peduncle." }
+      - { id: knife, label: Knife / gaff, help: "Deliberate cut, e.g. during release from gear." }
+      - { id: anthropogenic_unknown, label: "Human-caused, source unclear", help: "Clearly human in origin but not attributable to a specific source." }
+      - { id: scientific, label: "Scientific (tag, biopsy)", help: "Tagging or biopsy marks — keeps research marks out of the vessel categories." }
+      - { id: predator, label: "Other animal (predator, cookiecutter, remora)" }
       - { id: natural, label: Natural }
-      - { id: unknown, label: Unknown }
+      - { id: unknown, label: Unknown, help: "Cannot tell whether human-caused or natural." }
   - id: confidence
-    label: Confidence
+    label: Cause confidence
+    help: "How certain is the CAUSE attribution above — not whether the scar exists. If you cannot tell the cause at all, choose 'Unknown' as the cause instead."
     required: true
-    default: certain
+    default: possible
     options:
       - { id: certain, label: Certain }
       - { id: probable, label: Probable }

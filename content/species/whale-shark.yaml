@@ -7,7 +7,7 @@
 # v1.1-proposal (2 Sep 2026, for the Clare–Simon working session): reconciled with
 # the Mafia scarring paper's coding scheme (classification.docx in
 # ClarePrebble/mafia-scarring; mapping table in that repo's
-# ANNOTATION_WORKFLOW_PROPOSAL.md). Changes, with Mafia-dataset row counts that
+# docs/review/ANNOTATION_WORKFLOW_PROPOSAL.md). Changes, with Mafia-dataset row counts that
 # motivated them:
 #   - flank split into anterior/posterior (the paper's anatomical result depends
 #     on it: vessel scars concentrate posteriorly) + ventral_surface added

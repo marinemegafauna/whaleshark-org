@@ -66,6 +66,8 @@ workbench:
   newLabel: · new
   unassignedPending: Unassigned · match pending
   noNewScars: No new scars
+  examinedClean: Examined · clean
+  notExamined: Not examined
   recorded: Recorded
   needsRecord: Needs record
   textChip: text
@@ -96,19 +98,28 @@ scar:
     allPhotos: All {count} photos
     help: Tap the photo to place a scar
   imageAlt: Flank photo of {individual}
-  tableHeaders: ["#", Body region, Type, Severity, Freshness, Likely cause, First seen]
+  tableHeaders: ["#", Body region, Anthropogenic, Threat / cause, Severity, Confidence, First seen]
   thisEncounter: This encounter
   newScarHelp: New scar — fill in the panel on the right
   cardsAriaLabel: Recorded scars
   scarLabel: Scar {number}
   draftLabel: Draft
   draftHelp: New scar — fill in the form below.
-  recordHelp: Terminology and options come from the whale shark schema file in the repo — change it once, every site’s form changes.
-  noNewScars: No new scars on this encounter
+  recordHelp: Fields follow the MMF whale shark scar-classification method (v0.1). Terminology lives in the species schema file in the repo — change it once, every site’s form changes.
+  examined:
+    heading: No scars on this encounter?
+    help: Record the explicit zero — tick the regions you actually looked at. Without it nobody can tell “no scar” from “nobody looked”.
+    regionsLabel: Regions examined
+    cleanButton: Examined · no scars
+    notExaminedButton: Photographed, not examined
+    recorded: "Examined, no scars — {regions}"
+    notExaminedRecorded: Photographed, not examined
+    regionsError: Tick at least one region you examined before saving the explicit zero.
   finishNext: Finish record · next encounter →
   placementPending: Left flank · click photo to place
   placementDone: Left flank · placed
-  notesPlaceholder: Optional field notes
+  notesPlaceholder: Why you coded it this way; anything ambiguous
+  descriptionPlaceholder: The observer’s own words, unedited
   linkedLabel: Linked to Sharkbook encounter
   discard: Discard
   save: Save scar

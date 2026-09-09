@@ -15,13 +15,16 @@ describe('scar save route', () => {
     body.set('species_id', 'whale-shark');
     body.set('schema_version', '1.0');
     body.set('site_id', 'tofo');
+    body.set('field_observation_mode', 'in_water');
+    body.set('field_description', 'Copied Sharkbook text.');
     body.set('field_body_region', 'dorsal_fin_1');
-    body.set('field_type', 'laceration');
-    body.set('field_severity', 'major');
-    body.set('field_freshness', 'fresh');
-    body.set('field_likely_cause', 'propeller');
+    body.set('field_anthropogenic', 'yes');
+    body.set('field_threat', 'vessel');
+    body.set('field_cause', 'propeller');
     body.set('field_confidence', 'probable');
-    body.set('field_notes', 'Copied Sharkbook text.');
+    body.set('field_severity', 'major');
+    body.set('field_healing_stage', 'fresh');
+    body.set('field_n_scars', '1');
 
     const response = await POST({
       request: new Request('http://local/api/scars', { method: 'POST', body }),

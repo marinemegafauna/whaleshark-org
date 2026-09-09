@@ -292,6 +292,8 @@ const appSchema = z.object({
     newLabel: text,
     unassignedPending: text,
     noNewScars: text,
+    examinedClean: text,
+    notExamined: text,
     recorded: text,
     needsRecord: text,
     textChip: text,
@@ -323,11 +325,12 @@ const appSchema = z.object({
     draftLabel: text,
     draftHelp: text,
     recordHelp: text,
-    noNewScars: text,
+    examined: z.object({ heading: text, help: text, regionsLabel: text, cleanButton: text, notExaminedButton: text, recorded: template, notExaminedRecorded: text, regionsError: text }).strict(),
     finishNext: text,
     placementPending: text,
     placementDone: text,
     notesPlaceholder: text,
+    descriptionPlaceholder: text,
     linkedLabel: text,
     discard: text,
     save: text,
@@ -481,20 +484,22 @@ const speciesOptionSchema = z.object({
 const speciesFieldSchema = z.object({
   id: text,
   label: text,
-  type: z.enum(['text']).optional(),
+  type: z.enum(['text', 'number']).optional(),
   help: text.optional(),
   required: z.boolean(),
   default: z.string().optional(),
   options: z.array(speciesOptionSchema).optional(),
 }).strict().superRefine((field, context) => {
-  if (field.type !== 'text' && !field.options?.length) context.addIssue({ code: 'custom', message: `Field "${field.id}" must define options` });
-  if (field.type === 'text' && field.options) context.addIssue({ code: 'custom', message: `Text field "${field.id}" cannot define options` });
+  const freeForm = field.type === 'text' || field.type === 'number';
+  if (!freeForm && !field.options?.length) context.addIssue({ code: 'custom', message: `Field "${field.id}" must define options` });
+  if (freeForm && field.options) context.addIssue({ code: 'custom', message: `${field.type === 'number' ? 'Number' : 'Text'} field "${field.id}" cannot define options` });
+  if (field.type === 'number' && field.default !== undefined && !/^\d+$/.test(field.default)) context.addIssue({ code: 'custom', message: `Number field "${field.id}" default must be an integer string` });
   const seen = new Set<string>();
   for (const option of field.options ?? []) {
     if (seen.has(option.id)) context.addIssue({ code: 'custom', message: `Duplicate option id "${option.id}" in field "${field.id}"` });
     seen.add(option.id);
   }
-  if (field.default && !field.options?.some((option) => option.id === field.default)) {
+  if (!freeForm && field.default && !field.options?.some((option) => option.id === field.default)) {
     context.addIssue({ code: 'custom', message: `Default "${field.default}" is not an option for field "${field.id}"` });
   }
 });

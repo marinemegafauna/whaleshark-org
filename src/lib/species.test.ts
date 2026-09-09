@@ -13,9 +13,15 @@ describe('species schema', () => {
     const species = getSpecies('whale-shark');
 
     expect(species.common_name).toBe('Whale shark');
-    expect(species.fields.find((field) => field.id === 'severity')?.options).toHaveLength(2);
+    expect(species.version).toBe('2.0');
+    // Method v0.1 axes (METHOD.md Section 2) with the codes carried in the option labels.
+    expect(species.fields.map((field) => field.id)).toEqual(['observation_mode', 'description', 'body_region', 'region_detail', 'anthropogenic', 'threat', 'cause', 'confidence', 'severity', 'healing_stage', 'n_scars', 'notes']);
+    expect(species.fields.find((field) => field.id === 'severity')?.options?.map((option) => option.id)).toEqual(['major', 'moderate', 'minor']);
+    expect(species.fields.find((field) => field.id === 'anthropogenic')?.options?.map((option) => option.label)).toEqual(['Yes (Y)', 'Abrasion / contact (A)', 'Natural (N)', 'Unknown (U)']);
+    expect(species.fields.find((field) => field.id === 'confidence')?.default).toBe('possible');
+    expect(species.fields.find((field) => field.id === 'n_scars')).toMatchObject({ type: 'number', default: '1' });
     expect(species.text_hints).toEqual(expect.arrayContaining([
-      expect.objectContaining({ pattern: 'prop', values: { likely_cause: 'propeller' } }),
+      expect.objectContaining({ pattern: 'prop', values: { anthropogenic: 'yes', threat: 'vessel', cause: 'propeller', confidence: 'probable' } }),
     ]));
   });
 

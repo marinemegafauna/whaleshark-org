@@ -1,15 +1,25 @@
 import type { ScarRecord } from './db';
 import { getSpecies } from './species';
+import { isLegacySchemaVersion, normaliseScarFields } from './scar-fields';
 
 const SUMMARY_LINE = /^\[scars v([^\]]+)\]\s+(.+?)\s+\(whaleshark\.org,\s*(\d{4}-\d{2}-\d{2}),\s*([^)]+)\)\s*$/m;
 
+/**
+ * One scar as it appears in the Sharkbook summary line (schema v2.0, method v0.1):
+ *   <region[ (detail)]>: <anthropogenic> · <threat> / <cause> · <severity> · <confidence>[ · <healing stage>]
+ * Option labels carry the method codes in parentheses ("Propeller (P)"); the line drops
+ * them so it stays readable in Sharkbook, and the parser reads the words back.
+ */
 export interface ParsedScarSummaryRecord {
+  /** Schema 1.x lines carried type · severity · freshness · [confidence ]cause; they are kept verbatim in `legacyText`. */
+  legacyText?: string;
   bodyRegion: string;
-  type: string;
+  anthropogenic: string;
+  threat: string;
+  cause: string;
   severity: string;
-  freshness: string;
-  likelyCause: string;
-  confidence: 'certain' | 'probable' | 'possible';
+  confidence: string;
+  healingStage: string | null;
 }
 
 export interface ParsedScarSummary {
@@ -23,8 +33,14 @@ function lowerLabel(value: string): string {
   return value ? `${value[0]!.toLowerCase()}${value.slice(1)}` : value;
 }
 
+/** "Propeller (P)" -> "propeller"; "Red/pink · fresh" -> "fresh"; "1 Confirmed" -> "confirmed"; "Abrasion / contact (A)" -> "abrasion". */
 function summaryOptionLabel(fieldId: string, value: string): string {
-  const compact = fieldId === 'freshness' && value.includes('·') ? value.split('·').at(-1)!.trim() : value;
+  let compact = value;
+  if (fieldId === 'healing_stage' && compact.includes('·')) compact = compact.split('·').at(-1)!.trim();
+  if (fieldId === 'confidence') compact = compact.replace(/^\d+\s+/, '');
+  compact = compact.replace(/\s*\([A-Za-z]+\)\s*$/, '');
+  // "Abrasion / contact" -> "abrasion", "Strike, blunt" -> "strike": keeps ' / ' and ' · ' as separators only.
+  compact = compact.split(' / ')[0]!.split(',')[0]!.trim();
   return lowerLabel(compact);
 }
 
@@ -33,30 +49,40 @@ export function buildScarSummaryLine(records: ScarRecord[], schemaVersion: strin
   const species = getSpecies(records[0]!.species_id);
   const labels = new Map(species.fields.flatMap((field) => (field.options ?? []).map((option) => [`${field.id}:${option.id}`, summaryOptionLabel(field.id, option.label)] as const)));
   const summaries = records.map((record) => {
-    const fields = JSON.parse(record.fields_json) as Record<string, string>;
+    const { fields, legacy, legacyVersion } = normaliseScarFields(record);
     const label = (field: string, fallback = 'unknown') => labels.get(`${field}:${fields[field]}`) ?? fields[field] ?? fallback;
-    const confidence = fields.confidence === 'probable' || fields.confidence === 'possible' ? `${fields.confidence} ` : '';
-    const cause = label('likely_cause');
+    const region = fields.region_detail ? `${label('body_region')} (${label('region_detail')})` : label('body_region');
+    const healing = fields.healing_stage ? ` · ${label('healing_stage')}` : '';
+    const migrated = legacy ? ` · migrated from v${legacyVersion}` : '';
     return {
-      key: `${label('body_region')}\u0000${label('type')}\u0000${record.id}`,
-      text: `${label('body_region')}: ${label('type')} · ${label('severity')} · ${label('freshness')} · ${cause === 'unknown' ? cause : `${confidence}${cause}`}`,
+      key: `${region} ${record.id}`,
+      text: `${region}: ${label('anthropogenic')} · ${label('threat')} / ${label('cause')} · ${label('severity')} · ${label('confidence')}${healing}${migrated}`,
     };
   }).sort((a, b) => a.key.localeCompare(b.key));
-  const latest = [...records].sort((a, b) => `${b.recorded_at}\u0000${b.id}`.localeCompare(`${a.recorded_at}\u0000${a.id}`))[0]!;
+  const latest = [...records].sort((a, b) => `${b.recorded_at} ${b.id}`.localeCompare(`${a.recorded_at} ${a.id}`))[0]!;
   return `[scars v${schemaVersion}] ${summaries.map(({ text }) => text).join(' | ')} (whaleshark.org, ${latest.recorded_at.slice(0, 10)}, ${latest.observer})`;
 }
 
 export function parseScarSummaryLine(text: string | null | undefined): ParsedScarSummary | null {
   const match = text?.match(SUMMARY_LINE);
   if (!match) return null;
-  const records = match[2]!.split(' | ').map((part) => {
+  const schemaVersion = match[1]!;
+  const records = match[2]!.split(' | ').map((part): ParsedScarSummaryRecord => {
     const [bodyRegion = '', rest = ''] = part.split(/:\s+/, 2);
-    const [type = '', severity = '', freshness = '', causeText = ''] = rest.split(' · ');
-    const confidence: ParsedScarSummaryRecord['confidence'] = causeText.startsWith('probable ') ? 'probable' : causeText.startsWith('possible ') ? 'possible' : 'certain';
-    const likelyCause = confidence === 'certain' ? causeText : causeText.slice(confidence.length + 1);
-    return { bodyRegion, type, severity, freshness, likelyCause, confidence };
+    if (isLegacySchemaVersion(schemaVersion)) {
+      const [type = '', severity = '', freshness = '', causeText = ''] = rest.split(' · ');
+      const confidence = causeText.startsWith('probable ') ? 'probable' : causeText.startsWith('possible ') ? 'possible' : 'certain';
+      const cause = confidence === 'certain' ? causeText : causeText.slice(confidence.length + 1);
+      return { legacyText: part, bodyRegion, anthropogenic: '', threat: '', cause: `${cause} (${type})`, severity, confidence, healingStage: freshness || null };
+    }
+    const parts = rest.split(' · ');
+    const [anthropogenic = '', threatCause = '', severity = '', confidence = ''] = parts;
+    const healingStage = parts[4] && !parts[4].startsWith('migrated from') ? parts[4] : null;
+    const [threat = '', cause = ''] = threatCause.split(' / ');
+    if (parts.length < 4 || !threatCause.includes(' / ')) return { legacyText: part, bodyRegion, anthropogenic: '', threat: '', cause: rest, severity: '', confidence: '', healingStage: null };
+    return { bodyRegion, anthropogenic, threat, cause, severity, confidence, healingStage };
   });
-  return { schemaVersion: match[1]!, records, recordedDate: match[3]!, observer: match[4]!.trim() };
+  return { schemaVersion, records, recordedDate: match[3]!, observer: match[4]!.trim() };
 }
 
 export function mergeDistinguishingScar(existing: string | null | undefined, line: string): string {

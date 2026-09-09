@@ -1,53 +1,63 @@
-# Whale shark (Rhincodon typus) scar schema — v1.1-proposal
-# Anchored on Speed et al. 2008 (J Fish Biol 72:1488–1503) severity + injury categories,
-# healing-colour freshness after Womersley et al. 2021 (Conserv Physiol 9:coaa120),
-# dichotomous-key help text in the style of Anderson et al. 2025 (Front Mar Sci).
-# DRAFT — owner: Clare Prebble. Change terminology here; every site's form follows.
-#
-# v1.1-proposal (2 Sep 2026, for the Clare–Simon working session): reconciled with
-# the Mafia scarring paper's coding scheme (classification.docx in
-# ClarePrebble/mafia-scarring; mapping table in that repo's
-# docs/review/ANNOTATION_WORKFLOW_PROPOSAL.md). Changes, with Mafia-dataset row counts that
-# motivated them:
-#   - flank split into anterior/posterior (the paper's anatomical result depends
-#     on it: vessel scars concentrate posteriorly) + ventral_surface added
-#   - causes added: anthropogenic_unknown (92 Mafia records), scientific (91 —
-#     keeps tag/biopsy marks out of boat_strike), knife (6 confirmed)
-#   - predator relabelled to cover interspecies damage (cookiecutter, remora)
-#   - confidence: default flipped certain -> possible (defaulting to "certain"
-#     inverts the epistemics; most first-pass Mafia attributions needed
-#     downgrading on review) + help text pinned to CAUSE attribution
+# Whale shark (Rhincodon typus) scar schema — v2.0
+# Research fields implement the published MMF scar-classification method, v0.1
+# (Prebble, Pierce & Rohner 2026, github.com/marinemegafauna/whale-shark-scar-classification,
+# METHOD.md Section 2): anthropogenic status, threat, cause, confidence, severity,
+# body region (+ side/edge detail) and number of distinct scars, with the observer's
+# verbatim description kept separate from the coder's interpretation (Section 3.1) and
+# the observation channel recorded per row (Section 3.6). Rows are one per distinct scar
+# per encounter; the explicit "examined, no scar" zero is recorded on the encounter review
+# (regions examined), matching the template's examined_clean row type (Section 4).
+# Two additions beyond the method: `healing_stage` (fresh / healing / healed, after
+# Womersley et al. 2021, proposed to the method repo as an optional axis) and
+# `description` / `notes` as separate free-text fields.
+# Owner of terminology: Clare Prebble. Change wording here; every site's form follows.
+# Option ids map to the method's codes in the option help text (Y/A/N/U etc.) so a
+# CSV export (/api/scars/export.csv) drops straight into templates/scar_records_template.csv.
 id: whale-shark
-version: "1.1-proposal"
+version: "2.0"
 common_name: Whale shark
 scientific_name: Rhincodon typus
 wildbook_taxonomy: "Rhincodon typus"
 text_hints:
-  - { pattern: "prop", values: { likely_cause: propeller } }
-  - { pattern: "vessel|boat strike", values: { likely_cause: boat_strike } }
-  - { pattern: '\b(?:net|rope|fishing[ -]?line|entangl)', values: { likely_cause: net_line } }
-  - { pattern: "knife|gaff", values: { likely_cause: knife } }
-  - { pattern: '\b(?:tag|biops)', values: { likely_cause: scientific } }
-  - { pattern: "cookie|remora|orca|predat", values: { likely_cause: predator } }
+  # Order matters: a later hint overwrites an earlier one. Wound words (cause K) come
+  # first so an observer-NAMED cause overwrites them (METHOD 3.1: named causes stand,
+  # bare wound words are never upgraded); generic regions (dorsal, caudal) come before the
+  # specific ones (2nd dorsal, peduncle) for the same reason. Hints only preselect.
+  - { pattern: '\b(?:nick|notch|\bcut|lacer)', values: { severity: moderate } }
+  - { pattern: "amput|missing|deep|open wound", values: { severity: major } }
+  - { pattern: '\b(?:nick|notch|\bcut|lacer|missing|amput)', values: { cause: cut_unstated, confidence: possible } }
+  - { pattern: "abras|scrap|scratch|denticle", values: { anthropogenic: abrasion, threat: contact, cause: contact, confidence: possible, severity: minor } }
+  - { pattern: 'cookie|remora|orca|predat|shark bite|\bbite', values: { anthropogenic: natural, threat: natural, cause: natural, confidence: probable } }
+  - { pattern: '\b(?:tag|biops|tether|clamp)', values: { anthropogenic: "yes", threat: scientific, cause: scientific, confidence: probable } }
+  - { pattern: "knife|gaff", values: { anthropogenic: "yes", threat: human_other, cause: human_other, confidence: probable } }
+  - { pattern: '\b(?:net|rope|fishing[ -]?line|\bline\b|hook|entangl)', values: { anthropogenic: "yes", threat: fisheries, cause: entanglement, confidence: probable } }
+  - { pattern: 'vessel|boat strike|\bstrike|\bhull|boat paint', values: { anthropogenic: "yes", threat: vessel, cause: strike, confidence: probable } }
+  - { pattern: "prop", values: { anthropogenic: "yes", threat: vessel, cause: propeller, confidence: probable } }
   - { pattern: "head|snout", values: { body_region: head } }
   - { pattern: "gill", values: { body_region: gills } }
+  - { pattern: 'mouth|\bjaw', values: { body_region: mouth } }
+  - { pattern: "clasper", values: { body_region: claspers } }
   - { pattern: "pectoral", values: { body_region: pectoral_fin } }
   - { pattern: "dorsal", values: { body_region: dorsal_fin_1 } }
+  - { pattern: "2nd dorsal|second dorsal", values: { body_region: dorsal_fin_2 } }
   - { pattern: "ventral|belly|underside", values: { body_region: ventral_surface } }
   - { pattern: "anterior flank|front flank|forward flank", values: { body_region: flank_anterior } }
-  - { pattern: "posterior flank|rear flank|back flank|hind flank", values: { body_region: flank_posterior } }
-  # bare "flank"/"side" deliberately NOT pre-filled: the anterior/posterior split is the
-  # point of the change, and a silent default would bias legacy text towards one half
+  - { pattern: "posterior flank|rear flank|back flank|hind flank|behind (?:the )?(?:1st |first )?dorsal", values: { body_region: flank_posterior } }
+  # bare "flank"/"side" deliberately NOT pre-filled: the anterior/posterior split matters
+  # to the method's anatomical result and a silent default would bias legacy text
   - { pattern: "pelvic", values: { body_region: pelvic_fin } }
-  - { pattern: "caudal peduncle", values: { body_region: caudal_peduncle } }
   - { pattern: "caudal|tail", values: { body_region: caudal_fin } }
-  - { pattern: "lacer|cut|wound", values: { type: laceration } }
-  - { pattern: "abras|scrap", values: { type: abrasion } }
-  - { pattern: "bite|tooth", values: { type: bite } }
-  - { pattern: "amput|missing", values: { type: amputation } }
-  - { pattern: "fresh|bleed|red|pink", values: { freshness: fresh } }
-  - { pattern: "healing|white", values: { freshness: healing } }
-  - { pattern: "healed|black scar", values: { freshness: healed } }
+  - { pattern: "peduncle", values: { body_region: caudal_peduncle } }
+  - { pattern: '\btip\b', values: { region_detail: tip } }
+  - { pattern: '\bleft\b', values: { region_detail: left } }
+  - { pattern: '\bright\b', values: { region_detail: right } }
+  - { pattern: "leading edge", values: { region_detail: leading_edge } }
+  - { pattern: "trailing edge", values: { region_detail: trailing_edge } }
+  - { pattern: "upper (?:lobe|caudal)", values: { region_detail: upper_lobe } }
+  - { pattern: "lower (?:lobe|caudal)", values: { region_detail: lower_lobe } }
+  - { pattern: 'fresh|bleed|\bred\b|pink', values: { healing_stage: fresh } }
+  - { pattern: "healing|white", values: { healing_stage: healing } }
+  - { pattern: "healed|black scar", values: { healing_stage: healed } }
 public_report:
   version: "1.0"
   submit_label: Save sighting details
@@ -268,70 +278,119 @@ public_report:
           options:
             - { id: agreed, label: I agree the photos can be used for research and shown on Sharkbook with my name on them }
 fields:
+  - id: observation_mode
+    label: Seen how
+    help: "Which channel this row comes from (METHOD 3.6): an in-water note usually wins on presence, a photograph on precise location and severity."
+    required: true
+    options:
+      - { id: in_water, label: In the water }
+      - { id: from_boat, label: From the boat }
+      - { id: photograph_only, label: Photograph only }
+  - id: description
+    label: Observer description, verbatim
+    type: text
+    help: "What the person who saw the shark wrote or said. Code the fields below from it; never edit it."
+    required: false
   - id: body_region
     label: Body region
     required: true
     options:
       - { id: head, label: Head }
       - { id: gills, label: Gills }
+      - { id: mouth, label: Mouth }
+      - { id: dorsal_fin_1, label: "1st dorsal fin" }
+      - { id: dorsal_fin_2, label: "2nd dorsal fin" }
       - { id: pectoral_fin, label: Pectoral fin }
-      - { id: dorsal_fin_1, label: "Dorsal fin, 1st" }
-      - { id: dorsal_fin_2, label: "Dorsal fin, 2nd" }
-      - { id: flank_anterior, label: "Flank, anterior", help: "Side of the body ahead of the 1st dorsal fin." }
-      - { id: flank_posterior, label: "Flank, posterior", help: "Side of the body from the 1st dorsal fin back." }
-      - { id: ventral_surface, label: Ventral surface, help: "Underside of the body." }
       - { id: pelvic_fin, label: Pelvic fin }
+      - { id: claspers, label: Claspers }
+      - { id: flank_anterior, label: "Anterior flank", help: "Side of the body ahead of the 1st dorsal fin." }
+      - { id: flank_posterior, label: "Posterior flank", help: "Side of the body from the 1st dorsal fin back." }
+      - { id: ventral_surface, label: Ventral surface, help: "Underside of the body." }
       - { id: caudal_peduncle, label: Caudal peduncle }
       - { id: caudal_fin, label: Caudal fin }
-  - id: type
-    label: Type
-    help: Speed et al. 2008 injury categories.
-    required: true
+  - id: region_detail
+    label: Side or edge
+    help: "Left / right for flanks and pectoral fins; leading edge, trailing edge or tip for the 1st dorsal; upper or lower lobe for the caudal fin."
+    required: false
     options:
-      - { id: laceration, label: Laceration, help: "Open cut or tear in the skin." }
-      - { id: nick, label: Nick, help: "Small notch on a fin edge." }
-      - { id: amputation, label: Amputation, help: "Complete or near-complete loss of a fin or fin section." }
-      - { id: abrasion, label: Abrasion, help: "Scraped, roughened skin; no penetrating cut." }
-      - { id: blunt_trauma, label: Blunt trauma, help: "Bruising or deformation without a cut." }
-      - { id: bite, label: Bite, help: "Crescentic wound or tooth marks." }
-      - { id: other, label: Other }
+      - { id: left, label: Left }
+      - { id: right, label: Right }
+      - { id: leading_edge, label: Leading edge }
+      - { id: trailing_edge, label: Trailing edge }
+      - { id: tip, label: Tip }
+      - { id: upper_lobe, label: Upper lobe }
+      - { id: lower_lobe, label: Lower lobe }
+  - id: anthropogenic
+    label: Anthropogenic
+    help: "Is this scar human-caused? Abrasions are their own class and stay out of the headline figure (METHOD 3.2)."
+    required: true
+    default: unknown
+    options:
+      - { id: "yes", label: "Yes (Y)", help: "Clearly human-caused: a cause is named or unmistakable (propeller, rope/net, hook, boat paint, knife, tag).", emphasis: true }
+      - { id: abrasion, label: "Abrasion / contact (A)", help: "Abrasions, scrapes, missing denticles, scratches with no named cause. Reported separately." }
+      - { id: natural, label: "Natural (N)", help: "Shark bite, predator, cookiecutter, healed natural wound, or not a scar at all (pigment, deformity)." }
+      - { id: unknown, label: "Unknown (U)", help: "Cannot tell from the record. Say why in the notes." }
+  - id: threat
+    label: Threat
+    help: "What kind of human activity."
+    required: true
+    default: unknown
+    options:
+      - { id: vessel, label: "Vessel (V)" }
+      - { id: fisheries, label: "Fisheries (F)", help: "Net, rope, line, hook, entanglement." }
+      - { id: human_other, label: "Other / unspecified human (H)" }
+      - { id: scientific, label: "Scientific (Sc)", help: "Tags, tethers, biopsy, clamps." }
+      - { id: natural, label: "Natural (N)" }
+      - { id: contact, label: "Contact / abrasion (C)" }
+      - { id: unknown, label: "Unknown (U)" }
+  - id: cause
+    label: Cause
+    help: "The mechanism. Where the observer only gave a wound word (nick, cut, notch, missing tip), choose 'Cut of unstated origin' and do not upgrade it (METHOD 3.1)."
+    required: true
+    default: unknown
+    options:
+      - { id: strike, label: "Strike, blunt (S)" }
+      - { id: propeller, label: "Propeller (P)", help: "Parallel sharp lacerations." }
+      - { id: entanglement, label: "Entanglement (E)", help: "Rope, net or line marks encircling peduncle, fin or body." }
+      - { id: cut_unstated, label: "Cut of unstated origin (K)", help: "Cut, laceration, notch, nick or missing tip with no cause named." }
+      - { id: human_other, label: "Other human (H)" }
+      - { id: scientific, label: "Scientific (Sc)" }
+      - { id: natural, label: "Natural (N)" }
+      - { id: contact, label: "Contact / abrasion (C)" }
+      - { id: unknown, label: "Unknown (U)" }
+  - id: confidence
+    label: Cause confidence
+    help: "How certain the CAUSE attribution is, not whether the scar exists."
+    required: true
+    default: possible
+    options:
+      - { id: confirmed, label: "1 Confirmed", help: "The record states the cause unambiguously ('propeller cuts', 'rope still attached')." }
+      - { id: probable, label: "2 Probable", help: "Strong wording ('rope mark on peduncle', 'boat paint')." }
+      - { id: possible, label: "3 Possible", help: "Wound described, cause inferred." }
+      - { id: unknown, label: "4 Unknown" }
   - id: severity
     label: Severity
     required: true
     options:
-      - { id: major, label: Major, help: "Penetrates the sub-dermal layer on head, flank or dorsal surface, or any complete/near-complete fin amputation.", emphasis: true }
-      - { id: minor, label: Minor, help: "Superficial: abrasions, small nicks to pectoral, caudal or dorsal fins." }
-  - id: freshness
-    label: Freshness
-    help: Healing colour progression.
-    required: true
+      - { id: major, label: Major, help: "Amputation, missing fin tip or lobe, deep or fresh open wound.", emphasis: true }
+      - { id: moderate, label: Moderate, help: "Cuts, notches, nicks, healed lacerations." }
+      - { id: minor, label: Minor, help: "Abrasions, scratches, scrapes, small marks." }
+  - id: healing_stage
+    label: Healing stage
+    help: "Optional. Colour progression after Womersley et al. 2021; proposed to the method as an optional axis."
+    required: false
     options:
       - { id: fresh, label: "Red/pink · fresh", swatch: "#e06c75" }
       - { id: healing, label: "White · healing", swatch: "#e8e2d8" }
       - { id: healed, label: "Black · healed", swatch: "#2b2b2b" }
-  - id: likely_cause
-    label: Likely cause
-    required: false
-    options:
-      - { id: propeller, label: Propeller, help: "Regular parallel or crescentic slices." }
-      - { id: boat_strike, label: Boat strike, help: "Blunt or slicing impact from a hull or keel." }
-      - { id: net_line, label: Net / line, help: "Entanglement: rope, net or line abrasion, often around fins or the caudal peduncle." }
-      - { id: knife, label: Knife / gaff, help: "Deliberate cut, e.g. during release from gear." }
-      - { id: anthropogenic_unknown, label: "Human-caused, source unclear", help: "Clearly human in origin but not attributable to a specific source." }
-      - { id: scientific, label: "Scientific (tag, biopsy)", help: "Tagging or biopsy marks — keeps research marks out of the vessel categories." }
-      - { id: predator, label: "Other animal (predator, cookiecutter, remora)" }
-      - { id: natural, label: Natural }
-      - { id: unknown, label: Unknown, help: "Cannot tell whether human-caused or natural." }
-  - id: confidence
-    label: Cause confidence
-    help: "How certain is the CAUSE attribution above — not whether the scar exists. If you cannot tell the cause at all, choose 'Unknown' as the cause instead."
+  - id: n_scars
+    label: Number of distinct scars in this row
+    type: number
+    help: "Usually 1. An unnumbered plural ('several notches') is one group: enter 1 and say so in the notes."
     required: true
-    default: possible
-    options:
-      - { id: certain, label: Certain }
-      - { id: probable, label: Probable }
-      - { id: possible, label: Possible }
+    default: "1"
   - id: notes
-    label: Notes
+    label: Coder notes
     type: text
+    help: "Why you coded it this way, and anything ambiguous (METHOD 3.5: ambiguity is recorded, not resolved)."
     required: false

@@ -23,7 +23,7 @@ describe('scar write-back sync', () => {
     expect(patchBody).toEqual([{
       op: 'replace',
       path: 'distinguishingScar',
-      value: expect.stringMatching(/^Human observer note\.\n\n\[scars v1\.0\]/),
+      value: expect.stringMatching(/^Human observer note\.\n\n\[scars v2\.0\] 1st dorsal fin \(leading edge\): yes · vessel \/ propeller · moderate · confirmed · healing \| caudal fin \(upper lobe\): unknown · unknown \/ cut of unstated origin · moderate · possible · healed \(whaleshark\.org, 2026-08-14, clare\)$/),
     }]);
     expect(await createMemoryStore().listScarRecords({ encounterId: '2fca3548' })).toEqual([
       expect.objectContaining({ sync_status: 'synced', synced_at: '2026-08-22T10:30:00.000Z', sync_error: null }),

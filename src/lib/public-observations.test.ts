@@ -149,7 +149,7 @@ describe('public sighting observations', () => {
       'Encounter.lifeStage': 'adult',
       'Encounter.livingStatus': 'alive',
       'Encounter.behavior': 'Feeding at surface; With other sharks',
-      'Encounter.distinguishingScar': 'Major: Fresh wound; Rope or net marks on Dorsal fin, 1st; Flank, posterior — reporter: trailing rope on right side',
+      'Encounter.distinguishingScar': 'Major: Fresh wound; Rope or net marks on 1st dorsal fin; Posterior flank — reporter: trailing rope on right side',
       'Encounter.measurement.length': '7.62',
       'Encounter.measurement.length.samplingProtocol': 'samplingProtocol0',
       'Encounter.measurement.temperature': '26.7',

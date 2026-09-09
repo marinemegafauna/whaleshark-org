@@ -1,6 +1,7 @@
 import { mockBatchItems, mockBatches, mockReviewStatuses, mockScarRecords, mockSubmissions } from '../mock/data';
 
-export type ReviewStatus = 'needs_record' | 'recorded' | 'no_new_scars';
+// `no_new_scars` is the pre-v2.0 explicit zero (kept for existing rows); `examined_clean` carries the regions examined (METHOD 4.1).
+export type ReviewStatus = 'needs_record' | 'recorded' | 'no_new_scars' | 'examined_clean' | 'not_examined';
 export type BatchStatus = 'draft' | 'processing' | 'review' | 'submitted' | 'error';
 export type BatchItemStatus = 'queued' | 'uploading' | 'detecting' | 'matching' | 'matched' | 'likely_new' | 'no_shark' | 'error';
 export type ScarSyncStatus = 'pending' | 'synced' | 'failed' | 'disabled';
@@ -61,6 +62,10 @@ export interface EncounterReview {
   status: ReviewStatus;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  regions_examined: string | null;
+  site_id: string | null;
+  individual_id: string | null;
+  individual_uuid: string | null;
 }
 
 export interface PublicSubmission {
@@ -121,7 +126,7 @@ export interface DataStore {
   updateScarRecord(id: string, patch: Partial<ScarRecord>): Promise<ScarRecord>;
   getReviewStatus(encounterId: string): Promise<EncounterReview | null>;
   listReviewStatuses(): Promise<EncounterReview[]>;
-  setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string): Promise<EncounterReview>;
+  setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string, extra?: { regionsExamined?: string[]; siteId?: string; individualId?: string | null; individualUuid?: string | null }): Promise<EncounterReview>;
   createSubmission(submission: PublicSubmission): Promise<PublicSubmission>;
   getSubmission(id: string): Promise<PublicSubmission | null>;
   listSubmissions(): Promise<PublicSubmission[]>;
@@ -196,8 +201,8 @@ class MemoryStore implements DataStore {
     return this.reviews;
   }
 
-  async setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string) {
-    const review: EncounterReview = { encounter_id: encounterId, species_id: speciesId, status, reviewed_by: reviewedBy, reviewed_at: new Date().toISOString() };
+  async setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string, extra: { regionsExamined?: string[]; siteId?: string; individualId?: string | null; individualUuid?: string | null } = {}) {
+    const review: EncounterReview = { encounter_id: encounterId, species_id: speciesId, status, reviewed_by: reviewedBy, reviewed_at: new Date().toISOString(), regions_examined: extra.regionsExamined?.length ? JSON.stringify(extra.regionsExamined) : null, site_id: extra.siteId ?? null, individual_id: extra.individualId ?? null, individual_uuid: extra.individualUuid ?? null };
     const index = this.reviews.findIndex((candidate) => candidate.encounter_id === encounterId);
     if (index >= 0) this.reviews[index] = review;
     else this.reviews.push(review);
@@ -351,10 +356,10 @@ class D1Store implements DataStore {
     return (await this.db.prepare('SELECT * FROM encounter_review').all<EncounterReview>()).results;
   }
 
-  async setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string) {
-    const review: EncounterReview = { encounter_id: encounterId, species_id: speciesId, status, reviewed_by: reviewedBy, reviewed_at: new Date().toISOString() };
-    await this.db.prepare(`INSERT INTO encounter_review (encounter_id, species_id, status, reviewed_by, reviewed_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(encounter_id) DO UPDATE SET species_id=excluded.species_id, status=excluded.status, reviewed_by=excluded.reviewed_by, reviewed_at=excluded.reviewed_at`)
-      .bind(review.encounter_id, review.species_id, review.status, review.reviewed_by, review.reviewed_at).run();
+  async setReviewStatus(encounterId: string, speciesId: string, status: ReviewStatus, reviewedBy: string, extra: { regionsExamined?: string[]; siteId?: string; individualId?: string | null; individualUuid?: string | null } = {}) {
+    const review: EncounterReview = { encounter_id: encounterId, species_id: speciesId, status, reviewed_by: reviewedBy, reviewed_at: new Date().toISOString(), regions_examined: extra.regionsExamined?.length ? JSON.stringify(extra.regionsExamined) : null, site_id: extra.siteId ?? null, individual_id: extra.individualId ?? null, individual_uuid: extra.individualUuid ?? null };
+    await this.db.prepare(`INSERT INTO encounter_review (encounter_id, species_id, status, reviewed_by, reviewed_at, regions_examined, site_id, individual_id, individual_uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(encounter_id) DO UPDATE SET species_id=excluded.species_id, status=excluded.status, reviewed_by=excluded.reviewed_by, reviewed_at=excluded.reviewed_at, regions_examined=excluded.regions_examined, site_id=excluded.site_id, individual_id=excluded.individual_id, individual_uuid=excluded.individual_uuid`)
+      .bind(review.encounter_id, review.species_id, review.status, review.reviewed_by, review.reviewed_at, review.regions_examined, review.site_id, review.individual_id, review.individual_uuid).run();
     return review;
   }
 

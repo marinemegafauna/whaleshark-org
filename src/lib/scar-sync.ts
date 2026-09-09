@@ -1,4 +1,5 @@
 import type { DataStore } from './db';
+import { getSpecies } from './species';
 import { buildScarSummaryLine, mergeDistinguishingScar } from './scar-summary';
 import { getEncounter, patchEncounter, type Fetcher } from './wildbook';
 
@@ -20,8 +21,9 @@ export async function syncScarRecordsToWildbook(input: SyncScarRecordsInput): Pr
   const now = (input.now ?? new Date()).toISOString();
   try {
     const current = await getEncounter(input.cookie, input.encounterId, input.fetcher);
-    const latest = [...records].sort((a, b) => `${b.recorded_at}\u0000${b.id}`.localeCompare(`${a.recorded_at}\u0000${a.id}`))[0]!;
-    const line = buildScarSummaryLine(records, latest.schema_version);
+    // The line is always written in the CURRENT vocabulary (records are normalised), so it carries
+    // the current species schema version, not the version a legacy record was saved under.
+    const line = buildScarSummaryLine(records, getSpecies(records[0]!.species_id).version);
     const existing = typeof current.distinguishingScar === 'string' ? current.distinguishingScar : null;
     await patchEncounter(input.cookie, input.encounterId, [{
       op: 'replace', path: 'distinguishingScar', value: mergeDistinguishingScar(existing, line),

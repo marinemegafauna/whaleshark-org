@@ -39,19 +39,19 @@ export const mockScarFirstSeenLabels: Record<string, string> = { 'old-2023': '2 
 
 export const mockScarRecords = [
   {
-    id: 'scar-1', species_id: 'whale-shark', schema_version: '1.0', encounter_id: '2fca3548', individual_id: 'MZ-284', individual_uuid: 'mock-individual-mz-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:00:00.000Z', photo_asset_id: 'mock-1', x: 0.42, y: 0.32,
-    fields_json: JSON.stringify({ body_region: 'dorsal_fin_1', type: 'laceration', severity: 'major', freshness: 'healing', likely_cause: 'propeller', confidence: 'probable' }), notes: 'Leading-edge laceration.', first_seen_encounter_id: '2fca3548', synced_at: null, sync_status: 'disabled' as const, sync_error: null,
+    id: 'scar-1', species_id: 'whale-shark', schema_version: '2.0', encounter_id: '2fca3548', individual_id: 'MZ-284', individual_uuid: 'mock-individual-mz-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:00:00.000Z', photo_asset_id: 'mock-1', x: 0.42, y: 0.32,
+    fields_json: JSON.stringify({ observation_mode: 'in_water', description: 'Prop cuts on the leading edge of the first dorsal', body_region: 'dorsal_fin_1', region_detail: 'leading_edge', anthropogenic: 'yes', threat: 'vessel', cause: 'propeller', confidence: 'confirmed', severity: 'moderate', healing_stage: 'healing', n_scars: '1' }), notes: 'Observer named the cause.', first_seen_encounter_id: '2fca3548', synced_at: null, sync_status: 'disabled' as const, sync_error: null,
   },
   {
-    id: 'scar-2', species_id: 'whale-shark', schema_version: '1.0', encounter_id: '2fca3548', individual_id: 'MZ-284', individual_uuid: 'mock-individual-mz-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:05:00.000Z', photo_asset_id: 'mock-1', x: 0.75, y: 0.58,
-    fields_json: JSON.stringify({ body_region: 'caudal_fin', type: 'nick', severity: 'minor', freshness: 'healed', likely_cause: 'unknown', confidence: 'certain' }), notes: null, first_seen_encounter_id: 'old-2023', synced_at: null, sync_status: 'disabled' as const, sync_error: null,
+    id: 'scar-2', species_id: 'whale-shark', schema_version: '2.0', encounter_id: '2fca3548', individual_id: 'MZ-284', individual_uuid: 'mock-individual-mz-284', site_id: 'tofo', observer: 'clare', recorded_at: '2026-08-14T10:05:00.000Z', photo_asset_id: 'mock-1', x: 0.75, y: 0.58,
+    fields_json: JSON.stringify({ observation_mode: 'photograph_only', description: 'Nick in upper caudal', body_region: 'caudal_fin', region_detail: 'upper_lobe', anthropogenic: 'unknown', threat: 'unknown', cause: 'cut_unstated', confidence: 'possible', severity: 'moderate', healing_stage: 'healed', n_scars: '1' }), notes: null, first_seen_encounter_id: 'old-2023', synced_at: null, sync_status: 'disabled' as const, sync_error: null,
   },
 ];
 
 export const mockReviewStatuses = [
-  { encounter_id: 'c5983598', species_id: 'whale-shark', status: 'recorded' as const, reviewed_by: 'clare', reviewed_at: '2026-08-12T12:00:00.000Z' },
-  { encounter_id: 'a17e02d9', species_id: 'whale-shark', status: 'no_new_scars' as const, reviewed_by: 'clare', reviewed_at: '2026-08-09T12:00:00.000Z' },
-  { encounter_id: 'd8f1c2a0', species_id: 'whale-shark', status: 'recorded' as const, reviewed_by: 'clare', reviewed_at: '2026-08-08T12:00:00.000Z' },
+  { encounter_id: 'c5983598', species_id: 'whale-shark', status: 'recorded' as const, reviewed_by: 'clare', reviewed_at: '2026-08-12T12:00:00.000Z', regions_examined: null, site_id: 'tofo', individual_id: 'MZ-107', individual_uuid: 'mock-individual-mz-107' },
+  { encounter_id: 'a17e02d9', species_id: 'whale-shark', status: 'examined_clean' as const, reviewed_by: 'clare', reviewed_at: '2026-08-09T12:00:00.000Z', regions_examined: JSON.stringify(['dorsal_fin_1', 'flank_anterior', 'flank_posterior', 'caudal_fin']), site_id: 'tofo', individual_id: 'MZ-093', individual_uuid: 'mock-individual-mz-093' },
+  { encounter_id: 'd8f1c2a0', species_id: 'whale-shark', status: 'recorded' as const, reviewed_by: 'clare', reviewed_at: '2026-08-08T12:00:00.000Z', regions_examined: null, site_id: 'tofo', individual_id: 'MZ-152', individual_uuid: 'mock-individual-mz-152' },
 ];
 
 export const mockSubmissions = [

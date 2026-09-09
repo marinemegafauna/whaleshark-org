@@ -33,10 +33,9 @@ function lowerLabel(value: string): string {
   return value ? `${value[0]!.toLowerCase()}${value.slice(1)}` : value;
 }
 
-/** "Propeller (P)" -> "propeller"; "Red/pink · fresh" -> "fresh"; "1 Confirmed" -> "confirmed"; "Abrasion / contact (A)" -> "abrasion". */
+/** "Propeller (P)" -> "propeller"; "1 Confirmed" -> "confirmed"; "Abrasion / contact (A)" -> "abrasion". */
 function summaryOptionLabel(fieldId: string, value: string): string {
   let compact = value;
-  if (fieldId === 'healing_stage' && compact.includes('·')) compact = compact.split('·').at(-1)!.trim();
   if (fieldId === 'confidence') compact = compact.replace(/^\d+\s+/, '');
   compact = compact.replace(/\s*\([A-Za-z]+\)\s*$/, '');
   // "Abrasion / contact" -> "abrasion", "Strike, blunt" -> "strike": keeps ' / ' and ' · ' as separators only.

@@ -23,7 +23,7 @@ describe('scar save route', () => {
     body.set('field_cause', 'propeller');
     body.set('field_confidence', 'probable');
     body.set('field_severity', 'major');
-    body.set('field_healing_stage', 'fresh');
+    body.set('field_healing_stage', 'open');
     body.set('field_n_scars', '1');
 
     const response = await POST({

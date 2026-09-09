@@ -13,7 +13,7 @@ describe('schema 1.x records under the v2.0 vocabulary', () => {
   test('maps a named legacy cause to the method axes and flags the row', () => {
     expect(normaliseScarFields(legacy)).toEqual({
       legacy: true, legacyVersion: '1.1-proposal',
-      fields: expect.objectContaining({ anthropogenic: 'yes', threat: 'vessel', cause: 'propeller', confidence: 'confirmed', severity: 'major', healing_stage: 'fresh', body_region: 'dorsal_fin_1', observation_mode: 'photograph_only', notes: expect.stringContaining('migrated from schema v1.1-proposal') }),
+      fields: expect.objectContaining({ anthropogenic: 'yes', threat: 'vessel', cause: 'propeller', confidence: 'confirmed', severity: 'major', healing_stage: 'open', body_region: 'dorsal_fin_1', observation_mode: 'photograph_only', notes: expect.stringContaining('migrated from schema v1.1-proposal') }),
     });
     const abrasion = normaliseScarFields({ ...legacy, fields_json: JSON.stringify({ body_region: 'flank', type: 'abrasion', severity: 'minor', freshness: 'healed', likely_cause: 'unknown', confidence: 'possible' }) });
     expect(abrasion.fields).toMatchObject({ anthropogenic: 'abrasion', threat: 'contact', cause: 'contact', severity: 'minor', confidence: 'possible', body_region: 'flank' });
@@ -21,8 +21,8 @@ describe('schema 1.x records under the v2.0 vocabulary', () => {
   });
 
   test('summary line and export carry the mapping instead of degrading the record', () => {
-    expect(buildScarSummaryLine([legacy], '2.0')).toBe('[scars v2.0] 1st dorsal fin: yes · vessel / propeller · major · confirmed · fresh · migrated from v1.1-proposal (whaleshark.org, 2026-08-14, clare)');
-    expect(parseScarSummaryLine(buildScarSummaryLine([legacy], '2.0'))?.records[0]).toMatchObject({ anthropogenic: 'yes', threat: 'vessel', cause: 'propeller', severity: 'major', confidence: 'confirmed', healingStage: 'fresh' });
+    expect(buildScarSummaryLine([legacy], '2.0')).toBe('[scars v2.0] 1st dorsal fin: yes · vessel / propeller · major · confirmed · open · migrated from v1.1-proposal (whaleshark.org, 2026-08-14, clare)');
+    expect(parseScarSummaryLine(buildScarSummaryLine([legacy], '2.0'))?.records[0]).toMatchObject({ anthropogenic: 'yes', threat: 'vessel', cause: 'propeller', severity: 'major', confidence: 'confirmed', healingStage: 'open' });
     const exported = buildScarExportRows([legacy], [])[0]!;
     expect(exported).toMatchObject({ anthropogenic: 'Y', threat: 'V', cause: 'P', confidence: '1', severity: 'Major', region: '1st dorsal' });
     expect(exported.notes).toContain('Old note.');
@@ -40,7 +40,7 @@ describe('schema 1.x records under the v2.0 vocabulary', () => {
     await syncScarRecordsToWildbook({ store, cookie: 'JSESSIONID=x', encounterId: 'legacy-only', fetcher });
     const line = (JSON.parse(calls[1]!) as Array<{ value: string }>)[0]!.value;
     expect(line.startsWith('[scars v2.0]')).toBe(true);
-    expect(parseScarSummaryLine(line)?.records[0]).toMatchObject({ threat: 'vessel', cause: 'propeller', severity: 'major', healingStage: 'fresh' });
+    expect(parseScarSummaryLine(line)?.records[0]).toMatchObject({ threat: 'vessel', cause: 'propeller', severity: 'major', healingStage: 'open' });
   });
 
   test('a schema 1.x summary line already on Sharkbook is kept verbatim, not misread as v2 fields', () => {

@@ -27,7 +27,7 @@ describe('Sharkbook scar text', () => {
       confidence: 'probable',
       severity: 'major',
       body_region: 'dorsal_fin_1',
-      healing_stage: 'fresh',
+      healing_stage: 'open',
     });
   });
 

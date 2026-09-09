@@ -7,8 +7,8 @@
 # the observation channel recorded per row (Section 3.6). Rows are one per distinct scar
 # per encounter; the explicit "examined, no scar" zero is recorded on the encounter review
 # (regions examined), matching the template's examined_clean row type (Section 4).
-# Two additions beyond the method: `healing_stage` (fresh / healing / healed, after
-# Womersley et al. 2021, proposed to the method repo as an optional axis) and
+# Two additions beyond the method: `healing_stage` (open / closing / healed by tissue
+# state, Womersley et al. 2021 — proposed to the method repo as an optional axis) and
 # `description` / `notes` as separate free-text fields.
 # Owner of terminology: Clare Prebble. Change wording here; every site's form follows.
 # Option ids map to the method's codes in the option help text (Y/A/N/U etc.) so a
@@ -55,8 +55,8 @@ text_hints:
   - { pattern: "trailing edge", values: { region_detail: trailing_edge } }
   - { pattern: "upper (?:lobe|caudal)", values: { region_detail: upper_lobe } }
   - { pattern: "lower (?:lobe|caudal)", values: { region_detail: lower_lobe } }
-  - { pattern: 'fresh|bleed|\bred\b|pink', values: { healing_stage: fresh } }
-  - { pattern: "healing|white", values: { healing_stage: healing } }
+  - { pattern: 'fresh|bleed|open wound|\bred\b|pink', values: { healing_stage: open } }
+  - { pattern: "healing|closing|white", values: { healing_stage: closing } }
   - { pattern: "healed|black scar", values: { healing_stage: healed } }
 public_report:
   version: "1.0"
@@ -377,12 +377,12 @@ fields:
       - { id: minor, label: Minor, help: "Abrasions, scratches, scrapes, small marks." }
   - id: healing_stage
     label: Healing stage
-    help: "Optional. Colour progression after Womersley et al. 2021; proposed to the method as an optional axis."
+    help: "Optional; proposed to the method as an extra axis. Judge by TISSUE STATE (Womersley et al. 2021), not colour: colour shifts from red/pink to white to dark are common but are not the criterion."
     required: false
     options:
-      - { id: fresh, label: "Red/pink · fresh", swatch: "#e06c75" }
-      - { id: healing, label: "White · healing", swatch: "#e8e2d8" }
-      - { id: healed, label: "Black · healed", swatch: "#2b2b2b" }
+      - { id: open, label: Open, help: "Any tissue other than the epidermis is visible (exposed white hypodermis is still open)." }
+      - { id: closing, label: Closing, help: "Wound margins contracting; epidermis re-forming over part of the area." }
+      - { id: healed, label: Healed, help: "Epidermis re-formed over the whole area; a closed scar, whatever its colour." }
   - id: n_scars
     label: Number of distinct scars in this row
     type: number

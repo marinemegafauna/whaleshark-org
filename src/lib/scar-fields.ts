@@ -55,6 +55,8 @@ export function normaliseScarFields(record: Pick<ScarRecord, 'schema_version' | 
     n_scars: '1',
     notes: [raw.notes, `migrated from schema v${record.schema_version}: type=${raw.type ?? '?'}, likely_cause=${raw.likely_cause ?? '?'}, confidence=${raw.confidence ?? '?'}`].filter(Boolean).join(' / '),
   };
-  if (raw.freshness) fields.healing_stage = raw.freshness;
+  // v1.x freshness was colour-coded (fresh/healing/healed); v2.0 healing_stage is tissue state.
+  const stage: Record<string, string> = { fresh: 'open', healing: 'closing', healed: 'healed' };
+  if (raw.freshness) fields.healing_stage = stage[raw.freshness] ?? raw.freshness;
   return { fields, legacy: true, legacyVersion: record.schema_version };
 }

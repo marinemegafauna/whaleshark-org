@@ -38,7 +38,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Managed sandboxes that prohibit local TCP listeners cannot run `astro dev` or browser-based local QA: Astro exits before becoming ready, and even a minimal local HTTP server fails to bind. In that environment, use `npm test`, `npx astro check`, and `npm run build`; perform rendered browser QA later in a local session that permits a loopback listener. Some managed shells also reject explicit temporary-file cleanup commands, so migration diagnostics should use an in-memory SQLite pipeline rather than a temporary database that needs removal.
+Managed sandboxes that prohibit local TCP listeners cannot run `astro dev` or browser-based local QA: Astro exits before becoming ready, and even a minimal local HTTP server fails to bind. In that environment, use `npm test`, `npx astro check`, and `npm run build`; perform rendered browser QA later in a local session that permits a loopback listener. A read-only sandbox (for example a review-only Codex run) cannot run Vitest at all — it fails with temporary-directory `EPERM` errors before any test executes — so reviewers there should reproduce with `node` one-liners and leave the suite to the parent session. Some managed shells also reject explicit temporary-file cleanup commands, so migration diagnostics should use an in-memory SQLite pipeline rather than a temporary database that needs removal.
 
 ```bash
 { for migration in migrations/*.sql; do sed -n '1,$p' "$migration"; done; printf '.schema contributions\n'; } | sqlite3 :memory:

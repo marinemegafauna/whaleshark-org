@@ -154,7 +154,8 @@ describe('Wildbook client', () => {
       from: 0,
       size: 20,
       query: { bool: { filter: [{ terms: { locationId: ['Tofo'] } }, { match: { taxonomy: 'Rhincodon typus' } }] } },
-      sort: [{ dateMillis: { order: 'desc' } }],
+      // id breaks dateMillis ties so from/size pages neither repeat nor skip records.
+      sort: [{ dateMillis: { order: 'desc' } }, { id: 'asc' }],
     });
   });
 

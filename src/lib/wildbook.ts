@@ -357,11 +357,14 @@ export async function searchEncounters(cookie: string, search: EncounterSearch, 
       },
     });
   }
+  // from/size paging needs a total order: records sharing a dateMillis can be
+  // returned twice or skipped across pages, so id breaks ties.
+  const sort = [{ dateMillis: { order: 'desc' } }, { id: 'asc' }];
   const response = await checked(
     await fetcher(endpoint('/api/v3/search/encounter'), {
       method: 'POST',
       headers: sessionHeaders(cookie),
-      body: JSON.stringify({ from: search.from, size: search.size, query: { bool: { filter } }, sort: [{ dateMillis: { order: 'desc' } }] }),
+      body: JSON.stringify({ from: search.from, size: search.size, query: { bool: { filter } }, sort }),
     }),
   );
   const body = (await response.json()) as { hits: EncounterHit[] };

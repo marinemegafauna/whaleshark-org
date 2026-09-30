@@ -9,6 +9,7 @@ header:
   menuLabel: Menu
   navAriaLabel: Application navigation
   nav:
+    - { key: matching, label: Matching, href: /app/matching }
     - { key: encounters, label: Encounters, href: /app }
     - { key: individuals, label: Individuals }
     - { key: scars, label: Scar records }

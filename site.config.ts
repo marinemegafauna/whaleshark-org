@@ -6,6 +6,7 @@ const siteConfig = {
   // the 3,000 most recent whale shark encounters). Sharkbook's sites are coarser than ours — Mafia Island
   // encounters carry locationId 'Tanzania'.
   sites: [
+    { id: 'kenya', locationIds: ['Kenya'] },
     { id: 'tofo', locationIds: ['Tofo', 'Mozambique'] },
     { id: 'mafia-island', locationIds: ['Tanzania'] },
     { id: 'nosy-be', locationIds: ['Madagascar'] },

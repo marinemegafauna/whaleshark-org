@@ -1,0 +1,9 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AppHeader from '../../../components/AppHeader.astro';
+import { getPageCopy, getSiteCopy, fillTemplate } from '../../../lib/content';
+import { matchingStore } from '../../../lib/runtime';
+const [copy,site,batches] = await Promise.all([getPageCopy('matching'),getSiteCopy(),matchingStore(Astro.locals).listBatches()]);
+---
+<BaseLayout title={copy.seo.title} description={copy.seo.description}><AppHeader active="matching"/><main><h1>{copy.heading}</h1>{!batches.length && <section><p>{copy.empty}</p>{copy.commands.map(command=><pre>{command}</pre>)}</section>}{batches.map(b=><article><h2>{b.title}</h2><p>{site.researchSites.find(s=>s.id===b.site)?.label ?? b.site} · {copy.ui.imported} {b.imported_at.slice(0,10)}</p><progress value={b.decided} max={b.cards || 1}/><p>{fillTemplate(copy.ui.progress,{decided:b.decided,total:b.cards})} · {Object.entries(b.by_cls).map(([cls,n])=>`${copy.classes[cls as keyof typeof copy.classes]} ${n}`).join(' · ')}</p><a href={`/app/matching/${encodeURIComponent(b.id)}`}>{copy.ui.open}</a></article>)}</main></BaseLayout>
+<style>main{max-width:1000px;margin:auto;padding:24px}article{padding:20px;border:1px solid var(--line);border-radius:10px;margin:16px 0}progress{width:100%}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>

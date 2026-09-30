@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 type WorkerEnv = { MOCK?: string; MOCK_APP?: string; PUBLIC_WRITE?: string; SCAR_WRITEBACK?: string; [key: string]: unknown };
 const workerEnv = env as unknown as WorkerEnv;
 
-function setting(name: 'MOCK' | 'MOCK_APP' | 'PUBLIC_WRITE' | 'SCAR_WRITEBACK'): string | undefined {
+function setting(name: 'MOCK' | 'MOCK_APP' | 'PUBLIC_WRITE' | 'SCAR_WRITEBACK' | 'MATCHING'): string | undefined {
   const runtime = workerEnv[name];
   if (typeof runtime === 'string') return runtime;
   const bundled = import.meta.env[name];
@@ -28,4 +28,8 @@ export function publicWriteMode(): 'dry-run' | 'live' {
 
 export function scarWritebackMode(): 'off' | 'append' {
   return setting('SCAR_WRITEBACK') === 'append' ? 'append' : 'off';
+}
+
+export function isMatchingEnabled(): boolean {
+  return import.meta.env.DEV || setting('MATCHING') === 'on';
 }

@@ -1,0 +1,34 @@
+import { expect, test } from 'vitest';
+import { MemoryMatchingStore, D1MatchingStore } from './match-store';
+import { buildBatchFromCascadeReport } from './match-batch';
+const batch = buildBatchFromCascadeReport({thresholds:{likely_score:.45,likely_margin:.1,possible_score:.4,possible_margin:.05,duplicate_suspect:.99},results:[{query_enc:'q1',class:'weak',s1:.3},{query_enc:'q2',class:'no_likely_match'}]},{id:'test',title:'Test'});
+const input = {verdict:'new' as const,candidate_key:null,candidate_label:null,notes:'note',scar_notes:'scar',reviewer:'local'};
+test('import idempotence, reimport preserves verdict/log, removal, cache, counts and clear', async () => {
+  const store = new MemoryMatchingStore();
+  await store.importBatch(batch); await store.importBatch(batch);
+  await store.setVerdict('test','q1',input);
+  await store.setVerdict('test','q1',{...input,verdict:'cant_tell'});
+  await store.importBatch(batch);
+  expect(await store.listBatches()).toMatchObject([{cards:2,decided:1,by_cls:{weak:1,none:1}}]);
+  expect((await store.getCard('test','q1'))?.verdict?.verdict).toBe('cant_tell');
+  expect(store.log).toHaveLength(2);
+  await store.setVerdict('test','q1',null,'local');
+  expect(await store.getVerdicts('test')).toEqual([]);
+  expect(store.log[2]).toMatchObject({verdict:null,reviewer:'local'});
+  await store.importBatch({...batch,cards:[batch.cards[0]]});
+  expect(await store.listCards('test')).toHaveLength(1);
+  expect(await store.getCard('test','missing')).toBeNull();
+});
+test('D1 mutations are atomic and import never touches verdicts', async () => {
+  const operations: {sql:string;values:unknown[]}[][] = [];
+  const db = {prepare(sql:string) { return {sql,values:[] as unknown[],bind(...values:unknown[]) {this.values=values;return this;}};},async batch(rows: {sql:string;values:unknown[]}[]) {operations.push(rows);}} as unknown as D1Database;
+  const store = new D1MatchingStore(db);
+  await store.importBatch(batch);
+  expect(operations[0].every(r=>!r.sql.includes('match_verdict'))).toBe(true);
+  expect(operations[0].some(r=>r.sql.includes('NOT IN'))).toBe(true);
+  await store.setVerdict('test','q1',input);
+  await store.setVerdict('test','q1',null,'local');
+  expect(operations[1]).toHaveLength(2);
+  expect(operations[2][0].sql).toContain('DELETE FROM match_verdicts');
+  expect(operations[2][1].values[2]).toBeNull();
+});

@@ -498,3 +498,20 @@ export async function getBulkImportStatus(cookie: string, taskId: string, fetche
 export function getMatchResults(cookie: string, taskId: string, fetcher: Fetcher = fetch) {
   return getJson<Record<string, unknown>>(`/api/v3/tasks/${encodeURIComponent(taskId)}/match-results`, cookie, fetcher);
 }
+
+// Matching reads use the researcher's session; no matching operation writes upstream.
+export async function searchEncountersByIndividual(cookie: string, name: string, fetcher: Fetcher = fetch): Promise<EncounterHit[]> {
+  const response = await checked(await fetcher(endpoint('/api/v3/search/encounter?size=200'), {
+    method: 'POST', headers: sessionHeaders(cookie),
+    body: JSON.stringify({ query: { term: { individualDisplayName: name } }, sort: [{ id: 'asc' }] }),
+  }));
+  return ((await response.json()) as { hits: EncounterHit[] }).hits;
+}
+
+export async function searchEncountersByIds(cookie: string, ids: string[], fetcher: Fetcher = fetch): Promise<EncounterHit[]> {
+  const response = await checked(await fetcher(endpoint('/api/v3/search/encounter?size=200'), {
+    method: 'POST', headers: sessionHeaders(cookie),
+    body: JSON.stringify({ query: { ids: { values: ids } }, sort: [{ id: 'asc' }] }),
+  }));
+  return ((await response.json()) as { hits: EncounterHit[] }).hits;
+}

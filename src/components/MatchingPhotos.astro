@@ -1,0 +1,17 @@
+---
+import type { Photo } from '../lib/match-batch';
+import { matchingPhotoUrl } from '../lib/match-service';
+import type { PageCopyFor } from '../lib/content-schema';
+interface Props { photos:Photo[]; pane:number; offset?:number; copy:PageCopyFor<'matching'>; }
+const {photos,pane,offset=0,copy} = Astro.props;
+function crop(p:Photo) {
+  if (!p.box || !p.w || !p.h) return '';
+  // Contain (not cover) the ID box in the 4:3 tile so the whole flank area stays visible.
+  const [x,y,w,h] = p.box, scale = Math.min(4/3/w,1/h);
+  return `position:absolute;width:${p.w*scale/(4/3)*100}%;height:${p.h*scale*100}%;max-width:none;left:${((4/3-w*scale)/2-x*scale)/(4/3)*100}%;top:${((1-h*scale)/2-y*scale)*100}%;`;
+}
+---
+<div class="photo-strip">{photos.map((p,i)=><button type="button" class="photo-pick" data-pane={pane} data-idx={i+offset} aria-label={`${copy.ui.compare} · ${copy.views[p.view]} · ${p.fname ?? i+1}`}><span class="crop"><img src={matchingPhotoUrl(p.url)} style={crop(p)} alt={`${copy.views[p.view]} · ${p.enc.slice(0,8)}`} loading="lazy" decoding="async" /></span><span>{copy.views[p.view]} · {p.fname ?? i+1}</span></button>)}</div>
+<style>
+.photo-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.photo-pick{background:transparent;border:2px solid transparent;border-radius:8px;padding:3px;cursor:pointer;text-align:left;min-width:0}.photo-pick.selected{border-color:var(--accent)}.crop{display:block;position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--ink);border-radius:5px}.crop img{width:100%;height:100%;object-fit:contain}.photo-pick>span:last-child{display:block;font-size:12px;padding-top:4px}
+</style>

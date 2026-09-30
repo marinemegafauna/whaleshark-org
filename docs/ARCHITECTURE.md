@@ -20,7 +20,7 @@ Browser ──▶ Astro (Cloudflare Workers) ──▶ Wildbook v3 API (sharkboo
 
 ### Cloudflare runtime binding contract
 
-Server routes and middleware obtain the D1 binding from the Cloudflare adapter's Astro-local runtime context at `locals.runtime.env.DB`; `src/lib/runtime.ts` is the single adapter boundary. Re-check that path against the installed `@astrojs/cloudflare` release whenever the adapter's major version changes. Mock mode intentionally falls back to the in-memory store without a binding.
+Server routes and middleware obtain bindings from `cloudflare:workers` through `src/lib/runtime.ts`, the single adapter boundary for Astro 7 / Cloudflare 14. Re-check that contract whenever the adapter's major version changes. App storage follows `MOCK_APP`; matching always uses D1 when bound, including in mock-auth mode, with an in-memory fallback only when D1 is absent.
 
 ## Auth
 
@@ -81,3 +81,17 @@ This split allows the deployed public site to remain deterministic and write-saf
 ## Not in v1
 
 Dashboards beyond the season counts, user-built views, per-site gating beyond what Wildbook already enforces, a native mobile app.
+
+## Matching (local MVP)
+
+`whaleshark.match-batch/v1` contains report provenance, scoring thresholds and ordered cards. Each card groups a query encounter's annotation/tier rows into at most five candidates, plus optional notes, dates and embedded legacy photos. The shared ESM builder and Zod validator serve both the Node scripts and Astro. Catalogue inputs and generated files stay under ignored `local-data/`, which is excluded from TypeScript source checks; test data is synthetic except for the existing committed API fixture.
+
+Live reads are the preferred source and use the researcher's stored Wildbook session cookie. A D1 cache fresher than seven days is reused before fetching; `?refresh` bypasses it. Mock mode or a failed live read uses embedded photos when present, with an incomplete-photos notice. A 401 clears the site session cookie and returns the researcher to sign-in. Named candidates use a read-only individual-display-name search; matched sightings come first, followed by newest dates, capped at twelve with a hidden count.
+
+Every rendered photo goes through `/api/matching/photo`. It accepts only HTTPS `www.sharkbook.ai/wildbook_data_dir/` URLs, rejects credentials and traversal, refuses redirects, forwards no cookies, requires an image content type and sets private seven-day caching. The compare viewer uses the same full image for whole-photo and zoom-to-box views. Wheel zoom, pointer pan, photo stepping and candidate tabs do not set verdicts.
+
+The middleware returns 404 for `/app/matching` and `/api/matching` before authentication unless development mode or `MATCHING=on` enables them. Enabled matching uses the existing researcher sign-in gate. Wrangler has no default `MATCHING` setting. CLI import/export are local-only and refuse `--remote`.
+
+Migration `0010_matching.sql` adds `match_batches` (metadata), `match_cards` (ordered JSON), `match_card_cache` (hydrated photos), `match_verdicts` (current decision), and `match_verdict_log` (append-only audit). Imports atomically replace only batch/cards and remove stale cards; verdicts and the log survive re-import. Verdict save/clear atomically updates the current row and appends a log row. Matching scar returns accept only safe `/app/matching/` paths, carry through forms and return after finishing. Their saves remain local even if ordinary scar write-back is configured.
+
+The HTTP download and `matching:export` share `whaleshark.match-decisions/v1`: batch metadata, `verdicts` keyed by query encounter (`verdict`, candidate label/key/encounter, notes, quick scar `scars`, reviewer, `at`), and `scars` keyed by query encounter (review status, examined regions and structured records with fields, placement, schema version and creation time). The verdict shape is compatible with the offline review helper's apply tooling. Nothing in this feature writes to Sharkbook.

@@ -44,6 +44,21 @@ Managed sandboxes that prohibit local TCP listeners cannot run `astro dev` or br
 { for migration in migrations/*.sql; do sed -n '1,$p' "$migration"; done; printf '.schema contributions\n'; } | sqlite3 :memory:
 ```
 
+## Photo-ID matching (local only)
+
+The researcher Matching screen reviews offline cascade reports one sighting at a time, compares full photos and ID areas, records verdicts and quick scar notes, and links to the existing structured scar form. Build and run a batch with:
+
+```bash
+npm run matching:build -- --report <report.json> --notes <pairs.json> --encounters <encounters.json> --photos-from-page <index.html> --id <id> --title "<title>" --site kenya
+npm run matching:import -- local-data/matching/batches/<id>.json
+npm run matching:demo -- <id>
+npm run matching:export -- <id>
+```
+
+Only `--report`, `--id`, `--title` and `--site` are required for the builder. The demo applies migrations, sets `MOCK_APP=0`, starts Astro and opens Brave; sign in with your own Sharkbook account. Use `/app/matching` to list batches. Import and export refuse `--remote`; re-import preserves verdicts and the audit log.
+
+Run this workflow locally: the deployed dev site is publicly reachable and unpublished sighting photos and locations belong on the researcher's computer. Matching defaults off in deployed builds; it is available in development or with an explicit `MATCHING=on` setting. Do not enable that setting on the public deployment. `local-data/` holds reports, batches, photos, SQL and decisions and must never be committed. Live reads use the signed-in researcher's session; no API token is needed. Nothing in matching is written to Sharkbook, including scars recorded via the matching return path.
+
 ## Configure a real Wildbook
 
 1. Copy `.env.example` to `.env` locally and set `WILDBOOK_BASE_URL` to a Wildbook ≥ 10.12 instance.

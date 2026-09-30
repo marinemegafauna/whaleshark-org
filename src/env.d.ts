@@ -10,6 +10,7 @@ declare global {
   }
 
   interface ImportMetaEnv {
+    readonly MATCHING?: 'on' | 'off';
     readonly MOCK?: string;
     readonly MOCK_APP?: string;
     readonly PUBLIC_WRITE?: 'dry-run' | 'live';

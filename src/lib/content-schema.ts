@@ -260,7 +260,7 @@ const appSchema = z.object({
     menuLabel: text,
     navAriaLabel: text,
     nav: z.array(z.object({
-      key: z.enum(['encounters', 'individuals', 'scars', 'matches', 'exports', 'practice', 'contribute', 'collaboration']),
+      key: z.enum(['encounters', 'individuals', 'scars', 'matches', 'exports', 'practice', 'contribute', 'collaboration', 'matching']),
       label: text,
       href: text.optional(),
     }).strict()).min(1),
@@ -429,6 +429,14 @@ const contributeSchema = z.object({
   propose: z.object({ heading: text, body: text, links: z.array(linkSchema).min(1) }).strict(),
 }).strict();
 
+const matchingSchema = z.object({
+  page: z.literal('matching'), seo: z.object({title:text,description:text}).strict(), heading:text, empty:text, commands:z.array(text),
+  ui: z.object({open:text,imported:text,progress:text,all:text,likely:text,possible:text,undecided:text,prefetch:text,prefetchProgress:text,prefetchDone:text,download:text,newSighting:text,sharkbook:text,refresh:text,duplicate:text,cosine:text,margin:text,tier:text,flank:text,unknown:text,noPhotos:text,embedded:text,unavailable:text,candidateUnavailable:text,sightings:text,matched:text,pick:text,picked:text,new:text,same:text,cantTell:text,notes:text,scarNotes:text,save:text,saved:text,notSaved:text,dirty:text,recordScars:text,scarBadge:text,back:text,nextUndecided:text,previous:text,next:text,compare:text,compareHelp:text,close:text,fit:text,idArea:text,whole:text,photoCount:text}).strict(),
+  classes:z.object({likely:text,possible:text,weak:text,none:text,no_fingerprint:text}).strict(),
+  reviewStatuses:z.object({needs_record:text,recorded:text,no_new_scars:text,examined_clean:text,not_examined:text}).strict(),
+  views:z.object({left:text,right:text,other:text,'no box':text,unknown:text}).strict(),
+}).strict();
+
 export const pageCollectionSchema = z.union([
   landingSchema,
   bulkSchema,
@@ -438,6 +446,7 @@ export const pageCollectionSchema = z.union([
   provenanceSchema,
   signinSchema,
   appSchema,
+  matchingSchema,
   practiceSchema,
   collaborationSchema,
   contributeSchema,

@@ -1,10 +1,10 @@
 ---
 import { getPageCopy, getSiteCopy } from '../lib/content';
 import { listOpenContributionIssues } from '../lib/contribute';
-import { isMockAppMode } from '../lib/mode';
+import { isMockAppMode, isMatchingEnabled } from '../lib/mode';
 import { contributionIssueCache, runtimeValue } from '../lib/runtime';
 
-type NavKey = 'encounters' | 'individuals' | 'scars' | 'matches' | 'exports' | 'practice' | 'contribute' | 'collaboration';
+type NavKey = 'encounters' | 'individuals' | 'scars' | 'matches' | 'exports' | 'practice' | 'contribute' | 'collaboration' | 'matching';
 interface Props { active?: NavKey; }
 const { active = 'encounters' } = Astro.props;
 const [copy, siteCopy] = await Promise.all([getPageCopy('app'), getSiteCopy()]);
@@ -29,7 +29,7 @@ if (githubRepo) {
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"></path></svg>
     <span>{copy.header.menuLabel}</span>
   </button>
-  <nav id="app-menu" aria-label={copy.header.navAriaLabel}>{copy.header.nav.map((item) => item.href
+  <nav id="app-menu" aria-label={copy.header.navAriaLabel}>{copy.header.nav.filter(item => item.key !== 'matching' || isMatchingEnabled()).map((item) => item.href
     ? <a class:list={{ active: active === item.key }} href={item.href}>{item.label}{item.key === 'contribute' && contributionCount !== undefined && <small>{contributionCount}</small>}</a>
     : <span>{item.label}</span>)}<div class="account">{!isMockAppMode() && <span class="mono">{copy.header.connectedLabel}</span>}<span>{accountName}</span></div></nav>
 </header>

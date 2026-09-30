@@ -10,7 +10,11 @@
     "test:watch": "vitest",
     "deploy": "astro build && wrangler deploy",
     "db:create": "wrangler d1 create whaleshark-org",
-    "db:migrate": "wrangler d1 migrations apply whaleshark-org --remote"
+    "db:migrate": "wrangler d1 migrations apply whaleshark-org --remote",
+    "matching:build": "node scripts/matching/build-batch.mjs",
+    "matching:import": "node scripts/matching/import-batch.mjs",
+    "matching:export": "node scripts/matching/export-decisions.mjs",
+    "matching:demo": "bash scripts/matching/demo.sh"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.0.0",

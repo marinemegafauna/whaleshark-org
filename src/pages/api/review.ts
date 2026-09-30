@@ -1,3 +1,4 @@
+import { safeMatchingReturn } from '../../lib/match-return';
 import type { APIRoute } from 'astro';
 import siteConfig from '../../../site.config';
 import { getSpecies } from '../../lib/species';
@@ -8,6 +9,7 @@ import { isWildbookUnauthorized, searchEncounters } from '../../lib/wildbook';
 
 export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => {
   const form = await request.formData();
+  const matchingReturn = safeMatchingReturn(form.get('return'));
   const encounterId = String(form.get('encounter_id') ?? '');
   const siteId = String(form.get('site_id') ?? 'tofo');
   const status = String(form.get('status') ?? 'recorded');
@@ -18,12 +20,13 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
   if (requestedRegions.some((region) => !validRegions.has(region))) return Response.json({ error: 'invalid_region' }, { status: 400 });
   const regionsExamined = [...new Set(requestedRegions)];
   if (status === 'examined_clean' && !regionsExamined.length) {
-    return redirect(`/app/encounters/${encounterId}/scars?site=${encodeURIComponent(siteId)}&error=regions`, 303);
+    return redirect(`/app/encounters/${encounterId}/scars?site=${encodeURIComponent(siteId)}&error=regions${matchingReturn ? `&return=${encodeURIComponent(matchingReturn)}` : ''}`, 303);
   }
   const store = appDataStore(locals);
   await store.setReviewStatus(encounterId, species.id, status, locals.session?.username ?? 'mock-researcher', {
     regionsExamined: status === 'examined_clean' ? regionsExamined : undefined, siteId, individualId: String(form.get('individual_id') || '') || null, individualUuid: String(form.get('individual_uuid') || '') || null,
   });
+  if (matchingReturn) return redirect(matchingReturn, 303);
   let nextId: string | undefined;
   if (isMockAppMode()) {
     const currentIndex = mockEncounters.findIndex((encounter) => encounter.id === encounterId);

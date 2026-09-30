@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
-import { isMockAppMode, scarWritebackMode } from './mode';
+import { isMockAppMode, scarWritebackMode, isMatchingEnabled } from './mode';
 
 const workerEnv = env as Record<string, unknown>;
 
 afterEach(() => {
+  vi.unstubAllEnvs();
+  delete workerEnv.MATCHING;
   delete workerEnv.MOCK;
   delete workerEnv.MOCK_APP;
   delete workerEnv.SCAR_WRITEBACK;
@@ -33,4 +35,15 @@ describe('signed-in app mode', () => {
 
     expect(isMockAppMode()).toBe(true);
   });
+});
+
+test('matching is enabled in dev or explicitly on, otherwise off', () => {
+  vi.stubEnv('DEV', false);
+  expect(isMatchingEnabled()).toBe(false);
+  workerEnv.MATCHING = 'on';
+  expect(isMatchingEnabled()).toBe(true);
+  workerEnv.MATCHING = 'off';
+  expect(isMatchingEnabled()).toBe(false);
+  vi.stubEnv('DEV', true);
+  expect(isMatchingEnabled()).toBe(true);
 });

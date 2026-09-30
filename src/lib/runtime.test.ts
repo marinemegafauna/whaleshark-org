@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { env } from 'cloudflare:workers';
-import { appDataStore } from './runtime';
+import { appDataStore, matchingStore } from './runtime';
 
 const workerEnv = env as Record<string, unknown>;
 
@@ -24,4 +24,12 @@ describe('app data store', () => {
 
     expect(() => appDataStore({} as App.Locals)).not.toThrow();
   });
+});
+
+test('matching uses D1 even with mock authentication', () => {
+  workerEnv.MOCK_APP = '1';
+  workerEnv.DB = {};
+  expect(matchingStore({} as App.Locals).constructor.name).toBe('D1MatchingStore');
+  delete workerEnv.DB;
+  expect(matchingStore({} as App.Locals).constructor.name).toBe('MemoryMatchingStore');
 });

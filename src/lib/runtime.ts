@@ -1,3 +1,4 @@
+import { createMatchingStore, type MatchingStore } from './match-store';
 import { env } from 'cloudflare:workers';
 import type { DataStore } from './db';
 import type { ContributionIssueCache } from './contribute';
@@ -31,4 +32,9 @@ export function runtimeValue(_locals: App.Locals, name: keyof ImportMetaEnv): st
 
 export function contributionIssueCache(_locals: App.Locals): ContributionIssueCache | undefined {
   return workerEnv.SESSION;
+}
+
+// Matching batches persist in local D1 even when researcher authentication is mocked.
+export function matchingStore(_locals: App.Locals): MatchingStore {
+  return createMatchingStore(workerEnv.DB);
 }

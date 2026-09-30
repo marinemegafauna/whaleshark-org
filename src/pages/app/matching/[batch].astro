@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AppHeader from '../../../components/AppHeader.astro';
+import MatchingPhotos from '../../../components/MatchingPhotos.astro';
+import { getPageCopy, getSiteCopy, fillTemplate } from '../../../lib/content';
+import { matchingStore, appDataStore } from '../../../lib/runtime';
+import { loadMatchingCard, matchingPhotoUrl } from '../../../lib/match-service';
+import { isWildbookUnauthorized } from '../../../lib/wildbook';
+const store = matchingStore(Astro.locals), batch = await store.getBatch(Astro.params.batch!);
+if (!batch) return new Response('Not found',{status:404});
+const [copy,site,cards] = await Promise.all([getPageCopy('matching'),getSiteCopy(),store.listCards(batch.id)]);
+const requested = Number(Astro.url.searchParams.get('card'));
+const card = cards.find(c=>c.index===requested) ?? cards.find(c=>!c.verdict) ?? cards[0];
+if (!card) return Astro.redirect('/app/matching',303);
+let loaded;
+try { loaded = await loadMatchingCard(store,batch.id,card,Astro.locals.session?.wildbook_cookie ?? '',Astro.url.searchParams.has('refresh')); }
+catch(error) {
+  if (!isWildbookUnauthorized(error)) throw error;
+  Astro.cookies.delete('whaleshark_session',{path:'/'});
+  return Astro.redirect(`/signin?error=expired&next=${encodeURIComponent(Astro.url.pathname+Astro.url.search)}`,303);
+}
+const {data,source,unavailable} = loaded;
+const app = appDataStore(Astro.locals);
+const [scars,review] = await Promise.all([app.listScarRecords({encounterId:card.query_enc}),app.getReviewStatus(card.query_enc)]);
+const cardUrl = (index:number) => `/app/matching/${batch.id}?card=${index}`;
+const prev = cards.find(c=>c.index===card.index-1), next = cards.find(c=>c.index===card.index+1);
+const nextUndecided = [...cards.filter(c=>c.index>card.index),...cards.filter(c=>c.index<card.index)].find(c=>!c.verdict);
+const scarUrl = `/app/encounters/${encodeURIComponent(card.query_enc)}/scars?site=${encodeURIComponent(batch.site ?? '')}&return=${encodeURIComponent(cardUrl(card.index))}`;
+const best = card.candidates.find(c=>c.label===card.best?.label) ?? card.candidates[0];
+const panes = [{label:copy.ui.newSighting,photos:data.query.photos},...card.candidates.map(c=>({label:c.label,photos:'sightings' in (data.candidates[c.key] ?? {}) ? (data.candidates[c.key] as {sightings:{photos:import('../../../lib/match-batch').Photo[]}[]}).sightings.flatMap(s=>s.photos) : []}))];
+// The browser receives only same-origin photo URLs, never raw Sharkbook ones.
+const clientPanes = panes.map(p=>({...p,photos:p.photos.map(ph=>({...ph,url:matchingPhotoUrl(ph.url)}))}));
+const client = {batch:batch.id,query:card.query_enc,verdict:card.verdict,panes:clientPanes,ui:copy.ui,views:copy.views,prev:prev?cardUrl(prev.index):null,next:next?cardUrl(next.index):null};
+const json = JSON.stringify(client).replaceAll('<','\\u003c');
+const decided = cards.filter(c=>c.verdict).length;
+---
+<BaseLayout title={`${batch.title} · ${copy.seo.title}`} description={copy.seo.description}>
+<AppHeader active="matching"/>
+<div class="matching-layout">
+ <aside class="matching-rail">
+  <a href="/app/matching">{copy.ui.back}</a><h2>{batch.title}</h2>
+  <progress id="batch-progress" value={decided} max={cards.length}/><p id="progress-copy">{fillTemplate(copy.ui.progress,{decided,total:cards.length})}</p>
+  <div class="filters">{[['all',copy.ui.all],['likely',copy.ui.likely],['possible',copy.ui.possible],['undecided',copy.ui.undecided]].map(([value,label])=><button data-filter={value} type="button" aria-pressed={value==='all'}>{label}</button>)}</div>
+  <button id="prefetch" type="button">{copy.ui.prefetch}</button><span id="prefetch-state" role="status"></span>
+  <a href={`/api/matching/${batch.id}/decisions.json`}>{copy.ui.download}</a>
+  <nav class="card-list">{cards.map(c=><a href={cardUrl(c.index)} class:list={['card-row',{current:c.index===card.index}]} data-enc={c.query_enc} data-cls={c.cls} data-decided={c.verdict?'1':'0'} aria-current={c.index===card.index?'page':undefined}><b>{c.index}</b> <span>{c.query_enc.slice(0,8)}<small>{c.date ?? copy.ui.unknown}</small></span><span class="chip">{copy.classes[c.cls]}</span><span class="verdict-tick">{c.verdict?'✓':''}</span></a>)}</nav>
+ </aside>
+ <main>
+  <header><h1>{site.researchSites.find(s=>s.id===batch.site)?.label ?? batch.site} · {copy.ui.newSighting} · {card.query_enc.slice(0,8)}</h1><p>{data.query.date ?? card.date ?? copy.ui.unknown} · <a href={`https://www.sharkbook.ai/encounters/encounter.jsp?number=${encodeURIComponent(card.query_enc)}`} target="_blank" rel="noopener noreferrer">{copy.ui.sharkbook}</a> · <a href={`${cardUrl(card.index)}&refresh=1`}>{copy.ui.refresh}</a></p></header>
+  {card.note && <p class="note">{card.note}</p>}
+  <p class="rule">{card.best?.label ?? copy.classes[card.cls]} · {copy.ui.cosine} {card.best?.s1.toFixed(3) ?? '—'} · {copy.ui.margin} {card.best?.margin?.toFixed(3) ?? '—'} · {copy.ui.tier} {best?.tier ?? '—'} · {copy.ui.flank} {best?.flank ?? '—'} {card.duplicate_suspected && <strong class="chip duplicate">{copy.ui.duplicate}</strong>}</p>
+  {unavailable && <p class="notice" role="status">{copy.ui.unavailable}</p>}
+  {source==='embedded' && card.embedded && <p class="notice">{copy.ui.embedded}</p>}
+  <section class="query-block"><h2>{copy.ui.newSighting}</h2><p id="pick-hint" role="status">{copy.ui.pick}</p>{data.query.photos.length ? <MatchingPhotos photos={data.query.photos} pane={0} copy={copy}/> : <p>{copy.ui.noPhotos}</p>}{data.query.distinguishingScar && <blockquote>{data.query.distinguishingScar}</blockquote>}</section>
+  {card.candidates.map((c,ci)=>{
+    const candidate = data.candidates[c.key];
+    const sightings = candidate && 'sightings' in candidate ? candidate.sightings : [];
+    let offset = 0;
+    return <section class="candidate-block"><h2>{c.label}</h2><p>{c.loc ?? '—'} · {copy.ui.cosine} {c.s1.toFixed(3)} · {copy.ui.margin} {c.margin?.toFixed(3) ?? '—'} · {copy.ui.tier} {c.tier ?? '—'} · {copy.ui.flank} {c.flank ?? '—'} · {sightings.find(s=>s.matched)?.date ?? c.date ?? '—'}</p>{candidate && 'error' in candidate ? <p class="notice">{copy.ui.candidateUnavailable}</p> : <p>{fillTemplate(copy.ui.sightings,{n:candidate && 'n_sightings' in candidate ? candidate.n_sightings:0,hidden:candidate && 'hidden' in candidate ? candidate.hidden:0})}</p>}{sightings.map(s=>{const start=offset;offset+=s.photos.length;return <div class:list={['sighting',{matched:s.matched}]}><h3>{s.matched && <span class="chip">{copy.ui.matched}</span>} {s.date ?? copy.ui.unknown} · {s.loc ?? c.loc ?? '—'} · <a href={`https://www.sharkbook.ai/encounters/encounter.jsp?number=${encodeURIComponent(s.enc)}`} target="_blank" rel="noopener noreferrer">{s.enc.slice(0,8)}</a></h3>{s.photos.length ? <MatchingPhotos photos={s.photos} pane={ci+1} offset={start} copy={copy}/> : <p>{copy.ui.noPhotos}</p>}</div>})}</section>;
+  })}
+  <section class="verdict-bar">
+   <div class="verdict-buttons"><button type="button" data-v="new">{copy.ui.new}</button>{card.candidates.map(c=><button type="button" data-v="same" data-c={c.key}>{fillTemplate(copy.ui.same,{label:c.label})}</button>)}<button type="button" data-v="cant_tell">{copy.ui.cantTell}</button></div>
+   <div class="notes"><label>{copy.ui.notes}<textarea id="verdict-notes" rows="2">{card.verdict?.notes ?? ''}</textarea></label><label>{copy.ui.scarNotes}<textarea id="verdict-scars" rows="2">{card.verdict?.scar_notes ?? ''}</textarea></label><button id="save-verdict" type="button">{copy.ui.save}</button><span id="save-state" role="status"></span></div>
+   <div class="navigation"><a href={scarUrl}>{copy.ui.recordScars}</a><span class="chip">{fillTemplate(copy.ui.scarBadge,{n:scars.length,status:review ? copy.reviewStatuses[review.status] : copy.ui.unknown})}</span>{prev && <a href={cardUrl(prev.index)}>{copy.ui.previous}</a>}{next && <a href={cardUrl(next.index)}>{copy.ui.next}</a>}{nextUndecided && <a href={cardUrl(nextUndecided.index)}>{copy.ui.nextUndecided}</a>}</div>
+  </section>
+ </main>
+</div>
+<dialog id="compare" aria-label={copy.ui.compare}>
+ <div class="compare-bar"><strong>{copy.ui.compare}</strong><span>{copy.ui.compareHelp}</span><button id="compare-close" type="button">{copy.ui.close}</button></div>
+ <div class="compare-panes">{['L','R'].map(side=><section class="compare-pane" data-side={side}><div class="pane-head"><strong class="who"></strong><div class="tabs"></div></div><div class="stage"><img alt={copy.ui.compare} loading="lazy" decoding="async" draggable="false"/></div><div class="controls"><button type="button" data-a="prev">‹</button><button type="button" data-a="next">›</button><span class="caption"></span><button type="button" data-a="out">−</button><button type="button" data-a="in">+</button><button type="button" data-a="fit">{copy.ui.fit}</button><button type="button" data-a="area">{copy.ui.whole}</button></div></section>)}</div>
+</dialog>
+<script is:inline type="application/json" id="matching-data" set:html={json}/>
+<script>import { initMatchingReview } from '../../../lib/match-review-client'; initMatchingReview();</script>
+</BaseLayout>
+<style>
+.matching-layout{display:grid;grid-template-columns:300px minmax(0,1fr)}.matching-rail{position:sticky;top:0;height:100vh;overflow:auto;padding:16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:10px}.matching-rail h2{font-size:16px}.matching-rail progress{width:100%}.matching-rail p{margin:0;font-size:13px}.filters{display:flex;flex-wrap:wrap;gap:4px}button{border:1px solid var(--line-strong);border-radius:7px;background:#fff;cursor:pointer;min-height:40px;padding:7px 10px}button[aria-pressed=true]{background:var(--ink);color:#fff}.card-list{display:flex;flex-direction:column}.card-row{display:flex;gap:8px;padding:8px 0;align-items:center;font-size:12px}.card-row[hidden]{display:none}.card-row.current{color:var(--accent);border-left:3px solid var(--accent);padding-left:5px}.card-row small{display:block;font-size:10px}.chip{font-size:11px;border-radius:6px;background:var(--accent-soft);padding:4px 6px}.duplicate{color:var(--warn)}main{padding:24px;min-width:0}h1{font-size:24px}h2{font-size:19px}h3{font-size:14px;font-weight:500}.query-block,.candidate-block{border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}.query-block{background:var(--accent-soft)}.sighting{border-top:1px solid var(--line);padding:10px 0}.matched{border-left:3px solid var(--accent);padding-left:10px}.notice,.note{background:var(--accent-soft);padding:12px;border-radius:8px}.rule{font-size:13px;line-height:1.8}blockquote{white-space:pre-wrap}.verdict-bar{position:sticky;bottom:0;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:10px;padding:12px;z-index:3}.verdict-buttons,.navigation{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.notes{display:flex;gap:8px;align-items:end;margin:10px 0}.notes label{display:flex;flex:1;flex-direction:column;gap:4px;font-size:12px}textarea{resize:vertical;border:1px solid var(--line-strong);border-radius:7px;width:100%;font-size:16px}.navigation{font-size:12px}dialog{width:98vw;max-width:none;height:96vh;max-height:none;padding:12px;background:var(--ink);color:white;border:0;border-radius:8px}dialog::backdrop{background:rgba(0,0,0,.8)}dialog button{color:var(--ink)}.compare-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px}.compare-bar span{font-size:12px;flex:1}.compare-panes{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:calc(100% - 65px)}.compare-pane{display:flex;flex-direction:column;min-width:0}.pane-head{min-height:70px;font-size:14px}.stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#080d13;touch-action:none;cursor:grab}.stage img{position:absolute;max-width:none;transform-origin:0 0;user-select:none}.controls{display:flex;align-items:center;gap:5px;padding-top:8px;flex-wrap:wrap}.caption{font-size:12px;flex:1}.tabs{display:flex;gap:4px;flex-wrap:wrap}.tabs :global(button){font-size:11px;min-height:30px;padding:4px 8px;border:1px solid var(--line-strong);border-radius:7px;background:#fff;color:var(--ink);cursor:pointer}.tabs :global(button.on){background:var(--accent);color:#fff}
+@media(max-width:900px){.matching-layout{grid-template-columns:1fr}.matching-rail{position:relative;height:auto;border-bottom:1px solid var(--line)}.card-list{max-height:180px;overflow:auto}.notes{flex-wrap:wrap}.notes label{flex-basis:40%}main{padding:14px}.compare-bar span{display:none}.compare-panes{gap:6px}.pane-head{min-height:110px}.controls{gap:3px}.verdict-bar{bottom:env(safe-area-inset-bottom)}}
+</style>

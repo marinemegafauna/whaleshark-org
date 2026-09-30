@@ -23,6 +23,7 @@ publicNav:
   - { key: photographers, label: Photographers, href: "/#photographers" }
   - { key: about, label: About, href: "/#about" }
 researchSites:
+  - { id: kenya, label: Kenya }
   - { id: tofo, label: "Tofo, Mozambique" }
   - { id: mafia-island, label: "Mafia Island, Tanzania" }
   - { id: nosy-be, label: "Nosy Be, Madagascar" }

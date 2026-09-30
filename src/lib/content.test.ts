@@ -44,6 +44,7 @@ describe('Astro content sources', () => {
       '../../content/pages/how-it-works.md',
       '../../content/pages/landing.md',
       '../../content/pages/match.md',
+      '../../content/pages/matching.md',
       '../../content/pages/practice.md',
       '../../content/pages/provenance.md',
       '../../content/pages/signin.md',
